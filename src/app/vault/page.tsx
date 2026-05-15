@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MOCK_NOVELS } from "@/lib/mock-data";
 import { Book, Edit3, Trash2, Plus, Clock, Eye } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
 export default function VaultPage() {
@@ -94,7 +95,7 @@ export default function VaultPage() {
                 <Card key={novel.id} className="bg-card/40 border-white/5 overflow-hidden group hover:border-primary/30 transition-all">
                   <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
                     <div className="relative w-24 h-32 rounded-lg overflow-hidden shrink-0 shadow-lg">
-                      <img src={novel.coverImage} alt={novel.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <Image src={novel.coverImage} alt={novel.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     
                     <div className="flex-1 space-y-2">
