@@ -1,0 +1,80 @@
+
+import { Novel, Genre } from "./types";
+import { PlaceHolderImages } from "./placeholder-images";
+
+const genres: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
+
+export const MOCK_NOVELS: Novel[] = [
+  {
+    id: "1",
+    title: "The Velvet Shadow",
+    content: "The moon bled garnet across the obsidian fields...",
+    authorId: "user1",
+    authorUsername: "NocturneWitch",
+    genres: ["Fantasy", "Mystery"],
+    publishedAt: "2024-03-20T10:00:00Z",
+    createdAt: "2024-03-15T10:00:00Z",
+    coverImage: "https://picsum.photos/seed/castle/600/800",
+    isDraft: false,
+  },
+  {
+    id: "2",
+    title: "Amethyst Whispers",
+    content: "In the heart of the library, the runes began to glow...",
+    authorId: "user2",
+    authorUsername: "RuneSeeker",
+    genres: ["Fantasy", "Romance"],
+    publishedAt: "2024-03-21T12:00:00Z",
+    createdAt: "2024-03-10T12:00:00Z",
+    coverImage: "https://picsum.photos/seed/forest/600/800",
+    isDraft: false,
+  },
+  {
+    id: "3",
+    title: "Obsidian Dreams",
+    content: "The city breathed in neon and exhaled rain...",
+    authorId: "user3",
+    authorUsername: "NeonGothic",
+    genres: ["Sci-Fi", "Drama"],
+    publishedAt: "2024-03-22T08:00:00Z",
+    createdAt: "2024-03-18T08:00:00Z",
+    coverImage: "https://picsum.photos/seed/neon/600/800",
+    isDraft: false,
+  },
+  {
+    id: "4",
+    title: "The Silent Manor",
+    content: "Every floorboard in Blackwood Hall had a story of its own...",
+    authorId: "user4",
+    authorUsername: "GhostWriter",
+    genres: ["Horror", "Mystery"],
+    publishedAt: "2024-03-23T15:00:00Z",
+    createdAt: "2024-03-20T15:00:00Z",
+    coverImage: "https://picsum.photos/seed/manor/600/800",
+    isDraft: false,
+  },
+  {
+    id: "5",
+    title: "Midnight masquerade",
+    content: "Behind the porcelain mask, she was someone else entirely...",
+    authorId: "user5",
+    authorUsername: "MaskedMuse",
+    genres: ["Romance", "Drama"],
+    publishedAt: "2024-03-24T18:00:00Z",
+    createdAt: "2024-03-22T18:00:00Z",
+    coverImage: "https://picsum.photos/seed/cloak/600/800",
+    isDraft: false,
+  },
+  {
+    id: "6",
+    title: "Cursed Chronicles",
+    content: "The old book pulsated with an unholy light...",
+    authorId: "user6",
+    authorUsername: "AncientScribe",
+    genres: ["Horror", "Fantasy"],
+    publishedAt: "2024-03-25T11:00:00Z",
+    createdAt: "2024-03-23T11:00:00Z",
+    coverImage: "https://picsum.photos/seed/runes/600/800",
+    isDraft: false,
+  }
+];
