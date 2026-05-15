@@ -37,9 +37,11 @@ export default function Home() {
             Enter Rosa Novara, a safe sanctuary for dark fantasy, gothic romance, and ethereal storytelling.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-6 h-auto rounded-full font-headline font-semibold shadow-xl shadow-primary/20">
-              Start Writing
-            </Button>
+            <Link href="/write">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-6 h-auto rounded-full font-headline font-semibold shadow-xl shadow-primary/20">
+                Start Writing
+              </Button>
+            </Link>
             <Button size="lg" variant="outline" className="border-accent text-accent hover:bg-accent/10 text-lg px-8 py-6 h-auto rounded-full font-headline font-semibold">
               Explore Stories
             </Button>
