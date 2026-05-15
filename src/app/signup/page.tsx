@@ -18,6 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Shield, Sparkles, User, Mail, Lock } from "lucide-react";
+import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username is too long"),
@@ -27,6 +29,8 @@ const signupSchema = z.object({
 });
 
 export default function SignUpPage() {
+  const signupImage = PlaceHolderImages.find(img => img.id === 'signup-bg');
+
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -39,13 +43,21 @@ export default function SignUpPage() {
 
   function onSubmit(values: z.infer<typeof signupSchema>) {
     console.log(values);
-    // Logic for auth
   }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:block relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/castle/1000/1500')] bg-cover bg-center" />
+        {signupImage && (
+          <Image 
+            src={signupImage.imageUrl} 
+            alt={signupImage.description}
+            fill
+            className="object-cover"
+            priority
+            data-ai-hint={signupImage.imageHint}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end p-12 space-y-4">
           <h2 className="font-headline text-4xl font-bold text-white leading-tight">

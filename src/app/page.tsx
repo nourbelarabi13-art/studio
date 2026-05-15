@@ -10,11 +10,13 @@ import { Sparkles, Compass, Flame, Clock } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function Home() {
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
+  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-fantasy');
 
   const filteredNovels = selectedGenre === 'All' 
     ? MOCK_NOVELS 
@@ -26,7 +28,16 @@ export default function Home() {
       
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/dark-library/1920/1080')] bg-cover bg-center opacity-30" />
+        {heroImage && (
+          <Image 
+            src={heroImage.imageUrl} 
+            alt={heroImage.description}
+            fill
+            className="object-cover opacity-30"
+            priority
+            data-ai-hint={heroImage.imageHint}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background" />
         
         <div className="container relative z-10 px-4 text-center space-y-6 max-w-4xl animate-fade-in">
@@ -82,7 +93,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Masonry-style Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredNovels.map((novel, idx) => (
               <div 
@@ -96,7 +106,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Featured Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
           <div className="glass-morphism rounded-3xl p-8 space-y-6 border-primary/20">
             <h3 className="font-headline text-2xl font-bold flex items-center gap-2">

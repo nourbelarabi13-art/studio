@@ -2,7 +2,7 @@
 import { Novel, Genre } from "./types";
 import { PlaceHolderImages } from "./placeholder-images";
 
-const genres: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
+const getImg = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl || "";
 
 export const MOCK_NOVELS: Novel[] = [
   {
@@ -14,7 +14,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Fantasy", "Mystery"],
     publishedAt: "2024-03-20T10:00:00Z",
     createdAt: "2024-03-15T10:00:00Z",
-    coverImage: "https://picsum.photos/seed/castle/600/800",
+    coverImage: getImg("novel-1"),
     isDraft: false,
   },
   {
@@ -26,7 +26,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Fantasy", "Romance"],
     publishedAt: "2024-03-21T12:00:00Z",
     createdAt: "2024-03-10T12:00:00Z",
-    coverImage: "https://picsum.photos/seed/forest/600/800",
+    coverImage: getImg("novel-2"),
     isDraft: false,
   },
   {
@@ -38,7 +38,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Sci-Fi", "Drama"],
     publishedAt: "2024-03-22T08:00:00Z",
     createdAt: "2024-03-18T08:00:00Z",
-    coverImage: "https://picsum.photos/seed/neon/600/800",
+    coverImage: getImg("novel-6"),
     isDraft: false,
   },
   {
@@ -50,7 +50,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Horror", "Mystery"],
     publishedAt: "2024-03-23T15:00:00Z",
     createdAt: "2024-03-20T15:00:00Z",
-    coverImage: "https://picsum.photos/seed/manor/600/800",
+    coverImage: getImg("novel-5"),
     isDraft: false,
   },
   {
@@ -62,7 +62,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Romance", "Drama"],
     publishedAt: "2024-03-24T18:00:00Z",
     createdAt: "2024-03-22T18:00:00Z",
-    coverImage: "https://picsum.photos/seed/cloak/600/800",
+    coverImage: getImg("novel-4"),
     isDraft: false,
   },
   {
@@ -74,7 +74,7 @@ export const MOCK_NOVELS: Novel[] = [
     genres: ["Horror", "Fantasy"],
     publishedAt: "2024-03-25T11:00:00Z",
     createdAt: "2024-03-23T11:00:00Z",
-    coverImage: "https://picsum.photos/seed/runes/600/800",
+    coverImage: getImg("novel-3"),
     isDraft: false,
   }
 ];

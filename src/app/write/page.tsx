@@ -15,18 +15,13 @@ import {
   Trash2, 
   CheckCircle2, 
   AlertTriangle,
-  ChevronDown
+  Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestGenres } from "@/ai/flows/ai-genre-suggestion-flow";
 import { checkContentSafety } from "@/ai/flows/ai-content-safety-check-flow";
+import { suggestStorySpark } from "@/ai/flows/ai-story-spark-flow";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
@@ -36,6 +31,7 @@ export default function WritePage() {
   const [content, setContent] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSparking, setIsSparking] = useState(false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
 
   const toggleGenre = (genre: Genre) => {
@@ -76,6 +72,26 @@ export default function WritePage() {
     }
   };
 
+  const handleStorySpark = async () => {
+    setIsSparking(true);
+    try {
+      const result = await suggestStorySpark({ title, currentContent: content });
+      toast({
+        title: "A Spark of Ink",
+        description: result.spark,
+        duration: 10000,
+      });
+    } catch (error) {
+      toast({
+        title: "The Shadows are Silent",
+        description: "No spark could be summoned.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSparking(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!content || !title || selectedGenres.length === 0) {
       toast({
@@ -106,7 +122,6 @@ export default function WritePage() {
         title: "Chronicle Published",
         description: "Your story has been added to the Dark Archive.",
       });
-      // Logic for saving to DB
     } catch (error) {
       toast({
         title: "Publishing Error",
@@ -130,6 +145,15 @@ export default function WritePage() {
           </div>
           
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              className="gap-2 text-accent border-accent/20 hover:bg-accent/10"
+              onClick={handleStorySpark}
+              disabled={isSparking}
+            >
+              <Zap className={cn("w-4 h-4", isSparking && "animate-pulse")} />
+              Story Spark
+            </Button>
             <Button variant="outline" className="gap-2 text-muted-foreground border-white/5 hover:bg-muted/30">
               <Save className="w-4 h-4" />
               Save Draft

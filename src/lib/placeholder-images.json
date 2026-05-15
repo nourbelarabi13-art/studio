@@ -7,6 +7,12 @@
       "imageHint": "dark gothic library"
     },
     {
+      "id": "signup-bg",
+      "description": "Crumbling castle architecture",
+      "imageUrl": "https://picsum.photos/seed/castle/1000/1500",
+      "imageHint": "gothic castle"
+    },
+    {
       "id": "novel-1",
       "description": "Crumbling castle under a red moon",
       "imageUrl": "https://picsum.photos/seed/castle/600/800",
