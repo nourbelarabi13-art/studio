@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from "@/components/navbar";
@@ -19,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/i18n/context";
+import { MysticalQuoteGenerator } from "@/components/mystical-quote-generator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -467,6 +467,9 @@ export default function Home() {
             ))}
           </Tabs>
         </div>
+
+        {/* The Mystical Quote Generator */}
+        <MysticalQuoteGenerator />
 
         {/* Community Promo */}
         <section className="animate-fade-in">
