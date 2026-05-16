@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,6 +38,9 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
+  .font-arabic {
+    font-family: 'Amiri', serif;
+  }
 }
 
 .dreamy-fantasy-gradient {
@@ -48,6 +52,10 @@
 .writing-editor {
   line-height: 1.8;
   font-size: 1.125rem;
+}
+
+[dir="rtl"] .writing-editor {
+  text-align: right;
 }
 
 .glass-morphism {

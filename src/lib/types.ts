@@ -1,6 +1,7 @@
 
 export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi';
 export type UserRole = 'writer' | 'reader';
+export type AppLanguage = 'en' | 'ar' | 'fr';
 
 export interface Novel {
   id: string;
@@ -15,6 +16,13 @@ export interface Novel {
   isDraft: boolean;
   views: number;
   likes: number;
+  language: AppLanguage;
+  translations?: {
+    [key in AppLanguage]?: {
+      title: string;
+      content: string;
+    }
+  };
 }
 
 export interface UserProfile {
@@ -26,6 +34,7 @@ export interface UserProfile {
   createdAt: string;
   followerCount?: number;
   followingCount?: number;
+  language: AppLanguage;
 }
 
 export interface Follow {

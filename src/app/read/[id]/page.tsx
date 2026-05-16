@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +16,8 @@ import {
   User,
   Heart,
   Eye,
-  Loader2
+  Loader2,
+  Languages
 } from "lucide-react";
 import {
   Dialog,
@@ -31,11 +31,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useDoc, useUser } from "@/firebase";
-import { doc, getFirestore } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { incrementNovelView, toggleLikeNovel } from "@/firebase/firestore/novel-actions";
 import { Novel } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function ReadingPage() {
   const { id } = useParams();
@@ -43,8 +44,11 @@ export default function ReadingPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const { user } = useUser();
+  const { t, language: appLanguage } = useLanguage();
+  
   const [reportReason, setReportReason] = useState("");
   const [isLiking, setIsLiking] = useState(false);
+  const [useTranslation, setUseTranslation] = useState(false);
 
   const novelRef = useMemoFirebase(() => {
     if (!db || !id) return null;
@@ -53,7 +57,6 @@ export default function ReadingPage() {
 
   const { data: novel, loading } = useDoc<Novel>(novelRef);
 
-  // Tracking Views
   useEffect(() => {
     if (db && id) {
       incrementNovelView(db, id as string);
@@ -64,14 +67,14 @@ export default function ReadingPage() {
     if (!reportReason.trim()) return;
     toast({
       title: "Guardian Alerted",
-      description: "Thank you for helping keep the sanctuary safe. Our sentinels will review this report.",
+      description: "Thank you for helping keep the sanctuary safe.",
     });
     setReportReason("");
   };
 
   const handleLike = async () => {
     if (!user) {
-      toast({ title: "Identify Yourself", description: "Please join our archive to like stories.", variant: "destructive" });
+      toast({ title: "Identify Yourself", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
@@ -79,20 +82,12 @@ export default function ReadingPage() {
     setIsLiking(true);
     const liked = await toggleLikeNovel(db, id as string, user.uid);
     setIsLiking(false);
-    
-    toast({
-      title: liked ? "Story Loved" : "Love Recalled",
-      description: liked ? "Your appreciation has been recorded in the archive." : "You have softly withdrawn your appreciation.",
-    });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="italic text-muted-foreground">Unrolling the chronicle...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -101,18 +96,20 @@ export default function ReadingPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-6">
         <h1 className="font-headline text-4xl font-bold">Chronicle Lost</h1>
-        <p className="text-muted-foreground italic max-w-md">This story appears to have vanished back into the shadows of the archive.</p>
         <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Sanctuary</Button>
       </div>
     );
   }
+
+  const hasTranslation = !!novel.translations?.[appLanguage];
+  const displayTitle = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.title : novel.title;
+  const displayContent = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.content : novel.content;
 
   return (
     <div className="min-h-screen dreamy-fantasy-gradient pb-24">
       <Navbar />
       
       <main className="container mx-auto px-4 py-12 max-w-3xl space-y-12 animate-fade-in">
-        {/* Header Section */}
         <header className="space-y-6 text-center border-b border-primary/10 pb-12">
           <div className="flex justify-center gap-2 mb-4">
             {novel.genres.map(genre => (
@@ -122,7 +119,7 @@ export default function ReadingPage() {
             ))}
           </div>
           <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-tight">
-            {novel.title}
+            {displayTitle}
           </h1>
           <div className="flex items-center justify-center gap-6 text-muted-foreground italic">
             <div className="flex items-center gap-2 text-foreground font-semibold">
@@ -143,8 +140,19 @@ export default function ReadingPage() {
           </div>
         </header>
 
-        {/* Reading Tools (Sticky) */}
-        <div className="sticky top-20 z-10 flex justify-center">
+        <div className="sticky top-20 z-10 flex flex-col items-center gap-4">
+          {hasTranslation && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setUseTranslation(!useTranslation)}
+              className="rounded-full bg-white/80 backdrop-blur-md border-primary/20 text-primary gap-2 shadow-sm"
+            >
+              <Languages className="w-4 h-4" />
+              {useTranslation ? t.read.original_toggle : t.read.translate_toggle}
+            </Button>
+          )}
+
           <div className="glass-morphism border-primary/10 rounded-full px-6 py-2.5 flex items-center gap-6 shadow-xl">
             <Button 
               variant="ghost" 
@@ -170,10 +178,7 @@ export default function ReadingPage() {
               </DialogTrigger>
               <DialogContent className="bg-card border-primary/10">
                 <DialogHeader>
-                  <DialogTitle className="font-headline text-2xl">Summon the Guardian Sentinel</DialogTitle>
-                  <DialogDescription className="italic">
-                    Report content that violates our sanctuary's safety guidelines.
-                  </DialogDescription>
+                  <DialogTitle className="font-headline text-2xl">{t.read.report}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <Textarea 
@@ -192,40 +197,36 @@ export default function ReadingPage() {
           </div>
         </div>
 
-        {/* Content Section */}
         <article className="writing-editor prose prose-stone prose-lg max-w-none space-y-8 text-foreground/80 leading-relaxed font-body">
           <div className="whitespace-pre-wrap">
-            {novel.content}
+            {displayContent}
           </div>
         </article>
 
-        {/* Footer Navigation */}
         <footer className="pt-16 border-t border-primary/10 space-y-12">
           <div className="flex items-center justify-between">
             <Button variant="outline" className="gap-2 border-primary/10 text-muted-foreground rounded-full px-6" disabled>
               <ChevronLeft className="w-4 h-4" />
-              Previous Chapter
+              {t.read.prev}
             </Button>
             <Button className="gap-2 bg-primary hover:bg-primary/90 text-white rounded-full px-6 shadow-md shadow-primary/10">
-              Next Chapter
+              {t.read.next}
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
           
           <div className="bg-white/60 backdrop-blur-sm border border-primary/5 rounded-[2rem] p-10 text-center space-y-6 shadow-sm">
-            <h3 className="font-headline text-3xl font-bold">You've reached the end of this fragment.</h3>
-            <p className="text-muted-foreground italic text-lg">Your appreciation keeps the archive blooming.</p>
+            <h3 className="font-headline text-3xl font-bold">{t.read.end}</h3>
             <div className="flex flex-wrap justify-center gap-4">
               <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-8 h-12 shadow-lg shadow-primary/10 gap-2">
                 <Heart className="w-4 h-4" />
-                Appreciate Story
+                {t.read.appreciate}
               </Button>
               <Button variant="outline" className="border-primary/10 rounded-full px-8 h-12 gap-2 text-primary hover:bg-primary/5">
                 <Share2 className="w-4 h-4" />
-                Share Story
+                {t.read.share}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground italic pt-4">Penned with care by {novel.authorUsername}</p>
           </div>
         </footer>
       </main>

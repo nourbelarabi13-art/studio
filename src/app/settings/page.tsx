@@ -10,15 +10,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUser, useFirestore, useDoc } from "@/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Shield, PenTool, BookOpen, Sparkles } from "lucide-react";
-import { UserProfile, UserRole } from "@/lib/types";
+import { Loader2, User, Shield, PenTool, BookOpen, Sparkles, Languages } from "lucide-react";
+import { UserProfile, UserRole, AppLanguage } from "@/lib/types";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -27,27 +29,23 @@ export default function SettingsPage() {
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
-  const handleRoleChange = async (newRole: UserRole) => {
-    if (!db || !user || !profile || profile.role === newRole) return;
+  const handleUpdatePreference = async (updates: Partial<UserProfile>) => {
+    if (!db || !user || !profile) return;
     
     setIsUpdating(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), {
-        role: newRole
-      });
-      toast({
-        title: "Identity Manifested",
-        description: `You are now a ${newRole} within the sanctuary.`,
-      });
+      await updateDoc(doc(db, "users", user.uid), updates);
+      toast({ title: "Updated", description: "Your manifestation has been updated." });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "The Shift Failed",
-        description: "We couldn't change your path at this moment.",
-      });
+      toast({ variant: "destructive", title: "Error" });
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleLanguageChange = (lang: AppLanguage) => {
+    setLanguage(lang);
+    handleUpdatePreference({ language: lang });
   };
 
   if (authLoading || profileLoading) {
@@ -58,60 +56,60 @@ export default function SettingsPage() {
     );
   }
 
-  if (!user || !profile) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="font-headline text-2xl mb-4">Identify Yourself</h1>
-        <p className="text-muted-foreground mb-6">You must enter the sanctuary to adjust your settings.</p>
-        <Button onClick={() => window.location.href = "/login"}>Login</Button>
-      </div>
-    );
-  }
+  if (!user || !profile) return null;
 
   return (
     <div className="min-h-screen dreamy-fantasy-gradient">
       <Navbar />
       <main className="container mx-auto px-4 py-12 max-w-3xl space-y-12 animate-fade-in">
         <header className="space-y-2">
-          <h1 className="font-headline text-4xl font-bold">Sanctuary Settings</h1>
-          <p className="text-muted-foreground italic">Adjust your presence within Rosaline Bela.</p>
+          <h1 className="font-headline text-4xl font-bold">{t.settings.title}</h1>
+          <p className="text-muted-foreground italic">{t.settings.desc}</p>
         </header>
 
         <div className="grid gap-8">
+          {/* Language Preference */}
           <Card className="glass-morphism border-primary/10 rounded-3xl overflow-hidden">
             <CardHeader className="border-b border-primary/5 bg-primary/5">
               <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-primary" />
-                <CardTitle className="font-headline">Persona Profile</CardTitle>
+                <Languages className="w-5 h-5 text-primary" />
+                <CardTitle className="font-headline">{t.settings.language_title}</CardTitle>
               </div>
-              <CardDescription>Your registered identity traces.</CardDescription>
+              <CardDescription>{t.settings.language_desc}</CardDescription>
             </CardHeader>
-            <CardContent className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pen Name</p>
-                  <p className="text-lg font-medium">{profile.username}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Scroll Address</p>
-                  <p className="text-lg font-medium">{profile.email}</p>
-                </div>
-              </div>
+            <CardContent className="p-8">
+              <RadioGroup
+                defaultValue={language}
+                onValueChange={(val) => handleLanguageChange(val as AppLanguage)}
+                className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+              >
+                {[
+                  { id: 'en', name: 'English' },
+                  { id: 'ar', name: 'العربية' },
+                  { id: 'fr', name: 'Français' },
+                ].map((lang) => (
+                  <div key={lang.id} className="flex items-center space-x-2 rounded-2xl border p-4 hover:bg-primary/5 transition-colors cursor-pointer border-primary/10">
+                    <RadioGroupItem value={lang.id} id={lang.id} />
+                    <Label htmlFor={lang.id} className="cursor-pointer font-bold">{lang.name}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </CardContent>
           </Card>
 
+          {/* Role Change */}
           <Card className="glass-morphism border-primary/10 rounded-3xl overflow-hidden">
             <CardHeader className="border-b border-primary/5 bg-primary/5">
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-primary" />
-                <CardTitle className="font-headline">Chosen Path</CardTitle>
+                <CardTitle className="font-headline">{t.settings.role_title}</CardTitle>
               </div>
-              <CardDescription>Shift your role within the community.</CardDescription>
+              <CardDescription>{t.settings.role_desc}</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
               <RadioGroup
                 defaultValue={profile.role}
-                onValueChange={(val) => handleRoleChange(val as UserRole)}
+                onValueChange={(val) => handleUpdatePreference({ role: val as UserRole })}
                 disabled={isUpdating}
                 className="grid gap-4"
               >
@@ -123,7 +121,6 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <p className="font-bold text-lg">Reader</p>
-                      <p className="text-sm text-muted-foreground">Focus on discovering and exploring the Archive's fragments.</p>
                     </div>
                   </Label>
                 </div>
@@ -135,18 +132,10 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <p className="font-bold text-lg">Writer</p>
-                      <p className="text-sm text-muted-foreground">Manifest your own chronicles and manage your fragments.</p>
                     </div>
                   </Label>
                 </div>
               </RadioGroup>
-              
-              {isUpdating && (
-                <div className="flex items-center justify-center gap-2 mt-6 text-primary italic animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Weaving your new identity...
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -154,13 +143,11 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-destructive" />
-                <CardTitle className="font-headline text-destructive">Banishment Zone</CardTitle>
+                <CardTitle className="font-headline text-destructive">{t.settings.banish_title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-8">
-              <p className="text-sm text-muted-foreground italic mb-6">
-                Removing your presence from the sanctuary is permanent. All scrolls and fragments will vanish.
-              </p>
+              <p className="text-sm text-muted-foreground italic mb-6">{t.settings.banish_desc}</p>
               <Button variant="destructive" className="rounded-full px-8">Banish Persona</Button>
             </CardContent>
           </Card>

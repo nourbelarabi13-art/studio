@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useDeferredValue, useMemo } from "react";
@@ -6,7 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Genre } from "@/lib/types";
+import { Genre, AppLanguage } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { 
   Save, 
@@ -18,7 +19,8 @@ import {
   Loader2,
   Image as ImageIcon,
   Heart,
-  Wand2
+  Wand2,
+  Languages
 } from "lucide-react";
 import {
   Dialog,
@@ -33,14 +35,16 @@ import { suggestGenres } from "@/ai/flows/ai-genre-suggestion-flow";
 import { checkContentSafety } from "@/ai/flows/ai-content-safety-check-flow";
 import { suggestStorySpark } from "@/ai/flows/ai-story-spark-flow";
 import { generateCover } from "@/ai/flows/ai-cover-generator-flow";
+import { translateStory } from "@/ai/flows/translate-story-flow";
 import { cn } from "@/lib/utils";
 import { useFirestore, useUser, useDoc } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc } from "firebase/firestore";
+import { collection, addDoc, doc } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
+import { useLanguage } from "@/lib/i18n/context";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
@@ -49,6 +53,7 @@ export default function WritePage() {
   const { toast } = useToast();
   const { user } = useUser();
   const db = useFirestore();
+  const { t, language } = useLanguage();
   
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -69,7 +74,7 @@ export default function WritePage() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSparking, setIsSparking] = useState(false);
-  const [isCheckingSafety, setIsCheckingSafety] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const wordCount = useMemo(() => deferredContent.split(/\s+/).filter(Boolean).length, [deferredContent]);
@@ -84,7 +89,7 @@ export default function WritePage() {
 
   const handleSuggestGenres = async () => {
     if (!content || !title) {
-      toast({ title: "Keep writing", description: "Give your story a title and a few words first.", variant: "destructive" });
+      toast({ title: t.write.desk_desc, variant: "destructive" });
       return;
     }
     setIsAnalyzing(true);
@@ -92,7 +97,7 @@ export default function WritePage() {
       const result = await suggestGenres({ title, storyContent: content });
       setSelectedGenres(result.suggestedGenres as Genre[]);
     } catch (error) {
-      toast({ title: "Still thinking...", description: "We couldn't suggest genres right now.", variant: "destructive" });
+      toast({ title: "Error", variant: "destructive" });
     } finally { setIsAnalyzing(false); }
   };
 
@@ -100,15 +105,15 @@ export default function WritePage() {
     setIsSparking(true);
     try {
       const result = await suggestStorySpark({ title, currentContent: content });
-      toast({ title: "A Spark of Light", description: result.spark, duration: 8000 });
+      toast({ title: t.write.spark, description: result.spark, duration: 8000 });
     } catch (error) {
-      toast({ title: "Quiet Mind", description: "The muse is resting.", variant: "destructive" });
+      toast({ title: "Error", variant: "destructive" });
     } finally { setIsSparking(false); }
   };
 
   const handleManifestIllustration = async () => {
     if (!title) {
-      toast({ title: "Title Required", description: "Provide a title for your chronicle first.", variant: "destructive" });
+      toast({ title: "Error", variant: "destructive" });
       return;
     }
     setIsManifestingIllustration(true);
@@ -117,16 +122,16 @@ export default function WritePage() {
       setCoverImage(result.imageUrl);
       setShowManifestDialog(false);
       setManifestPrompt("");
-      toast({ title: "Illustration Manifested", description: "Your custom cover is ready." });
+      toast({ title: t.write.manifest_art });
     } catch (error: any) {
-      toast({ title: "Manifestation Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsManifestingIllustration(false);
     }
   };
 
   const handleSaveDraft = async () => {
-    if (!user || !db) { toast({ title: "Who are you?", description: "Please log in to save.", variant: "destructive" }); return; }
+    if (!user || !db) return;
     if (!title && !content) return;
     setIsSaving(true);
     const novelData = {
@@ -140,11 +145,12 @@ export default function WritePage() {
       createdAt: new Date().toISOString(),
       publishedAt: null,
       views: 0,
-      likes: 0
+      likes: 0,
+      language: language
     };
     addDoc(collection(db, "novels"), novelData).then(() => {
       setIsSaving(false);
-      toast({ title: "Dream Tucked Away", description: "Draft secured in your vault." });
+      toast({ title: t.write.save });
       router.push("/vault");
     }).catch(async () => {
       setIsSaving(false);
@@ -153,36 +159,53 @@ export default function WritePage() {
   };
 
   const handlePublish = async () => {
-    if (!user || !db) { toast({ title: "Identify yourself", description: "Log in to share your story.", variant: "destructive" }); return; }
+    if (!user || !db) return;
     if (!content || !title || selectedGenres.length === 0) {
-      toast({ title: "Almost there", description: "Check your title, content, and genres.", variant: "destructive" });
+      toast({ title: "Error", variant: "destructive" });
       return;
     }
-    setIsCheckingSafety(true);
+    setIsPublishing(true);
     try {
+      // 1. Safety Check
       const safetyResult = await checkContentSafety({ novelTitle: title, novelContent: content });
       if (!safetyResult.isSafe) {
-        toast({ title: "Gently Declined", description: safetyResult.reasons[0], variant: "destructive" });
-        setIsCheckingSafety(false);
+        toast({ title: "Safety Alert", description: safetyResult.reasons[0], variant: "destructive" });
+        setIsPublishing(false);
         return;
       }
+
+      // 2. AI Translation
+      const targetLanguages = (['en', 'ar', 'fr'] as AppLanguage[]).filter(l => l !== language);
+      const translationResult = await translateStory({ title, content, targetLanguages });
+
       const novelData = {
-        title, content, authorId: user.uid, authorUsername: profile?.username || "Dreamer",
-        genres: selectedGenres, coverImage, isDraft: false, 
+        title, 
+        content, 
+        authorId: user.uid, 
+        authorUsername: profile?.username || "Dreamer",
+        genres: selectedGenres, 
+        coverImage, 
+        isDraft: false, 
         createdAt: new Date().toISOString(), 
         publishedAt: new Date().toISOString(),
         views: 0,
-        likes: 0
+        likes: 0,
+        language: language,
+        translations: translationResult.translations
       };
+
       addDoc(collection(db, "novels"), novelData).then(() => {
-        setIsCheckingSafety(false);
-        toast({ title: "Story Bloomed", description: "Published to the Archive." });
+        setIsPublishing(false);
+        toast({ title: t.write.publish });
         router.push("/");
       }).catch(async () => {
-        setIsCheckingSafety(false);
+        setIsPublishing(false);
         errorEmitter.emit("permission-error", new FirestorePermissionError({ path: "novels", operation: "create" }));
       });
-    } catch (error) { setIsCheckingSafety(false); }
+    } catch (error) { 
+      setIsPublishing(false); 
+      toast({ title: "Error", variant: "destructive" });
+    }
   };
 
   return (
@@ -191,21 +214,21 @@ export default function WritePage() {
       <main className="flex-1 container mx-auto px-4 py-12 max-w-5xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
           <div className="space-y-1">
-            <h1 className="font-headline text-4xl font-bold italic text-primary">The Writing Desk</h1>
-            <p className="text-muted-foreground text-sm italic">Let your thoughts flow freely.</p>
+            <h1 className="font-headline text-4xl font-bold italic text-primary">{t.write.desk_title}</h1>
+            <p className="text-muted-foreground text-sm italic">{t.write.desk_desc}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5" onClick={handleStorySpark} disabled={isSparking}>
               {isSparking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              Get a Spark
+              {t.write.spark}
             </Button>
             <Button variant="outline" className="gap-2 rounded-full border-primary/10 text-muted-foreground hover:bg-primary/5" onClick={handleSaveDraft} disabled={isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Draft
+              {t.write.save}
             </Button>
-            <Button onClick={handlePublish} disabled={isCheckingSafety} className="gap-2 bg-primary hover:bg-primary/90 rounded-full px-8 shadow-md">
-              {isCheckingSafety ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Publish
+            <Button onClick={handlePublish} disabled={isPublishing} className="gap-2 bg-primary hover:bg-primary/90 rounded-full px-8 shadow-md">
+              {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {t.write.publish}
             </Button>
           </div>
         </div>
@@ -230,11 +253,11 @@ export default function WritePage() {
                   className="w-full h-8 text-[10px] font-bold uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-primary/5 gap-1.5 rounded-full"
                 >
                   <Wand2 className="w-3 h-3" />
-                  Manifest AI Art
+                  {t.write.manifest_art}
                 </Button>
               </div>
               <div className="flex-1 w-full">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Story Title..." className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-20 h-auto" />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.write.title_placeholder} className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-20 h-auto" />
               </div>
             </div>
             
@@ -252,7 +275,7 @@ export default function WritePage() {
             )}
 
             <div className="relative">
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Start your story here..." className="writing-editor min-h-[60vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-20 text-foreground/90" />
+              <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.write.content_placeholder} className="writing-editor min-h-[60vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-20 text-foreground/90" />
               <div className="absolute bottom-0 right-0 py-4 text-xs text-muted-foreground/40 font-bold uppercase tracking-widest">{wordCount} words</div>
             </div>
           </div>
@@ -260,7 +283,7 @@ export default function WritePage() {
           <aside className="space-y-8">
             <div className="glass-morphism rounded-3xl p-7 space-y-6 border-primary/10">
               <div className="flex items-center justify-between">
-                <h3 className="font-headline text-xl font-bold">Genres</h3>
+                <h3 className="font-headline text-xl font-bold">{t.write.genres}</h3>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full" onClick={handleSuggestGenres} disabled={isAnalyzing}>
                   <Sparkles className={cn("w-4 h-4", isAnalyzing && "animate-spin")} />
                 </Button>
@@ -274,14 +297,13 @@ export default function WritePage() {
 
             <div className="glass-morphism rounded-3xl p-7 space-y-4 bg-primary/5 border-primary/10">
               <h3 className="font-headline text-lg font-bold flex items-center gap-2">
-                <Heart className="w-4 h-4 text-primary" />
-                Soft Guidelines
+                <Languages className="w-4 h-4 text-primary" />
+                {t.write.language}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed italic">Your story should be comfortable and safe for all our dreamers to read.</p>
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground/70"><CheckCircle2 className="w-4 h-4 text-primary/40" /><span>Privacy Protected</span></div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground/70"><CheckCircle2 className="w-4 h-4 text-primary/40" /><span>Safety Check Active</span></div>
-              </div>
+              <Badge variant="outline" className="rounded-full border-primary/20 text-primary capitalize">
+                {language === 'ar' ? 'العربية' : language === 'fr' ? 'Français' : 'English'}
+              </Badge>
+              <p className="text-[10px] text-muted-foreground italic leading-relaxed">AI will automatically manifest translations when you publish.</p>
             </div>
 
             <Button variant="ghost" className="w-full text-destructive/40 hover:text-destructive hover:bg-destructive/5 gap-2 rounded-full h-11 text-xs font-bold uppercase tracking-widest" onClick={() => { if (confirm("Clear your desk?")) { setTitle(""); setContent(""); setSelectedGenres([]); } }}>
@@ -295,7 +317,7 @@ export default function WritePage() {
       <Dialog open={showManifestDialog} onOpenChange={setShowManifestDialog}>
         <DialogContent className="bg-white rounded-[2rem] border-primary/10 max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-headline text-2xl text-primary">Manifest Cover Illustration</DialogTitle>
+            <DialogTitle className="font-headline text-2xl text-primary">{t.write.manifest_art}</DialogTitle>
             <DialogDescription className="italic">
               Describe the atmosphere you wish to manifest. Our AI will weave a soft fantasy illustration for your chronicle.
             </DialogDescription>
@@ -315,7 +337,7 @@ export default function WritePage() {
               className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full gap-2 font-headline text-lg shadow-lg shadow-primary/10"
             >
               {isManifestingIllustration ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-              Manifest Illustration
+              {t.write.manifest_art}
             </Button>
           </DialogFooter>
         </DialogContent>

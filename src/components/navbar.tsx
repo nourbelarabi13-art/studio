@@ -20,6 +20,7 @@ import {
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc } from "firebase/firestore";
 import { UserProfile } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/context";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -28,6 +29,7 @@ export function Navbar() {
   const { user } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const { t } = useLanguage();
   
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -37,10 +39,10 @@ export function Navbar() {
   const { data: profile } = useDoc<UserProfile>(userProfileRef);
 
   const navLinks = [
-    { name: "Archive", href: "/", icon: Library, roles: ["writer", "reader"] },
-    { name: "Forge", href: "/write", icon: PenSquare, roles: ["writer"] },
-    { name: "Vault", href: "/vault", icon: BookOpen, roles: ["writer"] },
-    { name: "Community", href: "/community", icon: MessageSquare, roles: ["writer"] },
+    { name: t.nav.archive, href: "/", icon: Library, roles: ["writer", "reader"] },
+    { name: t.nav.forge, href: "/write", icon: PenSquare, roles: ["writer"] },
+    { name: t.nav.vault, href: "/vault", icon: BookOpen, roles: ["writer"] },
+    { name: t.nav.community, href: "/community", icon: MessageSquare, roles: ["writer"] },
   ];
 
   const handleLogout = async () => {
@@ -49,27 +51,14 @@ export function Navbar() {
       await signOut(auth);
       toast({
         title: "Goodbye for now",
-        description: "Your stories are safe in the vault. Come back soon.",
       });
       router.push("/");
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Stay a little longer?",
-        description: "We couldn't seal the vault right now.",
+        title: "Error",
       });
     }
-  };
-
-  const handleSearchClick = () => {
-    if (pathname === '/') {
-      const archive = document.querySelector('.scroll-mt-20');
-      if (archive) {
-        archive.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-    }
-    router.push('/');
   };
 
   return (
@@ -105,7 +94,7 @@ export function Navbar() {
             variant="ghost" 
             size="icon" 
             className="text-muted-foreground hover:text-primary hover:bg-primary/5"
-            onClick={handleSearchClick}
+            onClick={() => router.push("/")}
           >
             <Search className="w-5 h-5" />
           </Button>
@@ -121,26 +110,20 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground">
-                <DropdownMenuLabel className="font-headline text-foreground">Your Sanctuary</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-headline text-foreground">{profile?.username}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
                   <User className="w-4 h-4" />
-                  View Profile
+                  {t.nav.profile}
                 </DropdownMenuItem>
-                {profile?.role === 'writer' && (
-                  <DropdownMenuItem onClick={() => router.push('/vault')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
-                    <LayoutDashboard className="w-4 h-4" />
-                    My Vault
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
                   <Settings className="w-4 h-4" />
-                  Sanctuary Settings
+                  {t.nav.settings}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-destructive focus:bg-destructive/5 focus:text-destructive">
                   <LogOut className="w-4 h-4" />
-                  Leave Sanctuary
+                  {t.nav.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -148,12 +131,12 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="hover:bg-primary/5 gap-2 text-muted-foreground">
-                  Log In
+                  {t.nav.login}
                 </Button>
               </Link>
               <Link href="/signup">
                 <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 gap-2 rounded-full">
-                  Sign Up
+                  {t.nav.signup}
                 </Button>
               </Link>
             </div>
