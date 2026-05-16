@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Sparkles, Quote, BookOpen } from "lucide-react";
+import { Sparkles, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LiteraryQuote {
@@ -29,14 +29,22 @@ const ROTATION_INTERVAL = 180000; // 3 minutes in milliseconds
 export function MysticalQuoteGenerator() {
   const [index, setIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [isRotating, setIsRotating] = useState(false);
 
   const rotateQuote = useCallback(() => {
+    if (isRotating) return;
+    
+    setIsRotating(true);
     setIsVisible(false);
+    
     setTimeout(() => {
       setIndex((prev) => (prev + 1) % BILINGUAL_CATALOG.length);
       setIsVisible(true);
+      
+      // Wait for the fade-in animation to complete before allowing another manual rotation
+      setTimeout(() => setIsRotating(false), 1000);
     }, 800); // Wait for fade out to finish
-  }, []);
+  }, [isRotating]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,7 +59,13 @@ export function MysticalQuoteGenerator() {
   return (
     <section className="py-12 px-4 relative overflow-hidden">
       <div className="container mx-auto max-w-xl relative z-10">
-        <div className="rounded-[2.5rem] p-10 md:p-12 border-primary/10 shadow-2xl bg-[#ffd1dc] text-center space-y-8 transition-all duration-700 hover:shadow-pink-200/50 group">
+        <div 
+          onMouseEnter={() => {
+            // Trigger rotation on hover if not already in progress
+            if (!isRotating) rotateQuote();
+          }}
+          className="rounded-[2.5rem] p-10 md:p-12 border-primary/10 shadow-2xl bg-[#ffd1dc] text-center space-y-8 transition-all duration-700 hover:shadow-pink-200/50 group cursor-help"
+        >
           
           <div className="flex flex-col items-center gap-2">
             <div className="inline-flex items-center gap-2 bg-white/30 text-[#8b5cf6] px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-[0.3em] border border-white/20 backdrop-blur-sm">
@@ -83,7 +97,10 @@ export function MysticalQuoteGenerator() {
 
           <div className="pt-6 flex flex-col items-center gap-3">
             <button 
-              onClick={rotateQuote}
+              onClick={(e) => {
+                e.stopPropagation();
+                rotateQuote();
+              }}
               className="text-[10px] text-[#8b5cf6]/70 hover:text-[#8b5cf6] transition-colors flex items-center gap-2 uppercase tracking-widest font-bold group/btn"
             >
               <BookOpen className="w-3.5 h-3.5 group-hover/btn:rotate-12 transition-transform" />
