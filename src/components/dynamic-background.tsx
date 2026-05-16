@@ -21,10 +21,10 @@ export function DynamicBackground() {
       setCurrentIndex((prev) => (prev + 1) % BG_IMAGES.length);
       setIsTransitioning(true);
       
-      // Reset transition state after animation finishes
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setIsTransitioning(false);
       }, 2000); 
+      return () => clearTimeout(timer);
     }, 10000); // Change every 10 seconds
 
     return () => clearInterval(interval);
@@ -36,7 +36,7 @@ export function DynamicBackground() {
       <div className="absolute inset-0">
         <Image
           src={BG_IMAGES[prevIndex].imageUrl}
-          alt="Sanctuary Background"
+          alt=""
           fill
           className="object-cover opacity-20"
           priority
@@ -46,14 +46,15 @@ export function DynamicBackground() {
 
       {/* Current Image (Fades In) */}
       <div 
+        key={currentIndex}
         className={cn(
-          "absolute inset-0 transition-opacity duration-[2000ms] ease-in-out",
-          isTransitioning ? "opacity-100" : "opacity-100"
+          "absolute inset-0 transition-opacity [transition-duration:2000ms] ease-in-out",
+          isTransitioning ? "opacity-100" : "opacity-0"
         )}
       >
         <Image
           src={BG_IMAGES[currentIndex].imageUrl}
-          alt="Sanctuary Background"
+          alt=""
           fill
           className="object-cover opacity-20"
           priority
