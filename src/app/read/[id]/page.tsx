@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ import {
   Clock,
   Sun,
   Palette,
-  Check
+  Check,
+  List
 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +40,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useDoc, useUser } from "@/firebase";
@@ -69,6 +76,9 @@ export default function ReadingPage() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showRestorePosition, setShowRestorePosition] = useState(false);
   const [savedPosition, setSavedPosition] = useState<number | null>(null);
+  
+  // Chapter Navigation
+  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
 
   const novelRef = useMemoFirebase(() => {
     if (!db || !id) return null;
@@ -83,25 +93,18 @@ export default function ReadingPage() {
     }
   }, [db, id]);
 
-  // Handle scroll progress and save position
   useEffect(() => {
     const handleScroll = () => {
       const winScroll = document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
+      const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       setScrollProgress(scrolled);
-      
-      // Periodically save scroll position to local storage
-      if (id) {
-        localStorage.setItem(`read-pos-${id}`, winScroll.toString());
-      }
+      if (id) localStorage.setItem(`read-pos-${id}`, winScroll.toString());
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [id]);
 
-  // Check for saved position on mount
   useEffect(() => {
     if (id) {
       const pos = localStorage.getItem(`read-pos-${id}`);
@@ -119,58 +122,51 @@ export default function ReadingPage() {
     }
   };
 
-  const handleReport = () => {
-    if (!reportReason.trim()) return;
-    toast({
-      title: "Guardian Alerted",
-      description: "Thank you for helping keep the sanctuary safe.",
-    });
-    setReportReason("");
-  };
-
   const handleLike = async () => {
     if (!user) {
       toast({ title: "Identify Yourself", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
-
     setIsLiking(true);
-    const liked = await toggleLikeNovel(db, id as string, user.uid);
+    await toggleLikeNovel(db, id as string, user.uid);
     setIsLiking(false);
   };
 
+  const activeChapter = useMemo(() => {
+    if (novel?.chapters && novel.chapters.length > 0) {
+      return novel.chapters[currentChapterIndex];
+    }
+    return null;
+  }, [novel, currentChapterIndex]);
+
   const estimatedReadingTime = useMemo(() => {
     if (!novel) return 0;
-    const words = novel.content.split(/\s+/).length;
-    return Math.ceil(words / 200); // 200 wpm average
-  }, [novel]);
+    const content = activeChapter ? activeChapter.content : novel.content;
+    const words = content.split(/\s+/).length;
+    return Math.ceil(words / 200);
+  }, [novel, activeChapter]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
 
-  if (!novel) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-6">
-        <h1 className="font-headline text-4xl font-bold">Chronicle Lost</h1>
-        <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Sanctuary</Button>
-      </div>
-    );
-  }
+  if (!novel) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-6">
+      <h1 className="font-headline text-4xl font-bold">Chronicle Lost</h1>
+      <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Sanctuary</Button>
+    </div>
+  );
 
   const hasTranslation = !!novel.translations?.[appLanguage];
-  const displayTitle = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.title : novel.title;
-  const displayContent = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.content : novel.content;
-  const displayLang = (useTranslation && hasTranslation) ? appLanguage : novel.language;
-  const isRtl = displayLang === 'ar';
+  const displayTitle = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.title : (activeChapter?.title || novel.title);
+  const displayContent = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.content : (activeChapter?.content || novel.content);
+  const isRtl = (useTranslation && hasTranslation) ? (appLanguage === 'ar') : (novel.language === 'ar');
 
   const modeStyles = {
-    light: "bg-[#fff9f9] text-[#2c1818]",
+    light: "bg-[#fffafa] text-[#2c1818]",
     pink: "bg-[#fdf2f5] text-[#4a1523]",
     lavender: "bg-[#f7f2fd] text-[#26154a]"
   };
@@ -179,15 +175,10 @@ export default function ReadingPage() {
     <div className={cn("min-h-screen transition-colors duration-500", modeStyles[readingMode])}>
       <Navbar />
       
-      {/* Scroll Progress Bar */}
       <div className="fixed top-16 left-0 w-full h-1 z-50 bg-primary/10">
-        <div 
-          className="h-full bg-primary transition-all duration-300" 
-          style={{ width: `${scrollProgress}%` }}
-        />
+        <div className="h-full bg-primary transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
       </div>
 
-      {/* Restore Position Alert */}
       {showRestorePosition && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
           <div className="glass-morphism rounded-2xl p-4 px-6 flex items-center gap-4 shadow-2xl border-primary/20 backdrop-blur-xl">
@@ -207,19 +198,16 @@ export default function ReadingPage() {
         <header className="space-y-8 text-center border-b border-primary/10 pb-16">
           <div className="flex justify-center gap-3 mb-4">
             {novel.genres.map(genre => (
-              <Badge key={genre} variant="outline" className="border-primary/30 text-primary italic rounded-full bg-primary/5 px-4">
+              <Badge key={genre} variant="outline" className="border-primary/30 text-primary italic rounded-full bg-primary/5 px-4 h-6">
                 {genre}
               </Badge>
             ))}
-            <Badge variant="outline" className="border-primary/10 text-muted-foreground italic rounded-full bg-white/50 flex gap-1.5 items-center px-4">
-              <Globe className="w-3 h-3" />
-              {novel.language === 'ar' ? 'العربية' : novel.language === 'fr' ? 'Français' : 'English'}
-            </Badge>
           </div>
           
-          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight leading-tight transition-all">
-            {displayTitle}
+          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+            {novel.title}
           </h1>
+          {activeChapter && <p className="font-headline text-2xl italic text-primary/60">{activeChapter.title}</p>}
 
           <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground italic">
             <div className="flex items-center gap-3 text-foreground font-semibold">
@@ -230,26 +218,37 @@ export default function ReadingPage() {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary/40" />
-              <span className="text-xs font-bold uppercase tracking-widest">
+              <span className="text-[10px] font-bold uppercase tracking-widest">
                 {estimatedReadingTime} {t.read.reading_time}
               </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
-                <Eye className="w-4 h-4 opacity-40" />
-                {novel.views || 0}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary">
-                <Heart className="w-4 h-4 fill-primary/10" />
-                {novel.likes || 0}
-              </div>
             </div>
           </div>
         </header>
 
-        {/* Floating Controls */}
         <div className="sticky top-24 z-40 flex flex-col items-center gap-4">
           <div className="glass-morphism border-primary/10 rounded-full px-6 py-2.5 flex items-center gap-4 shadow-xl backdrop-blur-md">
+            {novel.chapters && novel.chapters.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-primary">
+                    <List className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-64 p-2">
+                  {novel.chapters.map((chap, idx) => (
+                    <DropdownMenuItem 
+                      key={chap.id} 
+                      onClick={() => { setCurrentChapterIndex(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className={cn("rounded-xl cursor-pointer gap-3", currentChapterIndex === idx && "bg-primary/5 text-primary")}
+                    >
+                      <span className="text-[10px] font-bold opacity-30"># {idx + 1}</span>
+                      <span className="font-headline text-sm truncate">{chap.title}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {hasTranslation && (
               <Button 
                 variant="ghost" 
@@ -258,7 +257,7 @@ export default function ReadingPage() {
                 className="rounded-full text-primary gap-2 h-10 px-4 hover:bg-primary/5"
               >
                 <Languages className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">
+                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">
                   {useTranslation ? t.read.original_toggle : t.read.translate_toggle}
                 </span>
               </Button>
@@ -266,7 +265,6 @@ export default function ReadingPage() {
 
             <div className="w-px h-6 bg-primary/10 mx-1 hidden sm:block" />
 
-            {/* Reading Modes & Font Control */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground hover:text-primary">
@@ -276,10 +274,10 @@ export default function ReadingPage() {
               <PopoverContent className="w-72 p-6 rounded-[2rem] border-primary/10 bg-white/95 backdrop-blur-lg">
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.read.reading_mode}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.read.reading_mode}</p>
                     <div className="flex gap-2">
                       {[
-                        { id: 'light', color: 'bg-white', label: t.read.mode_light },
+                        { id: 'light', color: 'bg-[#fffafa]', label: t.read.mode_light },
                         { id: 'pink', color: 'bg-[#fdf2f5]', label: t.read.mode_pink },
                         { id: 'lavender', color: 'bg-[#f7f2fd]', label: t.read.mode_lavender }
                       ].map(mode => (
@@ -288,13 +286,13 @@ export default function ReadingPage() {
                           onClick={() => setReadingMode(mode.id as ReadingMode)}
                           className={cn(
                             "flex-1 flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all",
-                            readingMode === mode.id ? "border-primary bg-primary/5" : "border-primary/10 hover:border-primary/30"
+                            readingMode === mode.id ? "border-primary bg-primary/5" : "border-primary/10"
                           )}
                         >
                           <div className={cn("w-6 h-6 rounded-full border border-primary/10", mode.color)}>
                             {readingMode === mode.id && <Check className="w-3 h-3 text-primary mx-auto mt-1" />}
                           </div>
-                          <span className="text-[10px] font-bold uppercase tracking-tight">{mode.label}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-tight">{mode.label}</span>
                         </button>
                       ))}
                     </div>
@@ -302,84 +300,47 @@ export default function ReadingPage() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.read.font_size}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.read.font_size}</p>
                       <span className="text-xs font-mono">{fontSize}px</span>
                     </div>
-                    <Slider 
-                      value={[fontSize]} 
-                      onValueChange={(val) => setFontSize(val[0])} 
-                      min={14} 
-                      max={28} 
-                      step={1}
-                      className="py-2"
-                    />
+                    <Slider value={[fontSize]} onValueChange={(val) => setFontSize(val[0])} min={14} max={28} step={1} />
                   </div>
                 </div>
               </PopoverContent>
             </Popover>
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleLike}
-              disabled={isLiking}
-              className={cn("h-10 w-10 rounded-full transition-colors", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}
-            >
-              <Heart className={cn("w-5 h-5", isLiking && "fill-primary")} />
+            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-10 w-10 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
+              <Heart className={cn("w-5 h-5", novel.likes > 0 && "fill-primary text-primary")} />
             </Button>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full">
-                  <Flag className="w-5 h-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-primary/10 rounded-[2.5rem] p-10">
-                <DialogHeader>
-                  <DialogTitle className="font-headline text-2xl">{t.read.report}</DialogTitle>
-                  <DialogDescription className="italic">Help us keep the sanctuary safe for all dreamers.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-6">
-                  <Textarea 
-                    placeholder="Describe the transgression..." 
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    className="bg-muted/30 border-primary/10 rounded-2xl min-h-[120px]"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="ghost" className="rounded-full px-8" onClick={() => setReportReason("")}>Cancel</Button>
-                  <Button onClick={handleReport} className="bg-destructive hover:bg-destructive/90 text-white rounded-full px-8 shadow-lg shadow-destructive/20">Send Report</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 
         <article 
-          className={cn(
-            "prose prose-stone max-w-none transition-all duration-300",
-            isRtl && "text-right"
-          )}
+          className={cn("prose prose-stone max-w-none transition-all duration-300", isRtl && "text-right")}
           dir={isRtl ? 'rtl' : 'ltr'}
-          style={{ 
-            fontSize: `${fontSize}px`, 
-            lineHeight: 1.8,
-            color: 'inherit'
-          }}
+          style={{ fontSize: `${fontSize}px`, lineHeight: 1.8, color: 'inherit' }}
         >
-          <div className="whitespace-pre-wrap space-y-10 font-body opacity-90">
+          <div className="whitespace-pre-wrap space-y-10 font-body opacity-90 leading-relaxed">
             {displayContent}
           </div>
         </article>
 
         <footer className="pt-24 border-t border-primary/10 space-y-16">
           <div className="flex items-center justify-between">
-            <Button variant="outline" className="gap-3 border-primary/10 text-muted-foreground rounded-full px-8 h-12 hover:bg-primary/5" disabled>
+            <Button 
+              variant="outline" 
+              className="gap-3 border-primary/10 text-muted-foreground rounded-full px-8 h-12 hover:bg-primary/5"
+              disabled={currentChapterIndex === 0}
+              onClick={() => { setCurrentChapterIndex(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            >
               <ChevronLeft className="w-4 h-4" />
               {t.read.prev}
             </Button>
-            <Button className="gap-3 bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-xl shadow-primary/20">
+            <Button 
+              className="gap-3 bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-xl"
+              disabled={!novel.chapters || currentChapterIndex === novel.chapters.length - 1}
+              onClick={() => { setCurrentChapterIndex(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            >
               {t.read.next}
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -391,11 +352,11 @@ export default function ReadingPage() {
               <p className="text-muted-foreground italic">Your presence brought life to this chronicle.</p>
             </div>
             <div className="flex flex-wrap justify-center gap-6">
-              <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-14 font-headline text-lg shadow-xl shadow-primary/20 gap-3 group">
-                <Heart className="w-5 h-5 transition-transform group-hover:scale-125" />
+              <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-14 font-headline text-lg shadow-xl gap-3">
+                <Heart className="w-5 h-5" />
                 {t.read.appreciate}
               </Button>
-              <Button variant="outline" className="border-primary/20 rounded-full px-10 h-14 gap-3 text-primary hover:bg-primary/5 font-headline text-lg backdrop-blur-sm">
+              <Button variant="outline" className="border-primary/20 rounded-full px-10 h-14 gap-3 text-primary hover:bg-primary/5 font-headline text-lg">
                 <Share2 className="w-5 h-5" />
                 {t.read.share}
               </Button>

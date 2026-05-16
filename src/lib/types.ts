@@ -3,10 +3,18 @@ export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sc
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
 
-export interface Novel {
+export interface Chapter {
   id: string;
   title: string;
   content: string;
+  order: number;
+}
+
+export interface Novel {
+  id: string;
+  title: string;
+  content: string; // The full text or summary
+  chapters?: Chapter[];
   authorId: string;
   authorUsername: string;
   genres: Genre[];
