@@ -8,7 +8,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { AppLanguage } from '@/lib/types';
 
 const AiAssistantInputSchema = z.object({
   uid: z.string(),
@@ -39,7 +38,9 @@ const aiAssistantFlow = ai.defineFlow(
     outputSchema: AiAssistantOutputSchema,
   },
   async (input) => {
-    const { response } = await ai.generate({
+    // CORRECTED: ai.generate returns the response object directly in Genkit 1.x.
+    // Destructuring { response } was resulting in undefined.
+    const response = await ai.generate({
       system: `You are the "Celestial Oracle" of Rosaline Bela, a dreamy and soft fantasy literature sanctuary.
       
       Your personality is:
@@ -65,9 +66,17 @@ const aiAssistantFlow = ai.defineFlow(
         role: h.role,
         content: [{ text: h.content }]
       })),
+      config: {
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+        ],
+      },
     });
 
-    const responseText = response.text;
+    const responseText = response.text || "The Oracle is currently contemplating the mists. Please try your whisper again.";
 
     // Dynamically suggest actions based on context
     const suggestedActions = [];
