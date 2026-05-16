@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc } from "firebase/firestore";
+import { UserProfile } from "@/lib/types";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -32,12 +34,12 @@ export function Navbar() {
     return doc(db, "users", user.uid);
   }, [user, db]);
   
-  const { data: profile } = useDoc(userProfileRef);
+  const { data: profile } = useDoc<UserProfile>(userProfileRef);
 
   const navLinks = [
-    { name: "Discover", href: "/", icon: Library },
-    { name: "Write", href: "/write", icon: PenSquare },
-    { name: "My Vault", href: "/vault", icon: BookOpen },
+    { name: "Discover", href: "/", icon: Library, roles: ["writer", "reader"] },
+    { name: "Write", href: "/write", icon: PenSquare, roles: ["writer"] },
+    { name: "My Vault", href: "/vault", icon: BookOpen, roles: ["writer"] },
   ];
 
   const handleLogout = async () => {
@@ -59,7 +61,6 @@ export function Navbar() {
   };
 
   const handleSearchClick = () => {
-    // Smooth scroll to archive if on home page
     if (pathname === '/') {
       const archive = document.querySelector('.scroll-mt-20');
       if (archive) {
@@ -83,7 +84,7 @@ export function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
+          {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -121,13 +122,15 @@ export function Navbar() {
               <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground">
                 <DropdownMenuLabel className="font-headline text-foreground">Your Sanctuary</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/vault')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
-                  <LayoutDashboard className="w-4 h-4" />
-                  My Vault
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                {profile?.role === 'writer' && (
+                  <DropdownMenuItem onClick={() => router.push('/vault')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                    <LayoutDashboard className="w-4 h-4" />
+                    My Vault
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
                   <Settings className="w-4 h-4" />
-                  Reading Settings
+                  Sanctuary Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-destructive focus:bg-destructive/5 focus:text-destructive">

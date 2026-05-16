@@ -1,5 +1,6 @@
 
 export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi';
+export type UserRole = 'writer' | 'reader';
 
 export interface Novel {
   id: string;
@@ -20,6 +21,7 @@ export interface UserProfile {
   uid: string;
   username: string;
   email: string;
+  role: UserRole;
   ageConfirmed: boolean;
   createdAt: string;
 }

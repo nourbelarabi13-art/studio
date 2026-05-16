@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,6 +9,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Form,
   FormControl,
@@ -17,7 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Sparkles, User, Mail, Lock, Loader2, Heart } from "lucide-react";
+import { Sparkles, User, Mail, Lock, Loader2, Heart, PenTool, BookOpen } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useFirestore } from "@/firebase";
@@ -30,6 +32,7 @@ const signupSchema = z.object({
   username: z.string().min(3, "Name must be at least 3 characters").max(20, "Name is too long"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Phrase must be at least 8 characters"),
+  role: z.enum(["writer", "reader"]),
   ageConfirmed: z.boolean().refine(v => v === true, "You must be 13 or older to join"),
 });
 
@@ -47,6 +50,7 @@ export default function SignUpPage() {
       username: "",
       email: "",
       password: "",
+      role: "reader",
       ageConfirmed: false,
     },
   });
@@ -63,13 +67,14 @@ export default function SignUpPage() {
         uid: user.uid,
         username: values.username,
         email: values.email,
+        role: values.role,
         ageConfirmed: values.ageConfirmed,
         createdAt: new Date().toISOString(),
       });
 
       toast({
         title: "Welcome, Traveler",
-        description: "Your space in the sanctuary is ready.",
+        description: `Your space as a ${values.role} in the sanctuary is ready.`,
       });
       router.push("/");
     } catch (error: any) {
@@ -168,6 +173,54 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
+              
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Choose Your Path</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col gap-3"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-2xl border p-4 bg-white hover:bg-primary/5 transition-colors cursor-pointer border-primary/10">
+                          <FormControl>
+                            <RadioGroupItem value="reader" />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center gap-3 cursor-pointer w-full">
+                            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground">
+                              <BookOpen className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="font-bold">Reader</p>
+                              <p className="text-xs text-muted-foreground">Explore and discover soft chronicles.</p>
+                            </div>
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0 rounded-2xl border p-4 bg-white hover:bg-primary/5 transition-colors cursor-pointer border-primary/10">
+                          <FormControl>
+                            <RadioGroupItem value="writer" />
+                          </FormControl>
+                          <FormLabel className="font-normal flex items-center gap-3 cursor-pointer w-full">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                              <PenTool className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="font-bold">Writer</p>
+                              <p className="text-xs text-muted-foreground">Forge fragments and manifest stories.</p>
+                            </div>
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="ageConfirmed"

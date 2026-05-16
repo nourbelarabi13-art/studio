@@ -9,10 +9,11 @@
         "uid": { "type": "string" },
         "username": { "type": "string" },
         "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["writer", "reader"], "default": "reader" },
         "ageConfirmed": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "username", "email", "ageConfirmed"]
+      "required": ["uid", "username", "email", "ageConfirmed", "role"]
     },
     "Novel": {
       "title": "Novel",
