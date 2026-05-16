@@ -166,18 +166,14 @@ export default function WritePage() {
 
   const handlePublish = async () => {
     if (!user || !db) return;
-    if (!totalWordCount || !title || selectedGenres.length === 0) {
-      toast({ title: "Forge Incomplete", description: "Ensure title, genres, and words are manifested.", variant: "destructive" });
-      return;
-    }
     
     setIsPublishing(true);
     try {
       const fullContent = chapters.map(c => `## ${c.title}\n\n${c.content}`).join('\n\n');
 
       const novelData = {
-        title, 
-        content: fullContent,
+        title: title || "Untitled Dream", 
+        content: fullContent || "",
         chapters,
         authorId: user.uid, 
         authorUsername: profile?.username || "Dreamer",
@@ -206,7 +202,7 @@ export default function WritePage() {
         followersSnap.forEach(followerDoc => {
           createNotification(db, followerDoc.data().followerId, {
             type: 'story',
-            message: `${profile?.username} published a new chronicle: "${title}"`,
+            message: `${profile?.username} published a new chronicle: "${title || "Untitled"}"`,
             fromUserId: user.uid,
             fromUserName: profile?.username,
             targetId: novelId || ""
