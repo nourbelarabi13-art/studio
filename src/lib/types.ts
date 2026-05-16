@@ -27,6 +27,7 @@ export interface Novel {
   views: number;
   likes: number;
   language: AppLanguage;
+  country?: string;
   translations?: {
     [key in AppLanguage]?: {
       title: string;
@@ -56,6 +57,7 @@ export interface UserProfile {
   publishedCount?: number;
   achievements?: string[];
   language: AppLanguage;
+  country?: string;
   preferredGenres?: Genre[];
   readingPreferences?: ReadingPreferences;
 }

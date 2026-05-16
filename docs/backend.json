@@ -19,7 +19,8 @@
         "totalLikes": { "type": "integer", "default": 0 },
         "publishedCount": { "type": "integer", "default": 0 },
         "achievements": { "type": "array", "items": { "type": "string" } },
-        "language": { "type": "string", "enum": ["en", "ar", "fr"] }
+        "language": { "type": "string", "enum": ["en", "ar", "fr"] },
+        "country": { "type": "string" }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]
     },
@@ -39,7 +40,8 @@
         "isDraft": { "type": "boolean" },
         "views": { "type": "integer", "default": 0 },
         "likes": { "type": "integer", "default": 0 },
-        "language": { "type": "string", "enum": ["en", "ar", "fr"] }
+        "language": { "type": "string", "enum": ["en", "ar", "fr"] },
+        "country": { "type": "string", "description": "The country of origin for the story." }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
     },

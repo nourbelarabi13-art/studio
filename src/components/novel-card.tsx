@@ -6,13 +6,19 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Novel } from "@/lib/types";
-import { BookOpen, User, Eye, Heart, TrendingUp, Zap } from "lucide-react";
+import { User, Eye, Heart, TrendingUp, Zap, Globe, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NovelCardProps {
   novel: Novel;
   badge?: 'trending' | 'rising';
 }
+
+const LANG_FLAGS: Record<string, string> = {
+  en: '🇬🇧',
+  ar: '🇸🇦',
+  fr: '🇫🇷'
+};
 
 export function NovelCard({ novel, badge }: NovelCardProps) {
   return (
@@ -44,6 +50,19 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-40 transition-opacity" />
           
+          <div className="absolute top-3 left-3 flex gap-1">
+             <Badge className="bg-white/80 backdrop-blur-md text-primary border-none text-[10px] font-bold px-2 h-6 flex items-center gap-1">
+                <span>{LANG_FLAGS[novel.language] || '🌐'}</span>
+                {novel.language.toUpperCase()}
+             </Badge>
+             {novel.country && (
+               <Badge className="bg-primary/80 backdrop-blur-md text-white border-none text-[8px] font-bold px-2 h-6 flex items-center gap-1">
+                  <MapPin className="w-2 h-2" />
+                  {novel.country}
+               </Badge>
+             )}
+          </div>
+
           <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
             {novel.genres.slice(0, 2).map((genre) => (
               <Badge key={genre} variant="secondary" className="bg-white/90 backdrop-blur-sm text-[9px] py-0 px-2 border-none font-bold uppercase tracking-tight text-primary">

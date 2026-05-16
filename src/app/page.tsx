@@ -5,13 +5,13 @@ import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel, ReadingProgress, AppLanguage, Bookmark } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart, MapPin } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
 import { Input } from "@/components/ui/input";
@@ -26,13 +26,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
-const LANGUAGES: { code: AppLanguage; label: string }[] = [
-  { code: 'en', label: 'English' },
-  { code: 'ar', label: 'العربية' },
-  { code: 'fr', label: 'Français' },
+const LANGUAGES: { code: AppLanguage; label: string; flag: string }[] = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+];
+
+const COUNTRIES = [
+  "Morocco", "France", "United Kingdom", "Egypt", "Saudi Arabia", "United States", "Canada", "Other"
 ];
 
 type SortOption = 'publishedAt' | 'views' | 'likes';
+type DiscoveryTab = 'archive' | 'for-you' | 'following' | 'en' | 'ar' | 'fr';
 
 export default function Home() {
   const db = useFirestore();
@@ -40,8 +45,9 @@ export default function Home() {
   const { t } = useLanguage();
   
   // Filtering & Search State
+  const [activeTab, setActiveTab] = useState<DiscoveryTab>('archive');
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
-  const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage | 'All'>('All');
+  const [selectedCountry, setSelectedCountry] = useState<string | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>('publishedAt');
   
@@ -71,15 +77,22 @@ export default function Home() {
   const novelsQuery = useMemoFirebase(() => {
     if (!db) return null;
     let q = query(collection(db, "novels"), where("isDraft", "==", false));
+    
+    // Apply Language Tab Filter
+    if (activeTab === 'en' || activeTab === 'ar' || activeTab === 'fr') {
+      q = query(q, where("language", "==", activeTab));
+    }
+    
     if (selectedGenre !== 'All') {
       q = query(q, where("genres", "array-contains", selectedGenre));
     }
-    if (selectedLanguage !== 'All') {
-      q = query(q, where("language", "==", selectedLanguage));
+    if (selectedCountry !== 'All') {
+      q = query(q, where("country", "==", selectedCountry));
     }
+    
     q = query(q, orderBy(sortBy, "desc"));
     return q;
-  }, [db, selectedGenre, selectedLanguage, sortBy]);
+  }, [db, selectedGenre, selectedCountry, sortBy, activeTab]);
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
@@ -102,28 +115,18 @@ export default function Home() {
 
   const preferredGenres = useMemo(() => {
     const genreMap: Record<string, number> = {};
-    
-    // Extract genres from bookmarks
     bookmarks?.forEach(b => {
-      b.genres?.forEach(g => {
-        genreMap[g] = (genreMap[g] || 0) + 2; // Bookmarks weighted higher
-      });
+      b.genres?.forEach(g => { genreMap[g] = (genreMap[g] || 0) + 2; });
     });
-
-    // Extract genres from progress
     progressData?.forEach(p => {
-      p.genres?.forEach(g => {
-        genreMap[g] = (genreMap[g] || 0) + 1;
-      });
+      p.genres?.forEach(g => { genreMap[g] = (genreMap[g] || 0) + 1; });
     });
-
     return Object.entries(genreMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([genre]) => genre as Genre);
   }, [bookmarks, progressData]);
 
-  // Fetch novels in preferred genres
   const recommendedGenresQuery = useMemoFirebase(() => {
     if (!db || preferredGenres.length === 0) return null;
     return query(
@@ -135,7 +138,6 @@ export default function Home() {
   }, [db, preferredGenres]);
   const { data: genreRecommendedNovels } = useCollection<Novel>(recommendedGenresQuery);
 
-  // Fetch novels from followed authors
   const followingNovelsQuery = useMemoFirebase(() => {
     if (!db || followedIds.length === 0) return null;
     const chunks = followedIds.slice(0, 10); 
@@ -175,19 +177,15 @@ export default function Home() {
   }, [db]);
   const { data: risingNovels } = useCollection<Novel>(risingQuery);
 
-  // --- Combined Recommendations ---
-
   const personalizedRecommendations = useMemo(() => {
     const combined = [
       ...(followingNovels || []),
       ...(genreRecommendedNovels || []),
       ...(trendingNovels || []).slice(0, 4)
     ];
-    // Remove duplicates
     return combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
   }, [followingNovels, genreRecommendedNovels, trendingNovels]);
 
-  // Client-side text search filtering for Archive tab
   const filteredNovels = useMemo(() => {
     if (!novels) return [];
     if (!searchQuery.trim()) return novels;
@@ -198,10 +196,6 @@ export default function Home() {
       n.content.toLowerCase().includes(lowerQuery)
     );
   }, [novels, searchQuery]);
-
-  const scrollToArchive = () => {
-    archiveRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const currentSortLabel = useMemo(() => {
     switch(sortBy) {
@@ -241,7 +235,7 @@ export default function Home() {
             <Button 
               size="lg" 
               variant="outline" 
-              onClick={scrollToArchive}
+              onClick={() => archiveRef.current?.scrollIntoView({ behavior: 'smooth' })}
               className="border-primary/20 text-primary hover:bg-primary/5 text-xl px-10 py-7 h-auto rounded-full font-headline font-semibold backdrop-blur-md transition-transform hover:scale-105"
             >
               {t.hero.explore}
@@ -254,19 +248,16 @@ export default function Home() {
         {/* Continue Reading Section */}
         {user && progressData && progressData.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <Clock className="text-primary w-8 h-8" />
-                {t.home.continue_reading}
-              </h2>
-            </div>
+            <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+              <Clock className="text-primary w-8 h-8" />
+              {t.home.continue_reading}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {progressData.map((prog) => (
                 <Link href={`/read/${prog.novelId}`} key={prog.novelId} className="group">
-                  <div className="glass-morphism rounded-[2.5rem] p-6 border-primary/5 border-primary/20 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col gap-6 h-full">
+                  <div className="glass-morphism rounded-[2.5rem] p-6 border-primary/20 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col gap-6 h-full">
                     <div className="relative aspect-[3/2] rounded-[1.8rem] overflow-hidden shadow-sm">
                       <Image src={prog.coverImage} alt={prog.novelTitle} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
                     </div>
                     <div className="space-y-3 flex-1">
                       <h3 className="font-headline text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{prog.novelTitle}</h3>
@@ -286,49 +277,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* Personalized "For You" Section (Homepage Highlight) */}
-        {user && personalizedRecommendations.length > 0 && !searchQuery && (
-          <div className="space-y-12 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <Sparkles className="text-primary w-8 h-8" />
-                Recommended for You
-              </h2>
-              <p className="text-muted-foreground italic text-lg ml-11">Chronicles manifested according to your preferences.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {personalizedRecommendations.slice(0, 4).map((novel) => (
-                <NovelCard key={novel.id} novel={novel} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Trending Section */}
-        {trendingNovels && trendingNovels.length > 0 && !searchQuery && (
-          <div className="space-y-12 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <TrendingUp className="text-primary w-8 h-8" />
-                {t.home.trending}
-              </h2>
-              <p className="text-muted-foreground italic text-lg ml-11">{t.home.trending_desc}</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {trendingNovels.slice(0, 4).map((novel) => (
-                <NovelCard key={novel.id} novel={novel} badge="trending" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* The Sanctuary Advanced Archive */}
+        {/* The Global Discovery Archive */}
         <div ref={archiveRef} className="space-y-12 scroll-mt-20">
           <div className="flex flex-col gap-8 border-b border-primary/10 pb-12">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
               <div className="space-y-3">
                 <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                  <BookOpen className="text-primary w-8 h-8" />
+                  <Globe className="text-primary w-8 h-8" />
                   {t.home.archive_title}
                 </h2>
                 <p className="text-muted-foreground italic text-lg">{t.home.archive_desc}</p>
@@ -345,24 +300,23 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Filter & Sort Bar */}
             <div className="flex flex-wrap items-center justify-between gap-6">
               <div className="flex flex-wrap items-center gap-3">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="rounded-full border-primary/10 gap-2 h-10 px-5 text-muted-foreground hover:text-primary">
-                      <Filter className="w-4 h-4" />
-                      {t.home.filters}
+                      <MapPin className="w-4 h-4" />
+                      {selectedCountry === 'All' ? t.home.country_filter : `${t.home.top_in_country} ${selectedCountry}`}
                       <ChevronDown className="w-3 h-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-64 p-4 rounded-3xl bg-white border-primary/10 shadow-xl">
-                    <DropdownMenuItem onClick={() => setSelectedLanguage('All')} className="rounded-xl cursor-pointer">
-                      All Languages
+                    <DropdownMenuItem onClick={() => setSelectedCountry('All')} className="rounded-xl cursor-pointer">
+                      {t.home.all_countries}
                     </DropdownMenuItem>
-                    {LANGUAGES.map(lang => (
-                      <DropdownMenuItem key={lang.code} onClick={() => setSelectedLanguage(lang.code)} className="rounded-xl cursor-pointer">
-                        {lang.label}
+                    {COUNTRIES.map(country => (
+                      <DropdownMenuItem key={country} onClick={() => setSelectedCountry(country)} className="rounded-xl cursor-pointer">
+                        {country}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -394,9 +348,6 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-4">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">
-                  {filteredNovels.length} {t.home.results_found}
-                </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="rounded-full gap-2 h-10 px-5 text-primary hover:bg-primary/5">
@@ -420,21 +371,31 @@ export default function Home() {
             </div>
           </div>
 
-          <Tabs defaultValue="archive" className="w-full">
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as DiscoveryTab)} className="w-full">
             <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2 scrollbar-hide">
               <TabsList className="bg-primary/5 rounded-full p-1 h-12 border border-primary/10 shrink-0">
                 <TabsTrigger value="archive" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                   <Globe className="w-4 h-4" />
-                  {t.nav.archive}
+                  {t.home.global}
                 </TabsTrigger>
-                <TabsTrigger value="for-you" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <Sparkles className="w-4 h-4" />
-                  {t.home.for_you}
-                </TabsTrigger>
-                <TabsTrigger value="following" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <Users className="w-4 h-4" />
-                  {t.home.following}
-                </TabsTrigger>
+                {user && (
+                  <>
+                    <TabsTrigger value="for-you" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                      <Sparkles className="w-4 h-4" />
+                      {t.home.for_you}
+                    </TabsTrigger>
+                    <TabsTrigger value="following" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                      <Users className="w-4 h-4" />
+                      {t.home.following}
+                    </TabsTrigger>
+                  </>
+                )}
+                {LANGUAGES.map(lang => (
+                  <TabsTrigger key={lang.code} value={lang.code} className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                    <span>{lang.flag}</span>
+                    {lang.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
 
@@ -442,36 +403,32 @@ export default function Home() {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="italic">Softly turning the pages...</p>
+                  <p className="italic">Gazing into the global Archive...</p>
                 </div>
               ) : filteredNovels.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground italic bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
-                  {searchQuery ? t.home.no_results : t.home.no_stories}
+                  {t.home.no_results}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {filteredNovels.map((novel, idx) => (
-                    <div key={novel.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                      <NovelCard novel={novel} />
-                    </div>
+                  {filteredNovels.map((novel) => (
+                    <NovelCard key={novel.id} novel={novel} />
                   ))}
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="for-you">
-              <div className="space-y-12">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {personalizedRecommendations.length > 0 ? (
-                    personalizedRecommendations.map((novel, idx) => (
-                      <NovelCard key={novel.id} novel={novel} />
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-20 italic text-muted-foreground">
-                      Interact with more chronicles to let the sanctuary learn your heart's desires.
-                    </div>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {personalizedRecommendations.length > 0 ? (
+                  personalizedRecommendations.map((novel) => (
+                    <NovelCard key={novel.id} novel={novel} />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-20 italic text-muted-foreground">
+                    Discover more stories to let the sanctuary learn your soul.
+                  </div>
+                )}
               </div>
             </TabsContent>
 
@@ -484,19 +441,32 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="text-center py-20 italic text-muted-foreground bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
-                  Your followed scribes have not manifested new fragments recently.
+                  Your followed scribes are currently silent.
                 </div>
               )}
             </TabsContent>
+
+            {['en', 'ar', 'fr'].map(langCode => (
+              <TabsContent key={langCode} value={langCode}>
+                {loading ? (
+                  <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                ) : filteredNovels.length === 0 ? (
+                  <div className="text-center py-20 italic text-muted-foreground">{t.home.no_results}</div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {filteredNovels.map((novel) => (
+                      <NovelCard key={novel.id} novel={novel} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
 
         {/* Community Promo */}
         <section className="animate-fade-in">
           <div className="glass-morphism rounded-[3rem] p-12 md:p-20 text-center space-y-8 border-primary/10 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl group-hover:bg-accent/10 transition-colors" />
-            
             <div className="relative z-10 space-y-6 max-w-2xl mx-auto">
               <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mx-auto shadow-inner">
                 <MessageSquare className="w-8 h-8" />
@@ -516,43 +486,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Rising Section */}
-        {risingNovels && risingNovels.length > 0 && !searchQuery && (
-          <div className="space-y-12 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <Zap className="text-accent-foreground w-8 h-8" />
-                Rising Stories
-              </h2>
-              <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {risingNovels.slice(0, 4).map((novel) => (
-                <NovelCard key={novel.id} novel={novel} badge="rising" />
-              ))}
-            </div>
-          </div>
-        )}
       </main>
-
-      <footer className="mt-24 border-t border-primary/10 bg-white/40 py-16">
-        <div className="container mx-auto px-4 text-center space-y-8">
-          <div className="space-y-2">
-            <p className="font-headline text-3xl text-primary font-bold">Rosaline Bela</p>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto italic">
-              "Every thought is a seed, and every story is a bloom."
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-10 pt-4">
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">Privacy Sanctuary</Link>
-            <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Ink</Link>
-            <Link href="/safety" className="text-sm text-muted-foreground hover:text-primary transition-colors">Guardian Guidelines</Link>
-            <Link href="/team" className="text-sm text-muted-foreground hover:text-primary transition-colors">The Archivists</Link>
-          </div>
-          <p className="text-[10px] text-muted-foreground/40 pt-8 uppercase tracking-[0.2em]">© 2024 Rosaline Bela Sanctuary. Dreamed with care.</p>
-        </div>
-      </footer>
     </div>
   );
 }
