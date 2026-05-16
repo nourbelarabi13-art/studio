@@ -88,6 +88,7 @@ export interface ChatMessage {
   senderId: string;
   senderName: string;
   text: string;
+  imageUrl?: string;
   createdAt: string;
 }
 
