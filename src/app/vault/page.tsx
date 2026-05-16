@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Novel } from "@/lib/types";
-import { Book, Edit3, Trash2, Plus, Loader2, Heart } from "lucide-react";
+import { Edit3, Trash2, Plus, Loader2, Heart, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,7 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function VaultPage() {
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
 
@@ -40,6 +41,27 @@ export default function VaultPage() {
     });
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
+        <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
+        <h1 className="text-2xl font-bold">Access Denied</h1>
+        <p className="text-muted-foreground">Please sign in to view your personal vault.</p>
+        <Link href="/login">
+          <Button className="rounded-full bg-primary">Sign In</Button>
+        </Link>
+      </div>
+    );
+  }
+
   const publishedCount = novels?.filter(n => !n.isDraft).length || 0;
   const draftCount = novels?.filter(n => n.isDraft).length || 0;
 
@@ -55,7 +77,7 @@ export default function VaultPage() {
               </div>
               <h1 className="font-headline text-4xl font-bold">My Personal Vault</h1>
             </div>
-            <p className="text-muted-foreground italic">A quiet space for your growing archive of dreams.</p>
+            <p className="text-muted-foreground italic">Manage your growing collection of stories.</p>
           </div>
           <Link href="/write">
             <Button size="lg" className="bg-primary hover:bg-primary/90 h-14 px-8 rounded-full gap-2 shadow-lg shadow-primary/10">
@@ -86,11 +108,11 @@ export default function VaultPage() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="italic">Opening the vault doors...</p>
+                <p>Loading your stories...</p>
               </div>
             ) : novels?.length === 0 ? (
               <div className="text-center py-20 glass-morphism rounded-3xl border-dashed border-primary/20">
-                <p className="text-muted-foreground italic mb-6">Your vault is waiting for your first story.</p>
+                <p className="text-muted-foreground mb-6">Your vault is empty.</p>
                 <Link href="/write"><Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 rounded-full">Start Writing</Button></Link>
               </div>
             ) : (
@@ -111,7 +133,7 @@ export default function VaultPage() {
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">{novel.genres.map(g => (<span key={g} className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">{g}</span>))}</div>
-                        <p className="text-sm text-muted-foreground line-clamp-2 italic opacity-80">{novel.content.substring(0, 150)}...</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 opacity-80">{novel.content.substring(0, 150)}...</p>
                       </div>
                       <div className="flex items-center gap-2 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l border-primary/5 pt-4 md:pt-0 md:pl-6">
                         <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary"><Edit3 className="w-5 h-5" /></Button>

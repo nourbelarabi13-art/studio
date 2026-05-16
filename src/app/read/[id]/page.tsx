@@ -18,7 +18,6 @@ import {
   Bookmark as BookmarkIcon,
   User,
   Heart,
-  Eye,
   Loader2,
   Languages,
   Palette,
@@ -32,7 +31,8 @@ import {
   Sun,
   Clock,
   Coffee,
-  X
+  X,
+  AlertCircle
 } from "lucide-react";
 import {
   Popover,
@@ -82,7 +82,7 @@ export default function ReadingPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
 
   const novelRef = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "novels", id as string);
   }, [db, id]);
 
@@ -104,13 +104,13 @@ export default function ReadingPage() {
   }, [currentUserProfile]);
 
   const progressRef = useMemoFirebase(() => {
-    if (!db || !user || !id) return null;
+    if (!db || !user || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "users", user.uid, "progress", id as string);
   }, [db, user, id]);
   const { data: cloudProgress } = useDoc<ReadingProgress>(progressRef);
 
   const bookmarkRef = useMemoFirebase(() => {
-    if (!db || !user || !id) return null;
+    if (!db || !user || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "users", user.uid, "bookmarks", id as string);
   }, [db, user, id]);
   const { data: bookmarkData } = useDoc(bookmarkRef);
@@ -127,7 +127,7 @@ export default function ReadingPage() {
   const { data: similarNovels } = useCollection<Novel>(similarNovelsQuery);
 
   useEffect(() => {
-    if (db && id) {
+    if (db && id && id !== 'undefined' && id !== 'null') {
       incrementNovelView(db, id as string);
     }
   }, [db, id]);
@@ -203,7 +203,7 @@ export default function ReadingPage() {
 
   const handleLike = () => {
     if (!user || !currentUserProfile) {
-      toast({ title: "Identify Yourself", variant: "destructive" });
+      toast({ title: "Identification Required", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
@@ -214,7 +214,7 @@ export default function ReadingPage() {
 
   const handleBookmark = (category: BookmarkCategory) => {
     if (!user) {
-      toast({ title: "Identify Yourself", variant: "destructive" });
+      toast({ title: "Identification Required", variant: "destructive" });
       return;
     }
     if (!db || !id || !novel) return;
@@ -226,7 +226,7 @@ export default function ReadingPage() {
     }, category).then((added) => {
       setIsBookmarking(false);
       toast({
-        title: added ? "Chronicle Secured" : "Chronicle Released",
+        title: added ? "Saved" : "Removed",
         description: added ? `Added to your ${category === 'favorite' ? 'Favorites' : 'Read Later'} collection.` : "Removed from your archive.",
       });
     });
@@ -253,9 +253,11 @@ export default function ReadingPage() {
   );
 
   if (!novel) return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-6">
-      <h1 className="font-headline text-4xl font-bold text-foreground">Chronicle Lost</h1>
-      <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Sanctuary</Button>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center gap-4">
+      <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
+      <h1 className="text-2xl font-bold">Chronicle Not Found</h1>
+      <p className="text-muted-foreground">The story you are looking for does not exist in our archive.</p>
+      <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Home</Button>
     </div>
   );
 
@@ -283,12 +285,12 @@ export default function ReadingPage() {
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
           <div className="glass-morphism rounded-2xl p-4 px-6 flex items-center gap-4 shadow-2xl border-primary/20 backdrop-blur-xl">
             <div className="space-y-0.5">
-              <p className="text-sm font-bold text-foreground">{t.read.continue}</p>
-              <p className="text-xs text-muted-foreground italic">{t.read.continue_desc}</p>
+              <p className="text-sm font-bold text-foreground">Continue Reading?</p>
+              <p className="text-xs text-muted-foreground italic">Return to where you left off.</p>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" className="text-xs rounded-full" onClick={() => setShowRestorePosition(false)}>Dismiss</Button>
-              <Button size="sm" className="text-xs rounded-full bg-primary" onClick={restoreScrollPosition}>{t.read.restore}</Button>
+              <Button size="sm" className="text-xs rounded-full bg-primary" onClick={restoreScrollPosition}>Restore Position</Button>
             </div>
           </div>
         </div>
@@ -389,7 +391,7 @@ export default function ReadingPage() {
               >
                 <Languages className="w-4 h-4" />
                 <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">
-                  {useTranslation ? t.read.original_toggle : t.read.translate_toggle}
+                  {useTranslation ? "Original" : "Translate"}
                 </span>
               </Button>
             )}
@@ -407,13 +409,13 @@ export default function ReadingPage() {
                   <div className="space-y-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                       <Sun className="w-3 h-3" />
-                      {t.read.reading_mode}
+                      Theme
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { id: 'light', color: 'bg-[#fffcfc]', label: t.read.mode_light, icon: Sun },
+                        { id: 'light', color: 'bg-[#fffcfc]', label: "Light", icon: Sun },
                         { id: 'sepia', color: 'bg-[#f4ecd8]', label: 'Sepia', icon: Coffee },
-                        { id: 'lavender', color: 'bg-[#f7f2fd]', label: t.read.mode_lavender, icon: Sparkles },
+                        { id: 'lavender', color: 'bg-[#f7f2fd]', label: "Lavender", icon: Sparkles },
                         { id: 'midnight', color: 'bg-[#0f0c13]', label: 'Midnight', icon: Moon }
                       ].map(mode => (
                         <button
@@ -440,7 +442,7 @@ export default function ReadingPage() {
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <Type className="w-3 h-3" />
-                        {t.read.font_size}
+                        Text Size
                       </p>
                       <span className="text-xs font-mono font-bold">{fontSize}px</span>
                     </div>
@@ -458,7 +460,7 @@ export default function ReadingPage() {
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <AlignLeft className="w-3 h-3" />
-                        Breath (Spacing)
+                        Line Spacing
                       </p>
                       <span className="text-xs font-mono font-bold">{lineHeight.toFixed(1)}</span>
                     </div>
@@ -543,14 +545,14 @@ export default function ReadingPage() {
               onClick={() => { setCurrentChapterIndex(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             >
               <ChevronLeft className="w-4 h-4" />
-              {t.read.prev}
+              Previous
             </Button>
             <Button 
               className="gap-3 bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-xl"
               disabled={!novel.chapters || currentChapterIndex === (novel.chapters.length - 1)}
               onClick={() => { setCurrentChapterIndex(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             >
-              {t.read.next}
+              Next
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -560,17 +562,17 @@ export default function ReadingPage() {
             readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"
           )}>
             <div className="space-y-2">
-              <h3 className="font-headline text-4xl font-bold">{t.read.end}</h3>
-              <p className="text-muted-foreground italic">Your presence brought life to this chronicle.</p>
+              <h3 className="font-headline text-4xl font-bold">End of Chronicle</h3>
+              <p className="text-muted-foreground italic">Thank you for reading.</p>
             </div>
             <div className="flex flex-wrap justify-center gap-6">
               <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-14 font-headline text-lg shadow-xl gap-3">
                 <Heart className="w-5 h-5" />
-                {t.read.appreciate}
+                Appreciate
               </Button>
               <Button variant="outline" className="border-primary/20 rounded-full px-10 h-14 gap-3 text-primary hover:bg-primary/5 font-headline text-lg">
                 <Share2 className="w-5 h-5" />
-                {t.read.share}
+                Share
               </Button>
             </div>
           </div>

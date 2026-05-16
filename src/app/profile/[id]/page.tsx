@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
@@ -14,13 +14,11 @@ import {
   Users, 
   Heart, 
   BookOpen, 
-  Star, 
   Eye, 
   Quote, 
-  TrendingUp, 
   Zap,
-  Award,
-  Trophy
+  Trophy,
+  AlertCircle
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, orderBy } from "firebase/firestore";
@@ -34,6 +32,7 @@ import { ACHIEVEMENTS } from "@/lib/achievements";
 
 export default function ProfilePage() {
   const { id } = useParams();
+  const router = useRouter();
   const db = useFirestore();
   const { user: currentUser } = useUser();
   const { toast } = useToast();
@@ -41,19 +40,19 @@ export default function ProfilePage() {
   const [sortOrder, setSortOrder] = useState<'latest' | 'popular'>('latest');
 
   const profileRef = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "users", id as string);
   }, [db, id]);
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
   const followRef = useMemoFirebase(() => {
-    if (!db || !currentUser || !id) return null;
+    if (!db || !currentUser || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "follows", `${currentUser.uid}_${id}`);
   }, [db, currentUser, id]);
   const { data: followStatus } = useDoc(followRef);
 
   const novelsQuery = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db || !id || id === 'undefined' || id === 'null') return null;
     return query(
       collection(db, "novels"),
       where("authorId", "==", id),
@@ -64,7 +63,7 @@ export default function ProfilePage() {
   const { data: novels, loading: novelsLoading } = useCollection<Novel>(novelsQuery);
 
   const readingProgressQuery = useMemoFirebase(() => {
-    if (!db || !id) return null;
+    if (!db || !id || id === 'undefined' || id === 'null') return null;
     return query(collection(db, "users", id as string, "progress"));
   }, [db, id]);
   const { data: readingProgress } = useCollection(readingProgressQuery);
@@ -76,7 +75,7 @@ export default function ProfilePage() {
 
   const handleFollow = async () => {
     if (!currentUser) {
-      toast({ title: "Identify Yourself", description: "Join our archive to follow travelers.", variant: "destructive" });
+      toast({ title: "Identification Required", description: "Please sign in to follow this traveler.", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
@@ -86,10 +85,21 @@ export default function ProfilePage() {
     setIsFollowingLoading(false);
 
     toast({
-      title: followed ? "Path Joined" : "Path Diverged",
+      title: followed ? "Followed" : "Unfollowed",
       description: followed ? `You are now following ${profile?.username}.` : `You have stopped following ${profile?.username}.`,
     });
   };
+
+  if (id === 'undefined' || id === 'null') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
+        <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
+        <h1 className="text-2xl font-bold">Invalid Profile Path</h1>
+        <p className="text-muted-foreground">The traveler identification provided is invalid.</p>
+        <Button onClick={() => router.push("/")}>Return to Home</Button>
+      </div>
+    );
+  }
 
   if (profileLoading) {
     return (
@@ -101,8 +111,11 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center italic text-muted-foreground">
-        The traveler you seek has vanished into the mist.
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
+        <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
+        <h1 className="text-2xl font-bold">Traveler Not Found</h1>
+        <p className="text-muted-foreground">The profile you are looking for does not exist in our archive.</p>
+        <Button onClick={() => router.push("/")}>Return to Home</Button>
       </div>
     );
   }
@@ -122,7 +135,6 @@ export default function ProfilePage() {
     <div className="min-h-screen dreamy-fantasy-gradient">
       <Navbar />
       <main className="container mx-auto px-4 py-16 max-w-6xl space-y-16">
-        {/* Profile Header */}
         <header className="glass-morphism rounded-[3rem] p-12 flex flex-col md:flex-row items-center md:items-start gap-12 border-primary/10 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           
@@ -132,7 +144,7 @@ export default function ProfilePage() {
                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             {isGrandArchivist && (
-              <div className="absolute -bottom-3 -right-3 bg-primary text-white p-2.5 rounded-2xl shadow-xl ring-4 ring-white animate-bounce">
+              <div className="absolute -bottom-3 -right-3 bg-primary text-white p-2.5 rounded-2xl shadow-xl ring-4 ring-white">
                 <Trophy className="w-6 h-6" />
               </div>
             )}
@@ -143,47 +155,45 @@ export default function ProfilePage() {
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <h1 className="font-headline text-5xl font-bold">{profile.username}</h1>
                 {isGrandArchivist && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
                     Grand Archivist
                   </Badge>
                 )}
                 {profile.role === 'writer' && !isGrandArchivist && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
                     Celestial Scribe
                   </Badge>
                 )}
               </div>
-              {profile.bio ? (
+              {profile.bio && (
                 <p className="text-muted-foreground italic text-lg leading-relaxed max-w-2xl">
                   <Quote className="inline-block w-4 h-4 mr-2 opacity-20" />
                   {profile.bio}
                 </p>
-              ) : (
-                <p className="text-muted-foreground italic text-sm opacity-50">This dreamer has not yet written their bio into the archive.</p>
               )}
             </div>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-10">
-              <div className="space-y-1 text-center md:text-left">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
                   <Eye className="w-4 h-4 text-primary" />
                   <span className="text-2xl font-bold">{profile.totalViews || 0}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Reach</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Views</p>
               </div>
-              <div className="space-y-1 text-center md:text-left">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
                   <Heart className="w-4 h-4 text-primary fill-primary/10" />
                   <span className="text-2xl font-bold">{profile.totalLikes || 0}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Appreciation</p>
               </div>
-              <div className="space-y-1 text-center md:text-left">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-2xl font-bold">{profile.followerCount || 0}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Travelers Following</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Followers</p>
               </div>
             </div>
 
@@ -194,11 +204,11 @@ export default function ProfilePage() {
                   onClick={handleFollow}
                   disabled={isFollowingLoading}
                   className={cn(
-                    "rounded-full px-10 h-14 font-headline text-lg shadow-xl transition-all hover:scale-105",
+                    "rounded-full px-10 h-14 font-headline text-lg shadow-xl transition-all",
                     followStatus ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : "bg-primary text-white hover:bg-primary/90 shadow-primary/20"
                   )}
                 >
-                  {isFollowingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : followStatus ? "Unfollow Traveler" : "Join Path"}
+                  {isFollowingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : followStatus ? "Unfollow" : "Follow"}
                 </Button>
               )}
               {isOwnProfile && (
@@ -207,18 +217,17 @@ export default function ProfilePage() {
                   className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg"
                   onClick={() => router.push('/settings')}
                 >
-                  Manifest Changes
+                  Settings
                 </Button>
               )}
             </div>
           </div>
         </header>
 
-        {/* Achievements Section */}
-        <section className="space-y-8 animate-fade-in">
+        <section className="space-y-8">
           <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
             <Trophy className="w-6 h-6 text-primary" />
-            <h2 className="font-headline text-3xl font-bold">Achievements Vault</h2>
+            <h2 className="font-headline text-3xl font-bold">Achievements</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {ACHIEVEMENTS.map((def) => {
@@ -231,7 +240,7 @@ export default function ProfilePage() {
                   key={def.id} 
                   className={cn(
                     "glass-morphism rounded-3xl p-6 border-primary/5 space-y-4 transition-all",
-                    isUnlocked ? "bg-white/90 shadow-md ring-1 ring-primary/10" : "opacity-60 grayscale-[0.8]"
+                    isUnlocked ? "bg-white/90 shadow-md ring-1 ring-primary/10" : "opacity-60 grayscale-[0.5]"
                   )}
                 >
                   <div className="flex items-center gap-4">
@@ -259,55 +268,11 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Popular Story Highlight */}
-        {popularStory && (
-          <section className="space-y-8 animate-fade-in">
-            <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
-              <Zap className="w-6 h-6 text-primary" />
-              <h2 className="font-headline text-3xl font-bold">Most Famous Manifestation</h2>
-            </div>
-            <div className="glass-morphism rounded-[3rem] p-8 border-primary/5 flex flex-col md:flex-row gap-8 items-center bg-white/40">
-              <div className="relative w-48 h-64 rounded-3xl overflow-hidden shadow-2xl shrink-0">
-                <Image src={popularStory.coverImage} alt={popularStory.title} fill className="object-cover" />
-              </div>
-              <div className="flex-1 space-y-4 text-center md:text-left">
-                <div className="space-y-2">
-                  <h3 className="font-headline text-4xl font-bold">{popularStory.title}</h3>
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    {popularStory.genres.map(g => (
-                      <Badge key={g} variant="outline" className="rounded-full text-[9px] uppercase tracking-widest border-primary/20 text-primary">
-                        {g}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic line-clamp-3 text-lg leading-relaxed">
-                  {popularStory.content.substring(0, 300)}...
-                </p>
-                <div className="flex flex-wrap gap-6 pt-2 justify-center md:justify-start">
-                   <div className="flex items-center gap-2 text-primary">
-                      <Eye className="w-4 h-4" />
-                      <span className="font-bold">{popularStory.views} Views</span>
-                   </div>
-                   <div className="flex items-center gap-2 text-primary">
-                      <Heart className="w-4 h-4 fill-primary/10" />
-                      <span className="font-bold">{popularStory.likes} Likes</span>
-                   </div>
-                </div>
-                <Button onClick={() => router.push(`/read/${popularStory.id}`)} className="rounded-full px-8 h-12 bg-primary/10 text-primary hover:bg-primary/20 border-none shadow-none font-bold uppercase tracking-widest text-[10px]">
-                  Read This Chronicle
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Full Archive */}
         <section className="space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-primary/5 pb-8">
             <div className="flex items-center gap-3">
               <BookOpen className="w-6 h-6 text-primary" />
-              <h2 className="font-headline text-3xl font-bold">The Published Archive</h2>
+              <h2 className="font-headline text-3xl font-bold">Published Archive</h2>
             </div>
             
             <div className="flex gap-2 bg-primary/5 p-1 rounded-full border border-primary/10">
@@ -341,9 +306,9 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-32 italic text-muted-foreground bg-white/30 rounded-[3rem] border border-dashed border-primary/10 flex flex-col items-center gap-4">
+            <div className="text-center py-20 italic text-muted-foreground bg-white/30 rounded-[3rem] border border-dashed border-primary/10 flex flex-col items-center gap-4">
               <BookOpen className="w-12 h-12 opacity-20" />
-              <p>No published fragments were found in this traveler's archive.</p>
+              <p>No published works were found in this traveler's archive.</p>
             </div>
           )}
         </section>
