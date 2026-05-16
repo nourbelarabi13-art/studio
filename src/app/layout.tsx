@@ -1,10 +1,8 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase";
 import { LanguageProvider } from "@/lib/i18n/context";
-import { AiAssistant } from "@/components/ai-assistant";
 
 export const metadata: Metadata = {
   title: 'Rosaline Bela | A Dreamy Sanctuary for Readers & Writers',
@@ -27,7 +25,6 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <LanguageProvider>
             {children}
-            <AiAssistant />
             <Toaster />
           </LanguageProvider>
         </FirebaseClientProvider>

@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -51,15 +50,7 @@
         "views": { "type": "integer", "default": 0 },
         "likes": { "type": "integer", "default": 0 },
         "language": { "type": "string", "enum": ["en", "ar", "fr"] },
-        "country": { "type": "string" },
-        "poll": {
-          "type": "object",
-          "properties": {
-            "question": { "type": "string" },
-            "options": { "type": "array", "items": { "type": "string" } },
-            "active": { "type": "boolean" }
-          }
-        }
+        "country": { "type": "string" }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
     },
@@ -75,17 +66,6 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "userName", "text", "createdAt"]
-    },
-    "AiChatMessage": {
-      "title": "AI Chat Message",
-      "description": "A message between a user and the celestial Oracle.",
-      "type": "object",
-      "properties": {
-        "role": { "type": "string", "enum": ["user", "model"] },
-        "content": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["role", "content", "createdAt"]
     }
   },
   "auth": {
@@ -99,10 +79,6 @@
     "/novels/{novelId}": {
       "schema": "Novel",
       "description": "Chronicle content."
-    },
-    "/users/{uid}/aiChats/{chatId}": {
-      "schema": "AiChatMessage",
-      "description": "Whispers between dreamer and Oracle."
     }
   }
 }

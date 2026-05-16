@@ -1,4 +1,3 @@
-
 export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi';
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
@@ -10,12 +9,6 @@ export interface Chapter {
   title: string;
   content: string;
   order: number;
-}
-
-export interface StoryPoll {
-  question: string;
-  options: string[];
-  active: boolean;
 }
 
 export interface ReadingPreferences {
@@ -41,20 +34,6 @@ export interface Novel {
   likes: number;
   language: AppLanguage;
   country?: string;
-  poll?: StoryPoll;
-  translations?: {
-    [key in AppLanguage]?: {
-      title: string;
-      content: string;
-    }
-  };
-}
-
-export interface AiChatMessage {
-  id?: string;
-  role: 'user' | 'model';
-  content: string;
-  createdAt: string;
 }
 
 export interface UserProfile {
@@ -130,11 +109,5 @@ export interface Comment {
   userAvatar?: string;
   text: string;
   parentId?: string;
-  createdAt: string;
-}
-
-export interface EndingVote {
-  userId: string;
-  choiceIndex: number;
   createdAt: string;
 }

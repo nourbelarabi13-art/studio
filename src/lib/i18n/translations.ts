@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     nav: {
@@ -49,17 +48,14 @@ export const translations = {
     write: {
       desk_title: "The Writing Desk",
       desk_desc: "Let your thoughts flow freely.",
-      spark: "Get a Spark",
       save: "Save Draft",
       publish: "Publish",
       title_placeholder: "Story Title...",
       content_placeholder: "Start your story here...",
       genres: "Genres",
-      manifest_art: "Manifest AI Art",
       language: "Story Language",
       country: "Chronicle Origin (Region)",
       select_language: "Select Writing Language",
-      language_help: "AI will automatically manifest translations when you publish.",
     },
     read: {
       views: "Views",
@@ -143,17 +139,14 @@ export const translations = {
     write: {
       desk_title: "مكتب الكتابة",
       desk_desc: "دع أفكارك تتدفق بحرية.",
-      spark: "احصل على إلهام",
       save: "حفظ مسودة",
       publish: "نشر",
       title_placeholder: "عنوان القصة...",
       content_placeholder: "ابدأ قصتك هنا...",
       genres: "الأنواع",
-      manifest_art: "تجسيد فن الذكاء الاصطناعي",
       language: "لغة القصة",
       country: "أصل القصة (المنطقة)",
       select_language: "اختر لغة الكتابة",
-      language_help: "سيقوم الذكاء الاصطناعي تلقائيًا بإنشاء ترجمات عند النشر.",
     },
     read: {
       views: "مشاهدات",
@@ -237,17 +230,14 @@ export const translations = {
     write: {
       desk_title: "Le Bureau d'Écriture",
       desk_desc: "Laissez vos pensées couler librement.",
-      spark: "Obtenir une Étincelle",
       save: "Sauvegarder le Brouillon",
       publish: "Publier",
       title_placeholder: "Titre de l'histoire...",
       content_placeholder: "Commencez votre histoire ici...",
       genres: "Genres",
-      manifest_art: "Manifester l'Art IA",
       language: "Langue de l'histoire",
       country: "Origine de la chronique (Région)",
       select_language: "Choisir la langue d'écriture",
-      language_help: "L'IA manifestera automatiquement des traductions lors de la publication.",
     },
     read: {
       views: "Vues",
