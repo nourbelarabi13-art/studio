@@ -43,25 +43,11 @@ export interface Novel {
   };
 }
 
-export interface Comment {
+export interface AiChatMessage {
   id?: string;
-  userId: string;
-  userName: string;
-  text: string;
-  parentId?: string;
+  role: 'user' | 'model';
+  content: string;
   createdAt: string;
-}
-
-export interface EndingVote {
-  userId: string;
-  choiceIndex: number;
-  createdAt: string;
-}
-
-export interface ReadingPreferences {
-  fontSize: number;
-  lineHeight: number;
-  mode: 'light' | 'sepia' | 'lavender' | 'midnight';
 }
 
 export interface UserProfile {
@@ -98,12 +84,6 @@ export interface ReadingProgress {
   genres?: Genre[];
 }
 
-export interface Follow {
-  followerId: string;
-  followingId: string;
-  createdAt: string;
-}
-
 export interface Notification {
   id?: string;
   type: NotificationType;
@@ -113,14 +93,6 @@ export interface Notification {
   targetId?: string;
   read: boolean;
   createdAt: string;
-}
-
-export interface ChatRoom {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  lastMessageAt?: string;
 }
 
 export interface ChatMessage {

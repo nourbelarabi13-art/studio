@@ -74,68 +74,16 @@
       },
       "required": ["userId", "userName", "text", "createdAt"]
     },
-    "EndingVote": {
-      "title": "Ending Vote",
-      "description": "A user's choice for a story's direction.",
+    "AiChatMessage": {
+      "title": "AI Chat Message",
+      "description": "A message between a user and the celestial Oracle.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "choiceIndex": { "type": "integer" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "content": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "choiceIndex", "createdAt"]
-    },
-    "ReadingProgress": {
-      "title": "Reading Progress",
-      "description": "A record of a user's progress through a chronicle.",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "novelId": { "type": "string" },
-        "percentage": { "type": "number" },
-        "lastReadAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Bookmark": {
-      "title": "Bookmark",
-      "description": "A saved chronicle in a user's library.",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "novelId": { "type": "string" },
-        "category": { "type": "string", "enum": ["favorite", "read-later"] }
-      }
-    },
-    "Notification": {
-      "title": "Notification",
-      "description": "A whisper from the sanctuary regarding community activity.",
-      "type": "object",
-      "properties": {
-        "type": { "type": "string", "enum": ["like", "comment", "story", "follow"] },
-        "message": { "type": "string" },
-        "read": { "type": "boolean", "default": false },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ChatRoom": {
-      "title": "Chat Room",
-      "description": "A discussion space for writers.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "category": { "type": "string" }
-      }
-    },
-    "ChatMessage": {
-      "title": "ChatMessage",
-      "description": "A message within a chat room.",
-      "type": "object",
-      "properties": {
-        "senderId": { "type": "string" },
-        "senderName": { "type": "string" },
-        "text": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+      "required": ["role", "content", "createdAt"]
     }
   },
   "auth": {
@@ -150,25 +98,9 @@
       "schema": "Novel",
       "description": "Chronicle content."
     },
-    "/novels/{novelId}/comments/{commentId}": {
-      "schema": "Comment",
-      "description": "Chronicle discussions."
-    },
-    "/novels/{novelId}/votes/{userId}": {
-      "schema": "EndingVote",
-      "description": "Ending preference votes."
-    },
-    "/users/{uid}/notifications/{notifId}": {
-      "schema": "Notification",
-      "description": "User whispers."
-    },
-    "/chatRooms/{roomId}": {
-      "schema": "ChatRoom",
-      "description": "Community discussion spaces."
-    },
-    "/chatRooms/{roomId}/messages/{msgId}": {
-      "schema": "ChatMessage",
-      "description": "Community chat messages."
+    "/users/{uid}/aiChats/{chatId}": {
+      "schema": "AiChatMessage",
+      "description": "Whispers between dreamer and Oracle."
     }
   }
 }
