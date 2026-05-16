@@ -4,24 +4,25 @@ import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, X } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
+import { Input } from "@/components/ui/input";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function Home() {
   const db = useFirestore();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
+  const [searchQuery, setSearchQuery] = useState("");
   const [sevenDaysAgo, setSevenDaysAgo] = useState<string | null>(null);
   const archiveRef = useRef<HTMLDivElement>(null);
 
-  // Calculate the 7-day window only on the client to prevent hydration mismatch
   useEffect(() => {
     const date = new Date();
     date.setDate(date.getDate() - 7);
@@ -44,10 +45,21 @@ export default function Home() {
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
-  // Weekly Trending (By views, published in the last 7 days)
+  // Client-side search filtering
+  const filteredNovels = useMemo(() => {
+    if (!novels) return [];
+    if (!searchQuery.trim()) return novels;
+    const lowerQuery = searchQuery.toLowerCase();
+    return novels.filter(n => 
+      n.title.toLowerCase().includes(lowerQuery) || 
+      n.authorUsername.toLowerCase().includes(lowerQuery) ||
+      n.content.toLowerCase().includes(lowerQuery)
+    );
+  }, [novels, searchQuery]);
+
+  // Weekly Trending
   const trendingQuery = useMemoFirebase(() => {
     if (!db || !sevenDaysAgo) return null;
-    
     return query(
       collection(db, "novels"),
       where("isDraft", "==", false),
@@ -59,7 +71,7 @@ export default function Home() {
   }, [db, sevenDaysAgo]);
   const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
 
-  // Rising (New stories gaining popularity quickly)
+  // Rising
   const risingQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(
@@ -80,7 +92,6 @@ export default function Home() {
     <div className="min-h-screen">
       <Navbar />
       
-      {/* Hero Section */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <DynamicBackground />
         
@@ -118,7 +129,7 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-16 space-y-32">
         {/* Trending Section */}
-        {trendingNovels && trendingNovels.length > 0 && (
+        {trendingNovels && trendingNovels.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">
             <div className="flex flex-col gap-2">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
@@ -136,7 +147,7 @@ export default function Home() {
         )}
 
         {/* Rising Section */}
-        {risingNovels && risingNovels.length > 0 && (
+        {risingNovels && risingNovels.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">
             <div className="flex flex-col gap-2">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
@@ -153,9 +164,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* Categories Section (The Archive) */}
+        {/* The Archive */}
         <div ref={archiveRef} className="space-y-12 scroll-mt-20">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-primary/10 pb-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 border-b border-primary/10 pb-12">
             <div className="space-y-3">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
                 <BookOpen className="text-primary w-8 h-8" />
@@ -164,24 +175,45 @@ export default function Home() {
               <p className="text-muted-foreground italic text-lg">Gently curated for your wandering mind</p>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
-                onClick={() => setSelectedGenre('All')}
-                className={cn("rounded-full transition-all", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary')}
-              >
-                All Stories
-              </Button>
-              {GENRES.map(genre => (
+            <div className="flex flex-col gap-6 w-full lg:w-auto">
+              <div className="relative group max-w-md w-full ml-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Search titles or authors..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-11 pr-11 bg-white/50 border-primary/10 h-12 rounded-full focus:bg-white transition-all shadow-sm"
+                />
+                {searchQuery && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 justify-end">
                 <Button 
-                  key={genre} 
-                  variant={selectedGenre === genre ? 'default' : 'ghost'}
-                  onClick={() => setSelectedGenre(genre)}
-                  className={cn("rounded-full transition-all", selectedGenre === genre ? 'bg-primary' : 'text-muted-foreground hover:text-primary')}
+                  variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
+                  onClick={() => setSelectedGenre('All')}
+                  className={cn("rounded-full transition-all h-9 px-5", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
                 >
-                  {genre}
+                  All Stories
                 </Button>
-              ))}
+                {GENRES.map(genre => (
+                  <Button 
+                    key={genre} 
+                    variant={selectedGenre === genre ? 'default' : 'ghost'}
+                    onClick={() => setSelectedGenre(genre)}
+                    className={cn("rounded-full transition-all h-9 px-5", selectedGenre === genre ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
+                  >
+                    {genre}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -190,13 +222,13 @@ export default function Home() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="italic">Softly turning the pages...</p>
             </div>
-          ) : novels?.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground italic">
-              No stories have blossomed in this category yet.
+          ) : filteredNovels.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground italic bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
+              {searchQuery ? "No chronicles match your search criteria." : "No stories have blossomed in this category yet."}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {novels?.map((novel, idx) => (
+              {filteredNovels.map((novel, idx) => (
                 <div 
                   key={novel.id} 
                   className="animate-fade-in" 

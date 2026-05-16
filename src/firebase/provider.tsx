@@ -32,11 +32,8 @@ export const FirebaseProvider: React.FC<{
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  if (!context) {
-    // Fallback for safety, though with default value it won't be undefined
-    return { firebaseApp: null, firestore: null, auth: null };
-  }
-  return context;
+  // No longer throwing error during SSR, returning null context instead
+  return context || { firebaseApp: null, firestore: null, auth: null };
 };
 
 export const useFirebaseApp = () => useFirebase().firebaseApp;
