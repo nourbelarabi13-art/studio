@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { NovelCard } from "@/components/novel-card";
 import { StoryComments } from "@/components/story-comments";
 import { EndingPoll } from "@/components/ending-poll";
+import { StarryNightEffect } from "@/components/starry-night-effect";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -287,8 +288,13 @@ export default function ReadingPage() {
     midnight: "bg-[#0f0c13] text-[#d1c9e0] selection:bg-primary/30"
   };
 
+  // Only enable starry effect for the specific requested story
+  const isStarryStory = novel.title === "قضية المصحة النفسية";
+
   return (
-    <div className={cn("min-h-screen transition-colors duration-500", modeStyles[readingMode])}>
+    <div className={cn("min-h-screen transition-colors duration-500 relative", modeStyles[readingMode])}>
+      {isStarryStory && <StarryNightEffect />}
+      
       {!isFocusMode && <Navbar />}
       
       <div className={cn("fixed top-0 left-0 w-full h-1 z-[60] bg-primary/10", isFocusMode ? "top-0" : "top-16")}>
@@ -322,7 +328,7 @@ export default function ReadingPage() {
       )}
 
       <main className={cn(
-        "container mx-auto px-4 max-w-3xl space-y-16 animate-fade-in transition-all duration-700",
+        "container mx-auto px-4 max-w-3xl space-y-16 animate-fade-in transition-all duration-700 relative z-10",
         isFocusMode ? "py-32" : "py-24"
       )}>
         <header className="space-y-8 text-center border-b border-primary/10 pb-16">
@@ -535,7 +541,7 @@ export default function ReadingPage() {
         </div>
 
         <article 
-          className={cn("prose prose-stone max-w-none transition-all duration-300", isRtl && "text-right")}
+          className={cn("prose prose-stone max-w-none transition-all duration-300 relative z-10", isRtl && "text-right")}
           dir={isRtl ? 'rtl' : 'ltr'}
           style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight, color: 'inherit' }}
         >
@@ -545,7 +551,7 @@ export default function ReadingPage() {
         </article>
 
         {/* Chapter Completion Milestone Bar */}
-        <div className="py-20 space-y-12">
+        <div className="py-20 space-y-12 relative z-10">
           <div className="space-y-4">
              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 <span>Progress manifested</span>
@@ -598,12 +604,12 @@ export default function ReadingPage() {
         </div>
 
         {novel.poll && novel.poll.active && (
-          <section className="pt-16 max-w-xl mx-auto">
+          <section className="pt-16 max-w-xl mx-auto relative z-10">
             <EndingPoll novel={novel} />
           </section>
         )}
 
-        <footer className="pt-24 border-t border-primary/10 space-y-24">
+        <footer className="pt-24 border-t border-primary/10 space-y-24 relative z-10">
           <div className={cn(
             "rounded-[3rem] p-12 text-center space-y-8 shadow-sm border",
             readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"

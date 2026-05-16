@@ -92,12 +92,17 @@ export default {
         'fade-in': {
           from: { opacity: '0', transform: 'translateY(10px)' },
           to: { opacity: '1', transform: 'translateY(0)' }
+        },
+        'star-twinkle': {
+          '0%, 100%': { opacity: '0.1', transform: 'scale(1) translate(0, 0)' },
+          '50%': { opacity: '0.4', transform: 'scale(1.3) translate(5px, -5px)' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.6s ease-out forwards'
+        'fade-in': 'fade-in 0.6s ease-out forwards',
+        'star-twinkle': 'star-twinkle 8s ease-in-out infinite',
       },
     },
   },
