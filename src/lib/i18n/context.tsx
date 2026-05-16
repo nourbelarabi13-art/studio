@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { AppLanguage, UserProfile } from '@/lib/types';
 import { translations } from './translations';
 import { useUser, useDoc, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 
 interface LanguageContextProps {
@@ -66,9 +66,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [language]);
 
-  const handleSetLanguage = (lang: AppLanguage) => {
+  const handleSetLanguage = async (lang: AppLanguage) => {
     setLanguage(lang);
     localStorage.setItem('rosaline-language', lang);
+    
+    // Sync to Firestore if user is logged in
+    if (user && db) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), {
+          language: lang
+        });
+      } catch (error) {
+        // Silent error, local state is still updated
+      }
+    }
   };
 
   const t = useMemo(() => translations[language] || translations.en, [language]);

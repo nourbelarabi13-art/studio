@@ -1,9 +1,22 @@
-
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare, Bookmark as BookmarkIcon, Bell } from "lucide-react";
+import { 
+  PenSquare, 
+  Library, 
+  User, 
+  Search, 
+  BookOpen, 
+  LogOut, 
+  Settings, 
+  Heart, 
+  MessageSquare, 
+  Bookmark as BookmarkIcon, 
+  Bell,
+  Globe,
+  ChevronDown
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc, collection, query, where } from "firebase/firestore";
-import { UserProfile, Notification } from "@/lib/types";
+import { UserProfile, Notification, AppLanguage } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/context";
 
 export function Navbar() {
@@ -29,7 +42,7 @@ export function Navbar() {
   const { user } = useUser();
   const auth = useAuth();
   const db = useFirestore();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -68,6 +81,12 @@ export function Navbar() {
     }
   };
 
+  const languages = [
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  ];
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -96,11 +115,43 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Language Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full"
+              >
+                <Globe className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-card border-primary/10 rounded-2xl p-2 shadow-2xl">
+              <DropdownMenuLabel className="font-headline text-[10px] uppercase tracking-widest text-muted-foreground px-3 py-2">
+                {t.settings.language_title}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-primary/5" />
+              {languages.map((lang) => (
+                <DropdownMenuItem 
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code as AppLanguage)}
+                  className={cn(
+                    "gap-3 cursor-pointer rounded-xl transition-colors py-2.5",
+                    language === lang.code ? "bg-primary/5 text-primary font-bold" : "hover:bg-primary/5"
+                  )}
+                >
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className="text-sm">{lang.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-muted-foreground hover:text-primary hover:bg-primary/5"
+            className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full"
             onClick={() => router.push("/")}
           >
             <Search className="w-5 h-5" />
@@ -112,7 +163,7 @@ export function Navbar() {
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "text-muted-foreground hover:text-primary hover:bg-primary/5",
+                  "text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full",
                   pathname === '/notifications' && "text-primary bg-primary/5"
                 )}
               >
@@ -129,26 +180,27 @@ export function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <User className="w-3.5 h-3.5" />
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5 rounded-full px-2 pr-4 h-10">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <User className="w-4 h-4" />
                   </div>
                   <span className="hidden sm:inline font-medium">{profile?.username || "Dreamer"}</span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground">
-                <DropdownMenuLabel className="font-headline text-foreground">{profile?.username}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
+              <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground rounded-2xl p-2 shadow-2xl">
+                <DropdownMenuLabel className="font-headline text-foreground px-3">{profile?.username}</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-primary/5" />
+                <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
                   <User className="w-4 h-4" />
                   {t.nav.profile}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
                   <Settings className="w-4 h-4" />
                   {t.nav.settings}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer text-destructive focus:bg-destructive/5 focus:text-destructive">
+                <DropdownMenuSeparator className="bg-primary/5" />
+                <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer text-destructive rounded-xl py-2.5 hover:bg-destructive/5">
                   <LogOut className="w-4 h-4" />
                   {t.nav.logout}
                 </DropdownMenuItem>
@@ -157,12 +209,12 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="hover:bg-primary/5 gap-2 text-muted-foreground">
+                <Button variant="ghost" size="sm" className="hover:bg-primary/5 gap-2 text-muted-foreground rounded-full px-4">
                   {t.nav.login}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 gap-2 rounded-full">
+                <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 gap-2 rounded-full px-6">
                   {t.nav.signup}
                 </Button>
               </Link>
