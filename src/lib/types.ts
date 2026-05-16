@@ -39,11 +39,14 @@ export interface UserProfile {
   uid: string;
   username: string;
   email: string;
+  bio?: string;
   role: UserRole;
   ageConfirmed: boolean;
   createdAt: string;
   followerCount?: number;
   followingCount?: number;
+  totalViews?: number;
+  totalLikes?: number;
   language: AppLanguage;
   preferredGenres?: Genre[];
 }

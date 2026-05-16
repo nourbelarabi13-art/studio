@@ -9,11 +9,14 @@
         "uid": { "type": "string" },
         "username": { "type": "string" },
         "email": { "type": "string", "format": "email" },
+        "bio": { "type": "string", "description": "A short manifesto of the dreamer's spirit." },
         "role": { "type": "string", "enum": ["writer", "reader"], "default": "reader" },
         "ageConfirmed": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
         "followerCount": { "type": "integer", "default": 0 },
         "followingCount": { "type": "integer", "default": 0 },
+        "totalViews": { "type": "integer", "default": 0 },
+        "totalLikes": { "type": "integer", "default": 0 },
         "language": { "type": "string", "enum": ["en", "ar", "fr"] }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]

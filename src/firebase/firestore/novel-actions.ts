@@ -15,12 +15,24 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { createNotification } from './notification-actions';
 
 /**
- * Increments the view count for a novel.
+ * Increments the view count for a novel and the author's total view count.
  */
-export function incrementNovelView(db: Firestore, novelId: string) {
+export async function incrementNovelView(db: Firestore, novelId: string) {
   const novelRef = doc(db, 'novels', novelId);
+  const novelSnap = await getDoc(novelRef);
+  
+  if (!novelSnap.exists()) return;
+  const novelData = novelSnap.data();
+
   updateDoc(novelRef, {
     views: increment(1)
+  }).then(() => {
+    // Also update author total views
+    if (novelData.authorId) {
+      updateDoc(doc(db, 'users', novelData.authorId), {
+        totalViews: increment(1)
+      });
+    }
   }).catch(async () => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       path: `novels/${novelId}`,
@@ -30,31 +42,37 @@ export function incrementNovelView(db: Firestore, novelId: string) {
 }
 
 /**
- * Toggles a like for a novel. 
+ * Toggles a like for a novel and updates the author's total like count.
  */
 export async function toggleLikeNovel(db: Firestore, novelId: string, userId: string, userName: string) {
   const likeRef = doc(db, 'novels', novelId, 'userLikes', userId);
   const novelRef = doc(db, 'novels', novelId);
 
   const novelSnap = await getDoc(novelRef);
+  if (!novelSnap.exists()) return false;
+  
   const novelData = novelSnap.data();
+  const authorRef = doc(db, 'users', novelData.authorId);
   const likeSnap = await getDoc(likeRef);
 
   if (likeSnap.exists()) {
     // Unlike
-    deleteDoc(likeRef).then(() => {
+    return deleteDoc(likeRef).then(() => {
       updateDoc(novelRef, { likes: increment(-1) });
+      updateDoc(authorRef, { totalLikes: increment(-1) });
+      return false;
     }).catch(() => {
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: likeRef.path,
         operation: 'delete'
       }));
+       return true;
     });
-    return false;
   } else {
     // Like
-    setDoc(likeRef, { createdAt: new Date().toISOString() }).then(() => {
+    return setDoc(likeRef, { createdAt: new Date().toISOString() }).then(() => {
       updateDoc(novelRef, { likes: increment(1) });
+      updateDoc(authorRef, { totalLikes: increment(1) });
       
       // Notify author
       if (novelData && novelData.authorId !== userId) {
@@ -66,12 +84,13 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
           targetId: novelId
         });
       }
+      return true;
     }).catch(() => {
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: likeRef.path,
         operation: 'create'
       }));
+       return false;
     });
-    return true;
   }
 }
