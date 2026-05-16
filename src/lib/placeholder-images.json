@@ -37,28 +37,16 @@
       "imageHint": "fantasy manuscript"
     },
     {
-      "id": "gallery-1",
-      "description": "Close up of a vintage typewriter with soft pink petals",
-      "imageUrl": "https://picsum.photos/seed/vintage-typewriter/800/600",
-      "imageHint": "vintage typewriter"
+      "id": "gallery-rotating-1",
+      "description": "An open vintage book with a feather pen resting on its aged pages",
+      "imageUrl": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+      "imageHint": "vintage writing"
     },
     {
-      "id": "gallery-2",
-      "description": "Old leather bound books in a soft moonlit library",
-      "imageUrl": "https://picsum.photos/seed/old-books/800/600",
-      "imageHint": "vintage books"
-    },
-    {
-      "id": "gallery-3",
-      "description": "A fountain pen resting on a handwritten letter with soft light",
-      "imageUrl": "https://picsum.photos/seed/fountain-pen/800/600",
-      "imageHint": "fountain pen"
-    },
-    {
-      "id": "gallery-4",
-      "description": "A lit candle next to an open book in a dark room",
-      "imageUrl": "https://picsum.photos/seed/candle-reading/800/600",
-      "imageHint": "candle book"
+      "id": "gallery-rotating-2",
+      "description": "A close-up of classical leather-bound books in a dark, atmospheric library",
+      "imageUrl": "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80",
+      "imageHint": "old books"
     },
     {
       "id": "novel-1",
