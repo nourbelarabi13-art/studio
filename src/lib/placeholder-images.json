@@ -13,6 +13,30 @@
       "imageHint": "pastel sky"
     },
     {
+      "id": "bg-writing-desk",
+      "description": "A cozy writing desk with an antique inkwell and soft morning sunlight",
+      "imageUrl": "https://picsum.photos/seed/writing-desk-cozy/1920/1080",
+      "imageHint": "writing desk"
+    },
+    {
+      "id": "bg-open-book",
+      "description": "A close up of an open vintage book with soft glowing dust motes",
+      "imageUrl": "https://picsum.photos/seed/open-book-magic/1920/1080",
+      "imageHint": "aesthetic book"
+    },
+    {
+      "id": "bg-dreamy-study",
+      "description": "A soft-focused study with lavender light and floor-to-ceiling bookshelves",
+      "imageUrl": "https://picsum.photos/seed/lavender-study/1920/1080",
+      "imageHint": "dreamy library"
+    },
+    {
+      "id": "bg-manuscript",
+      "description": "A glowing magical parchment resting on a velvet cloth",
+      "imageUrl": "https://picsum.photos/seed/magical-manuscript/1920/1080",
+      "imageHint": "fantasy manuscript"
+    },
+    {
       "id": "novel-1",
       "description": "An elegant book with a soft pink flower on top",
       "imageUrl": "https://picsum.photos/seed/pink-flower-book/600/800",

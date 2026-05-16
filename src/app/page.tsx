@@ -5,15 +5,14 @@ import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Coffee, Loader2, BookOpen, TrendingUp, Zap } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap } from "lucide-react";
 import { useState, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
+import { DynamicBackground } from "@/components/dynamic-background";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
@@ -21,7 +20,6 @@ export default function Home() {
   const db = useFirestore();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const archiveRef = useRef<HTMLDivElement>(null);
-  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-dreamy');
 
   // Archive Query
   const novelsQuery = useMemoFirebase(() => {
@@ -56,7 +54,7 @@ export default function Home() {
   }, [db]);
   const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
 
-  // Rising (New stories gaining popularity quickly - for MVP we use newest with high views)
+  // Rising (New stories gaining popularity quickly)
   const risingQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(
@@ -78,29 +76,19 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-        {heroImage && (
-          <Image 
-            src={heroImage.imageUrl} 
-            alt={heroImage.description}
-            fill
-            className="object-cover opacity-20"
-            priority
-            data-ai-hint={heroImage.imageHint}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+        <DynamicBackground />
         
         <div className="container relative z-10 px-4 text-center space-y-8 max-w-4xl animate-fade-in">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-2">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-2 border border-primary/20 backdrop-blur-md">
               <Sparkles className="w-4 h-4" />
               Welcome to the Sanctuary
             </div>
             <h1 className="font-headline text-6xl md:text-8xl font-bold tracking-tight text-foreground leading-tight text-balance">
               Find Your <span className="text-primary italic">Dream</span>
             </h1>
-            <p className="font-body text-xl md:text-2xl text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto italic">
+            <p className="font-body text-xl md:text-2xl text-muted-foreground/90 leading-relaxed max-w-2xl mx-auto italic">
               An elegant space where soft fantasies breathe and stories find their light.
             </p>
           </div>
@@ -115,7 +103,7 @@ export default function Home() {
               size="lg" 
               variant="outline" 
               onClick={scrollToArchive}
-              className="border-primary/20 text-primary hover:bg-primary/5 text-xl px-10 py-7 h-auto rounded-full font-headline font-semibold backdrop-blur-sm transition-transform hover:scale-105"
+              className="border-primary/20 text-primary hover:bg-primary/5 text-xl px-10 py-7 h-auto rounded-full font-headline font-semibold backdrop-blur-md transition-transform hover:scale-105"
             >
               Explore Library
             </Button>
@@ -126,10 +114,10 @@ export default function Home() {
       <main className="container mx-auto px-4 py-16 space-y-32">
         {/* Trending Section */}
         {trendingNovels && trendingNovels.length > 0 && (
-          <div className="space-y-12">
+          <div className="space-y-12 animate-fade-in">
             <div className="flex flex-col gap-2">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <TrendingUp className="text-orange-500 w-8 h-8" />
+                <TrendingUp className="text-primary w-8 h-8" />
                 Trending This Week
               </h2>
               <p className="text-muted-foreground italic text-lg ml-11">The stories captivating the community right now.</p>
@@ -144,10 +132,10 @@ export default function Home() {
 
         {/* Rising Section */}
         {risingNovels && risingNovels.length > 0 && (
-          <div className="space-y-12">
+          <div className="space-y-12 animate-fade-in">
             <div className="flex flex-col gap-2">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <Zap className="text-primary w-8 h-8" />
+                <Zap className="text-accent-foreground w-8 h-8" />
                 Rising Stories
               </h2>
               <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
