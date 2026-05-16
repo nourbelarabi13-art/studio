@@ -5,7 +5,7 @@ import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, X, Heart, Users, Globe } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -15,12 +15,14 @@ import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from "@/lib/i18n/context";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function Home() {
   const db = useFirestore();
   const { user } = useUser();
+  const { t } = useLanguage();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
   const [sevenDaysAgo, setSevenDaysAgo] = useState<string | null>(null);
@@ -58,7 +60,6 @@ export default function Home() {
 
   const followingNovelsQuery = useMemoFirebase(() => {
     if (!db || followedIds.length === 0) return null;
-    // Note: limit to 10 for "in" query constraint
     const chunks = followedIds.slice(0, 10); 
     return query(
       collection(db, "novels"),
@@ -123,20 +124,20 @@ export default function Home() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-2 border border-primary/20 backdrop-blur-md">
               <Sparkles className="w-4 h-4" />
-              Welcome to the Sanctuary
+              {t.hero.welcome}
             </div>
             <h1 className="font-headline text-6xl md:text-8xl font-bold tracking-tight text-foreground leading-tight text-balance">
-              Find Your <span className="text-primary italic">Dream</span>
+              {t.hero.title} <span className="text-primary italic">{t.hero.dream}</span>
             </h1>
             <p className="font-body text-xl md:text-2xl text-muted-foreground/90 leading-relaxed max-w-2xl mx-auto italic">
-              An elegant space where soft fantasies breathe and stories find their light.
+              {t.hero.subtitle}
             </p>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-6 pt-6">
             <Link href="/write">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-xl px-10 py-7 h-auto rounded-full font-headline font-semibold shadow-xl shadow-primary/20 transition-transform hover:scale-105">
-                Start Writing
+                {t.hero.start}
               </Button>
             </Link>
             <Button 
@@ -145,7 +146,7 @@ export default function Home() {
               onClick={scrollToArchive}
               className="border-primary/20 text-primary hover:bg-primary/5 text-xl px-10 py-7 h-auto rounded-full font-headline font-semibold backdrop-blur-md transition-transform hover:scale-105"
             >
-              Explore Library
+              {t.hero.explore}
             </Button>
           </div>
         </div>
@@ -158,9 +159,9 @@ export default function Home() {
             <div className="flex flex-col gap-2">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
                 <TrendingUp className="text-primary w-8 h-8" />
-                Trending This Week
+                {t.home.trending}
               </h2>
-              <p className="text-muted-foreground italic text-lg ml-11">The stories captivating the community right now.</p>
+              <p className="text-muted-foreground italic text-lg ml-11">{t.home.trending_desc}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {trendingNovels.map((novel) => (
@@ -176,16 +177,16 @@ export default function Home() {
             <div className="space-y-3">
               <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
                 <BookOpen className="text-primary w-8 h-8" />
-                The Archive
+                {t.home.archive_title}
               </h2>
-              <p className="text-muted-foreground italic text-lg">Gently curated for your wandering mind</p>
+              <p className="text-muted-foreground italic text-lg">{t.home.archive_desc}</p>
             </div>
             
             <div className="flex flex-col gap-6 w-full lg:w-auto">
               <div className="relative group max-w-md w-full ml-auto">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input 
-                  placeholder="Search titles or authors..." 
+                  placeholder={t.home.search_placeholder} 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-11 pr-11 bg-white/50 border-primary/10 h-12 rounded-full focus:bg-white transition-all shadow-sm"
@@ -195,23 +196,23 @@ export default function Home() {
           </div>
 
           <Tabs defaultValue="archive" className="w-full">
-            <div className="flex items-center justify-between mb-8">
-              <TabsList className="bg-primary/5 rounded-full p-1 h-12 border border-primary/10">
+            <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2 scrollbar-hide">
+              <TabsList className="bg-primary/5 rounded-full p-1 h-12 border border-primary/10 shrink-0">
                 <TabsTrigger value="archive" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                   <Globe className="w-4 h-4" />
-                  Archive
+                  {t.nav.archive}
                 </TabsTrigger>
                 <TabsTrigger value="for-you" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                   <Sparkles className="w-4 h-4" />
-                  For You
+                  {t.home.for_you}
                 </TabsTrigger>
                 <TabsTrigger value="following" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                   <Users className="w-4 h-4" />
-                  Following
+                  {t.home.following}
                 </TabsTrigger>
               </TabsList>
 
-              <div className="flex flex-wrap gap-2 justify-end">
+              <div className="flex flex-wrap gap-2 justify-end ml-4">
                 <Button 
                   variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
                   onClick={() => setSelectedGenre('All')}
@@ -240,7 +241,7 @@ export default function Home() {
                 </div>
               ) : filteredNovels.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground italic bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
-                  {searchQuery ? "No chronicles match your search criteria." : "No stories have blossomed here yet."}
+                  {searchQuery ? t.home.no_results : t.home.no_stories}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -256,9 +257,8 @@ export default function Home() {
             <TabsContent value="for-you">
               <div className="space-y-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {/* For You is a mix of following + trending for MVP */}
                   {[...(followingNovels || []), ...(trendingNovels || [])]
-                    .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i) // Unique
+                    .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i) 
                     .map((novel, idx) => (
                       <NovelCard key={novel.id} novel={novel} />
                     ))
@@ -289,6 +289,32 @@ export default function Home() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Community Promo */}
+        <section className="animate-fade-in">
+          <div className="glass-morphism rounded-[3rem] p-12 md:p-20 text-center space-y-8 border-primary/10 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-primary/10 transition-colors" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl group-hover:bg-accent/10 transition-colors" />
+            
+            <div className="relative z-10 space-y-6 max-w-2xl mx-auto">
+              <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mx-auto shadow-inner">
+                <MessageSquare className="w-8 h-8" />
+              </div>
+              <h2 className="font-headline text-4xl md:text-5xl font-bold text-foreground">
+                {t.home.community_title}
+              </h2>
+              <p className="text-muted-foreground text-lg italic leading-relaxed">
+                {t.home.community_desc}
+              </p>
+              <Link href="/community">
+                <Button size="lg" className="rounded-full px-12 h-14 bg-primary hover:bg-primary/90 text-lg font-headline shadow-xl shadow-primary/20 gap-3">
+                  <Users className="w-5 h-5" />
+                  {t.home.community_cta}
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* Rising Section */}
         {risingNovels && risingNovels.length > 0 && !searchQuery && (

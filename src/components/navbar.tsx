@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, LayoutDashboard, Heart, MessageSquare } from "lucide-react";
+import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -40,9 +40,9 @@ export function Navbar() {
 
   const navLinks = [
     { name: t.nav.archive, href: "/", icon: Library, roles: ["writer", "reader"] },
+    { name: t.nav.community, href: "/community", icon: MessageSquare, roles: ["writer", "reader"] },
     { name: t.nav.forge, href: "/write", icon: PenSquare, roles: ["writer"] },
     { name: t.nav.vault, href: "/vault", icon: BookOpen, roles: ["writer"] },
-    { name: t.nav.community, href: "/community", icon: MessageSquare, roles: ["writer"] },
   ];
 
   const handleLogout = async () => {
@@ -80,10 +80,10 @@ export function Navbar() {
               href={link.href}
               className={cn(
                 "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
+                pathname === link.href ? "text-primary font-bold" : "text-muted-foreground"
               )}
             >
-              <link.icon className="w-4 h-4" />
+              <link.icon className={cn("w-4 h-4", pathname === link.href ? "text-primary" : "text-muted-foreground/60")} />
               {link.name}
             </Link>
           ))}

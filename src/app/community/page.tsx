@@ -2,11 +2,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useUser, useFirestore, useCollection, useDoc } from "@/firebase";
 import { 
   collection, 
@@ -14,13 +16,11 @@ import {
   query, 
   orderBy, 
   limit, 
-  onSnapshot,
-  doc,
-  serverTimestamp
+  doc
 } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { Loader2, Send, MessageSquare, Users, Sparkles, Hash } from "lucide-react";
-import { ChatRoom, ChatMessage, UserProfile } from "@/lib/types";
+import { ChatMessage, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +32,9 @@ const DEFAULT_ROOMS = [
 ];
 
 export default function CommunityPage() {
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   const db = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
   const [activeRoomId, setActiveRoomId] = useState('general');
   const [messageText, setMessageText] = useState("");
@@ -43,7 +44,7 @@ export default function CommunityPage() {
     if (!db || !user) return null;
     return doc(db, "users", user.uid);
   }, [db, user]);
-  const { data: profile } = useDoc<UserProfile>(profileRef);
+  const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
   const activeRoom = DEFAULT_ROOMS.find(r => r.id === activeRoomId) || DEFAULT_ROOMS[0];
 
@@ -83,13 +84,21 @@ export default function CommunityPage() {
     }
   };
 
-  if (!user || profile?.role !== 'writer') {
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center dreamy-fantasy-gradient">
         <Sparkles className="w-12 h-12 text-primary mb-6" />
         <h1 className="font-headline text-3xl font-bold mb-4">The Community Awaits</h1>
-        <p className="text-muted-foreground italic max-w-md">This sanctuary is reserved for those walking the path of the Scribe. Please manifest your role in settings to enter.</p>
-        <Button onClick={() => window.location.href = "/"} className="mt-8 rounded-full px-8">Return to Library</Button>
+        <p className="text-muted-foreground italic max-w-md">This sanctuary is reserved for registered dreamers. Please manifest your presence to enter.</p>
+        <Button onClick={() => router.push("/login")} className="mt-8 rounded-full px-12 h-14 bg-primary text-white shadow-xl shadow-primary/20">Sign in to the Sanctuary</Button>
       </div>
     );
   }
@@ -130,9 +139,9 @@ export default function CommunityPage() {
           </div>
           
           <div className="glass-morphism rounded-3xl p-6 border-primary/10 bg-primary/5 hidden md:block">
-            <h3 className="font-headline text-lg font-bold mb-2">Scribe Protocol</h3>
+            <h3 className="font-headline text-lg font-bold mb-2">Dreamer Protocol</h3>
             <p className="text-xs text-muted-foreground italic leading-relaxed">
-              "Words are seeds. Speak with kindness, collaborate with grace, and keep the sanctuary safe."
+              "Words are seeds. Speak with kindness, collaborate with grace, and keep the sanctuary safe for all souls."
             </p>
           </div>
         </aside>

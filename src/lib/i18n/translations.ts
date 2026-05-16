@@ -30,6 +30,9 @@ export const translations = {
       following: "Following",
       no_results: "No chronicles match your search criteria.",
       no_stories: "No stories have blossomed here yet.",
+      community_title: "The Dreamer's Sanctuary",
+      community_desc: "Connect with fellow travelers, share fragments of your journey, and find your place in our growing community.",
+      community_cta: "Enter the Sanctuary",
     },
     write: {
       desk_title: "The Writing Desk",
@@ -96,6 +99,9 @@ export const translations = {
       following: "المتابعة",
       no_results: "لا توجد سجلات تطابق معايير بحثك.",
       no_stories: "لم تزدهر أي قصص هنا بعد.",
+      community_title: "ملاذ الحالمين",
+      community_desc: "تواصل مع زملائك المسافرين، وشارك أجزاءً من رحلتك، وجد مكانك في مجتمعنا المتنامي.",
+      community_cta: "ادخل الملاذ",
     },
     write: {
       desk_title: "مكتب الكتابة",
@@ -162,6 +168,9 @@ export const translations = {
       following: "Abonnements",
       no_results: "Aucune chronique ne correspond à vos critères.",
       no_stories: "Aucune histoire n'a encore éclos ici.",
+      community_title: "Le Sanctuaire des Rêveurs",
+      community_desc: "Connectez-vous avec d'autres voyageurs, partagez des fragments de votre voyage et trouvez votre place dans notre communauté grandissante.",
+      community_cta: "Entrer dans le Sanctuaire",
     },
     write: {
       desk_title: "Le Bureau d'Écriture",
