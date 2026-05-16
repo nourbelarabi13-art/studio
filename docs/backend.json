@@ -11,7 +11,9 @@
         "email": { "type": "string", "format": "email" },
         "role": { "type": "string", "enum": ["writer", "reader"], "default": "reader" },
         "ageConfirmed": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "followerCount": { "type": "integer", "default": 0 },
+        "followingCount": { "type": "integer", "default": 0 }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]
     },
@@ -33,6 +35,41 @@
         "likes": { "type": "integer", "default": 0 }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
+    },
+    "Follow": {
+      "title": "Follow",
+      "description": "A record of a user following another user.",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string" },
+        "followingId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerId", "followingId"]
+    },
+    "ChatRoom": {
+      "title": "Chat Room",
+      "description": "A discussion space for writers.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message within a chat room.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "senderName", "text"]
     }
   },
   "auth": {
@@ -46,6 +83,18 @@
     "/novels/{novelId}": {
       "schema": "Novel",
       "description": "A collection of all manifested chronicles and fragments."
+    },
+    "/follows/{followId}": {
+      "schema": "Follow",
+      "description": "Users following others. followId is followerId_followingId"
+    },
+    "/chatRooms/{roomId}": {
+      "schema": "ChatRoom",
+      "description": "Community discussion rooms."
+    },
+    "/chatRooms/{roomId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Messages in a specific chat room."
     }
   }
 }

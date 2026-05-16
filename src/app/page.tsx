@@ -1,23 +1,26 @@
+
 "use client";
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, X } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, X, Heart, Users, Globe } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function Home() {
   const db = useFirestore();
+  const { user } = useUser();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
   const [sevenDaysAgo, setSevenDaysAgo] = useState<string | null>(null);
@@ -44,6 +47,27 @@ export default function Home() {
   }, [db, selectedGenre]);
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
+
+  // Following Query
+  const followsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, "follows"), where("followerId", "==", user.uid));
+  }, [db, user]);
+  const { data: follows } = useCollection(followsQuery);
+  const followedIds = useMemo(() => follows?.map(f => f.followingId) || [], [follows]);
+
+  const followingNovelsQuery = useMemoFirebase(() => {
+    if (!db || followedIds.length === 0) return null;
+    // Note: limit to 10 for "in" query constraint
+    const chunks = followedIds.slice(0, 10); 
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      where("authorId", "in", chunks),
+      orderBy("publishedAt", "desc")
+    );
+  }, [db, followedIds]);
+  const { data: followingNovels, loading: followingLoading } = useCollection<Novel>(followingNovelsQuery);
 
   // Client-side search filtering
   const filteredNovels = useMemo(() => {
@@ -146,25 +170,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Rising Section */}
-        {risingNovels && risingNovels.length > 0 && !searchQuery && (
-          <div className="space-y-12 animate-fade-in">
-            <div className="flex flex-col gap-2">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <Zap className="text-accent-foreground w-8 h-8" />
-                Rising Stories
-              </h2>
-              <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {risingNovels.map((novel) => (
-                <NovelCard key={novel.id} novel={novel} badge="rising" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* The Archive */}
+        {/* The Sanctuary Feeds */}
         <div ref={archiveRef} className="space-y-12 scroll-mt-20">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 border-b border-primary/10 pb-12">
             <div className="space-y-3">
@@ -184,24 +190,34 @@ export default function Home() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-11 pr-11 bg-white/50 border-primary/10 h-12 rounded-full focus:bg-white transition-all shadow-sm"
                 />
-                {searchQuery && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary rounded-full"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
+            </div>
+          </div>
+
+          <Tabs defaultValue="archive" className="w-full">
+            <div className="flex items-center justify-between mb-8">
+              <TabsList className="bg-primary/5 rounded-full p-1 h-12 border border-primary/10">
+                <TabsTrigger value="archive" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <Globe className="w-4 h-4" />
+                  Archive
+                </TabsTrigger>
+                <TabsTrigger value="for-you" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <Sparkles className="w-4 h-4" />
+                  For You
+                </TabsTrigger>
+                <TabsTrigger value="following" className="rounded-full px-8 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                  <Users className="w-4 h-4" />
+                  Following
+                </TabsTrigger>
+              </TabsList>
+
               <div className="flex flex-wrap gap-2 justify-end">
                 <Button 
                   variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
                   onClick={() => setSelectedGenre('All')}
                   className={cn("rounded-full transition-all h-9 px-5", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
                 >
-                  All Stories
+                  All
                 </Button>
                 {GENRES.map(genre => (
                   <Button 
@@ -215,31 +231,82 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="italic">Softly turning the pages...</p>
-            </div>
-          ) : filteredNovels.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground italic bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
-              {searchQuery ? "No chronicles match your search criteria." : "No stories have blossomed in this category yet."}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredNovels.map((novel, idx) => (
-                <div 
-                  key={novel.id} 
-                  className="animate-fade-in" 
-                  style={{ animationDelay: `${idx * 0.05}s` }}
-                >
-                  <NovelCard novel={novel} />
+            <TabsContent value="archive">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="italic">Softly turning the pages...</p>
                 </div>
+              ) : filteredNovels.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground italic bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
+                  {searchQuery ? "No chronicles match your search criteria." : "No stories have blossomed here yet."}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {filteredNovels.map((novel, idx) => (
+                    <div key={novel.id} className="animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
+                      <NovelCard novel={novel} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="for-you">
+              <div className="space-y-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {/* For You is a mix of following + trending for MVP */}
+                  {[...(followingNovels || []), ...(trendingNovels || [])]
+                    .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i) // Unique
+                    .map((novel, idx) => (
+                      <NovelCard key={novel.id} novel={novel} />
+                    ))
+                  }
+                  {(!followingNovels?.length && !trendingNovels?.length) && (
+                    <div className="col-span-full text-center py-20 italic text-muted-foreground">
+                      Follow some scribes to see your personalized feed bloom.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="following">
+              {followingLoading ? (
+                <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+              ) : followingNovels && followingNovels.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {followingNovels.map((novel) => (
+                    <NovelCard key={novel.id} novel={novel} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 italic text-muted-foreground bg-white/30 rounded-[2rem] border border-dashed border-primary/10">
+                  Your followed scribes have not manifested new fragments recently.
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Rising Section */}
+        {risingNovels && risingNovels.length > 0 && !searchQuery && (
+          <div className="space-y-12 animate-fade-in">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                <Zap className="text-accent-foreground w-8 h-8" />
+                Rising Stories
+              </h2>
+              <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {risingNovels.map((novel) => (
+                <NovelCard key={novel.id} novel={novel} badge="rising" />
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
       <footer className="mt-24 border-t border-primary/10 bg-white/40 py-16">

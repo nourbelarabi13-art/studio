@@ -16,7 +16,7 @@ interface NovelCardProps {
 
 export function NovelCard({ novel, badge }: NovelCardProps) {
   return (
-    <Link href={`/read/${novel.id}`} className="group block">
+    <div className="group block">
       <Card className="overflow-hidden bg-card border-primary/5 group-hover:border-primary/30 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col relative">
         {badge && (
           <div className="absolute top-3 right-3 z-10">
@@ -34,7 +34,7 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
           </div>
         )}
 
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <Link href={`/read/${novel.id}`} className="relative aspect-[3/4] overflow-hidden">
           <Image
             src={novel.coverImage}
             alt={novel.title}
@@ -51,24 +51,24 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
               </Badge>
             ))}
           </div>
-        </div>
+        </Link>
         
         <CardContent className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-          <div className="space-y-2">
+          <Link href={`/read/${novel.id}`} className="space-y-2">
             <h3 className="font-headline text-xl font-bold leading-tight line-clamp-2 group-hover:text-primary transition-colors">
               {novel.title}
             </h3>
             <p className="text-muted-foreground text-sm line-clamp-2 italic leading-relaxed opacity-80">
               {novel.content.length > 80 ? novel.content.substring(0, 80) + "..." : novel.content}
             </p>
-          </div>
+          </Link>
           
           <div className="flex flex-col gap-3 pt-4 border-t border-primary/5">
             <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              <div className="flex items-center gap-2">
+              <Link href={`/profile/${novel.authorId}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                 <User className="w-3 h-3 text-primary/60" />
-                <span className="group-hover:text-foreground transition-colors">{novel.authorUsername}</span>
-              </div>
+                <span>{novel.authorUsername}</span>
+              </Link>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
                   <Eye className="w-3 h-3" />
@@ -83,6 +83,6 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }

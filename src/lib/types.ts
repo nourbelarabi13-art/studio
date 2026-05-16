@@ -24,13 +24,28 @@ export interface UserProfile {
   role: UserRole;
   ageConfirmed: boolean;
   createdAt: string;
+  followerCount?: number;
+  followingCount?: number;
 }
 
-export interface Report {
+export interface Follow {
+  followerId: string;
+  followingId: string;
+  createdAt: string;
+}
+
+export interface ChatRoom {
   id: string;
-  novelId: string;
-  reporterId: string;
-  reason: string;
-  status: 'pending' | 'resolved' | 'dismissed';
+  name: string;
+  description: string;
+  category: string;
+  lastMessageAt?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
   createdAt: string;
 }

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, LayoutDashboard, Heart } from "lucide-react";
+import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, LayoutDashboard, Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -37,9 +37,10 @@ export function Navbar() {
   const { data: profile } = useDoc<UserProfile>(userProfileRef);
 
   const navLinks = [
-    { name: "Discover", href: "/", icon: Library, roles: ["writer", "reader"] },
-    { name: "Write", href: "/write", icon: PenSquare, roles: ["writer"] },
-    { name: "My Vault", href: "/vault", icon: BookOpen, roles: ["writer"] },
+    { name: "Archive", href: "/", icon: Library, roles: ["writer", "reader"] },
+    { name: "Forge", href: "/write", icon: PenSquare, roles: ["writer"] },
+    { name: "Vault", href: "/vault", icon: BookOpen, roles: ["writer"] },
+    { name: "Community", href: "/community", icon: MessageSquare, roles: ["writer"] },
   ];
 
   const handleLogout = async () => {
@@ -116,12 +117,16 @@ export function Navbar() {
                   <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                     <User className="w-3.5 h-3.5" />
                   </div>
-                  <span className="hidden sm:inline font-medium">{profile?.username || user.email?.split('@')[0] || "Dreamer"}</span>
+                  <span className="hidden sm:inline font-medium">{profile?.username || "Dreamer"}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground">
                 <DropdownMenuLabel className="font-headline text-foreground">Your Sanctuary</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
+                  <User className="w-4 h-4" />
+                  View Profile
+                </DropdownMenuItem>
                 {profile?.role === 'writer' && (
                   <DropdownMenuItem onClick={() => router.push('/vault')} className="gap-2 cursor-pointer focus:bg-primary/5 focus:text-primary">
                     <LayoutDashboard className="w-4 h-4" />
