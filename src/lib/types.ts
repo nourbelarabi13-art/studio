@@ -43,6 +43,7 @@ export interface UserProfile {
   followerCount?: number;
   followingCount?: number;
   language: AppLanguage;
+  preferredGenres?: Genre[];
 }
 
 export interface Follow {
@@ -64,5 +65,11 @@ export interface ChatMessage {
   senderId: string;
   senderName: string;
   text: string;
+  createdAt: string;
+}
+
+export interface Bookmark {
+  userId: string;
+  novelId: string;
   createdAt: string;
 }

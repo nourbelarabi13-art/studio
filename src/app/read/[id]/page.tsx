@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { NovelCard } from "@/components/novel-card";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -24,7 +25,8 @@ import {
   Sun,
   Palette,
   Check,
-  List
+  List,
+  Sparkles
 } from "lucide-react";
 import {
   Dialog,
@@ -48,8 +50,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useDoc, useUser } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
+import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { incrementNovelView, toggleLikeNovel } from "@/firebase/firestore/novel-actions";
 import { Novel } from "@/lib/types";
@@ -87,6 +89,18 @@ export default function ReadingPage() {
 
   const { data: novel, loading } = useDoc<Novel>(novelRef);
 
+  // Recommendations: Similar Stories
+  const similarNovelsQuery = useMemoFirebase(() => {
+    if (!db || !novel) return null;
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      where("genres", "array-contains-any", novel.genres),
+      limit(4)
+    );
+  }, [db, novel]);
+  const { data: similarNovels } = useCollection<Novel>(similarNovelsQuery);
+
   useEffect(() => {
     if (db && id) {
       incrementNovelView(db, id as string);
@@ -106,7 +120,7 @@ export default function ReadingPage() {
   }, [id]);
 
   useEffect(() => {
-    if (id) {
+    if (id && !loading) {
       const pos = localStorage.getItem(`read-pos-${id}`);
       if (pos && parseInt(pos) > 500) {
         setSavedPosition(parseInt(pos));
@@ -362,6 +376,24 @@ export default function ReadingPage() {
               </Button>
             </div>
           </div>
+
+          {/* Similar Stories Recommendation */}
+          {similarNovels && similarNovels.length > 1 && (
+            <section className="space-y-8 pt-16">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-headline text-2xl font-bold italic">Similar Chronicles</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {similarNovels
+                  .filter(n => n.id !== id)
+                  .slice(0, 4)
+                  .map(similarNovel => (
+                    <NovelCard key={similarNovel.id} novel={similarNovel} />
+                  ))}
+              </div>
+            </section>
+          )}
         </footer>
       </main>
     </div>
