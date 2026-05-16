@@ -6,14 +6,13 @@ import { openai } from 'genkitx-openai';
 /**
  * Global Genkit instance for the Rosaline Bela sanctuary.
  * Configured with Google AI and OpenAI (ChatGPT) plugins.
- * Uses a defensive initialization pattern to prevent "undefined" plugin errors.
+ * Uses a defensive initialization pattern to prevent "undefined" or "not a function" errors.
  */
 
 // Initialize plugins with safety checks to avoid runtime crashes during module load
 const initializedPlugins = [
   googleAI(),
-  // Community plugins like openai can have varying export structures based on version.
-  // We use a safe check to ensure we only register initialized plugin objects.
+  // Defensive check for community plugins which may vary in export structure
   typeof openai === 'function' ? (openai as any)() : openai
 ].filter(Boolean);
 
