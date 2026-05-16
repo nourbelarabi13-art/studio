@@ -2,6 +2,7 @@
 export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi';
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
+export type BookmarkCategory = 'favorite' | 'read-later';
 
 export interface Chapter {
   id: string;
@@ -82,7 +83,11 @@ export interface ChatMessage {
 }
 
 export interface Bookmark {
-  userId: string;
+  uid: string;
   novelId: string;
+  novelTitle: string;
+  coverImage: string;
+  authorUsername: string;
+  category: BookmarkCategory;
   createdAt: string;
 }

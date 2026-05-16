@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare } from "lucide-react";
+import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare, Bookmark as BookmarkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,7 @@ export function Navbar() {
 
   const navLinks = [
     { name: t.nav.archive, href: "/", icon: Library, roles: ["writer", "reader"] },
+    { name: "My Library", href: "/library", icon: BookmarkIcon, roles: ["writer", "reader"] },
     { name: t.nav.community, href: "/community", icon: MessageSquare, roles: ["writer", "reader"] },
     { name: t.nav.forge, href: "/write", icon: PenSquare, roles: ["writer"] },
     { name: t.nav.vault, href: "/vault", icon: BookOpen, roles: ["writer"] },

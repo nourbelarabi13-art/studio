@@ -14,7 +14,7 @@ import {
   Flag, 
   Type, 
   Share2,
-  Bookmark,
+  Bookmark as BookmarkIcon,
   User,
   Heart,
   Eye,
@@ -55,7 +55,8 @@ import { doc, collection, query, where, limit, orderBy } from "firebase/firestor
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { incrementNovelView, toggleLikeNovel } from "@/firebase/firestore/novel-actions";
 import { saveReadingProgress } from "@/firebase/firestore/reading-progress-actions";
-import { Novel, ReadingProgress } from "@/lib/types";
+import { toggleBookmark } from "@/firebase/firestore/bookmark-actions";
+import { Novel, ReadingProgress, BookmarkCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 
@@ -71,6 +72,7 @@ export default function ReadingPage() {
   
   const [reportReason, setReportReason] = useState("");
   const [isLiking, setIsLiking] = useState(false);
+  const [isBookmarking, setIsBookmarking] = useState(false);
   const [useTranslation, setUseTranslation] = useState(false);
   
   // Custom reading controls
@@ -96,6 +98,13 @@ export default function ReadingPage() {
     return doc(db, "users", user.uid, "progress", id as string);
   }, [db, user, id]);
   const { data: cloudProgress } = useDoc<ReadingProgress>(progressRef);
+
+  // Bookmark Reference
+  const bookmarkRef = useMemoFirebase(() => {
+    if (!db || !user || !id) return null;
+    return doc(db, "users", user.uid, "bookmarks", id as string);
+  }, [db, user, id]);
+  const { data: bookmarkData } = useDoc(bookmarkRef);
 
   // Recommendations: Similar Stories
   const similarNovelsQuery = useMemoFirebase(() => {
@@ -185,6 +194,26 @@ export default function ReadingPage() {
     setIsLiking(true);
     await toggleLikeNovel(db, id as string, user.uid);
     setIsLiking(false);
+  };
+
+  const handleBookmark = async (category: BookmarkCategory) => {
+    if (!user) {
+      toast({ title: "Identify Yourself", variant: "destructive" });
+      return;
+    }
+    if (!db || !id || !novel) return;
+    setIsBookmarking(true);
+    const added = await toggleBookmark(db, user.uid, id as string, {
+      title: novel.title,
+      coverImage: novel.coverImage,
+      authorUsername: novel.authorUsername
+    }, category);
+    setIsBookmarking(false);
+    
+    toast({
+      title: added ? "Chronicle Secured" : "Chronicle Released",
+      description: added ? `Added to your ${category === 'favorite' ? 'Favorites' : 'Read Later'} collection.` : "Removed from your archive.",
+    });
   };
 
   const activeChapter = useMemo(() => {
@@ -362,6 +391,28 @@ export default function ReadingPage() {
                 </div>
               </PopoverContent>
             </Popover>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", bookmarkData ? "text-primary" : "text-muted-foreground hover:text-primary")}>
+                  {bookmarkData ? (
+                    bookmarkData.category === 'favorite' ? <Heart className="w-5 h-5 fill-primary" /> : <BookmarkIcon className="w-5 h-5 fill-primary" />
+                  ) : (
+                    <BookmarkIcon className="w-5 h-5" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-48 p-2">
+                <DropdownMenuItem onClick={() => handleBookmark('favorite')} className="gap-3 cursor-pointer rounded-xl">
+                  <Heart className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-bold">Add to Favorites</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBookmark('read-later')} className="gap-3 cursor-pointer rounded-xl">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  <span className="text-xs font-bold">Read Later</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-10 w-10 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
               <Heart className={cn("w-5 h-5", (novel.likes > 0) && "fill-primary text-primary")} />

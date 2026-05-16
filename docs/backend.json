@@ -55,6 +55,21 @@
       },
       "required": ["uid", "novelId", "percentage"]
     },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "A saved chronicle in a user's library.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "novelId": { "type": "string" },
+        "novelTitle": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "category": { "type": "string", "enum": ["favorite", "read-later"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "novelId", "category"]
+    },
     "Follow": {
       "title": "Follow",
       "description": "A record of a user following another user.",
@@ -79,7 +94,7 @@
       "required": ["name", "category"]
     },
     "ChatMessage": {
-      "title": "Chat Message",
+      "title": "ChatMessage",
       "description": "A message within a chat room.",
       "type": "object",
       "properties": {
@@ -102,6 +117,10 @@
     "/users/{uid}/progress/{novelId}": {
       "schema": "ReadingProgress",
       "description": "The user's reading progress for a specific chronicle."
+    },
+    "/users/{uid}/bookmarks/{novelId}": {
+      "schema": "Bookmark",
+      "description": "User's saved chronicles and favorites."
     },
     "/novels/{novelId}": {
       "schema": "Novel",
