@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Music, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Music, Volume2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const AMBIENT_TRACK_URL = "https://assets.mixkit.co/music/preview/mixkit-beautiful-dream-493.mp3";
+// Reliable direct MP3 link for ambient atmosphere
+const AMBIENT_TRACK_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
 export function AmbientPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,9 +16,18 @@ export function AmbientPlayer() {
 
   useEffect(() => {
     // Create audio element on mount
-    audioRef.current = new Audio(AMBIENT_TRACK_URL);
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0;
+    const audio = new Audio(AMBIENT_TRACK_URL);
+    audio.loop = true;
+    audio.volume = 0;
+    
+    // Graceful error handling - log to console only, no user-facing alerts
+    audio.onerror = () => {
+      console.warn("The sanctuary's melody failed to manifest. The source link might be unstable.");
+      setIsLoading(false);
+      setIsPlaying(false);
+    };
+
+    audioRef.current = audio;
 
     return () => {
       if (audioRef.current) {
@@ -37,8 +47,8 @@ export function AmbientPlayer() {
       clearInterval(fadeIntervalRef.current);
     }
 
-    const step = 0.05;
-    const intervalTime = 50; // ms
+    const step = 0.02;
+    const intervalTime = 50; // ms for a smoother fade
 
     fadeIntervalRef.current = setInterval(() => {
       if (!audioRef.current) {
@@ -72,9 +82,10 @@ export function AmbientPlayer() {
       try {
         await audioRef.current.play();
         setIsPlaying(true);
-        fadeVolume(0.4); // Target comfortable ambient volume
+        fadeVolume(0.3); // Comfortable target volume
       } catch (error) {
-        console.error("The mists blocked the music manifestation:", error);
+        // Silent error handling for the user experience
+        console.warn("Audio playback ritual interrupted by the environment.");
       } finally {
         setIsLoading(false);
       }
