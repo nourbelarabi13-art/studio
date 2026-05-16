@@ -37,6 +37,30 @@
       "imageHint": "fantasy manuscript"
     },
     {
+      "id": "gallery-1",
+      "description": "Close up of a vintage typewriter with soft pink petals",
+      "imageUrl": "https://picsum.photos/seed/vintage-typewriter/800/600",
+      "imageHint": "vintage typewriter"
+    },
+    {
+      "id": "gallery-2",
+      "description": "Old leather bound books in a soft moonlit library",
+      "imageUrl": "https://picsum.photos/seed/old-books/800/600",
+      "imageHint": "vintage books"
+    },
+    {
+      "id": "gallery-3",
+      "description": "A fountain pen resting on a handwritten letter with soft light",
+      "imageUrl": "https://picsum.photos/seed/fountain-pen/800/600",
+      "imageHint": "fountain pen"
+    },
+    {
+      "id": "gallery-4",
+      "description": "A lit candle next to an open book in a dark room",
+      "imageUrl": "https://picsum.photos/seed/candle-reading/800/600",
+      "imageHint": "candle book"
+    },
+    {
       "id": "novel-1",
       "description": "An elegant book with a soft pink flower on top",
       "imageUrl": "https://picsum.photos/seed/pink-flower-book/600/800",

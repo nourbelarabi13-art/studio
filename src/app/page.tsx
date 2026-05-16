@@ -3,6 +3,7 @@
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { Genre, Novel, ReadingProgress, AppLanguage, Bookmark } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart, MapPin } from "lucide-react";
@@ -209,6 +210,9 @@ export default function Home() {
     <div className="min-h-screen">
       <Navbar />
       
+      {/* Introductory mysterious gallery */}
+      <PhotoGallery />
+
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <DynamicBackground />
         
