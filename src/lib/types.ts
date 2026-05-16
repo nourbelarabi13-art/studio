@@ -47,6 +47,8 @@ export interface UserProfile {
   followingCount?: number;
   totalViews?: number;
   totalLikes?: number;
+  publishedCount?: number;
+  achievements?: string[];
   language: AppLanguage;
   preferredGenres?: Genre[];
 }

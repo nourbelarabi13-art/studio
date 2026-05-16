@@ -17,6 +17,8 @@
         "followingCount": { "type": "integer", "default": 0 },
         "totalViews": { "type": "integer", "default": 0 },
         "totalLikes": { "type": "integer", "default": 0 },
+        "publishedCount": { "type": "integer", "default": 0 },
+        "achievements": { "type": "array", "items": { "type": "string" } },
         "language": { "type": "string", "enum": ["en", "ar", "fr"] }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]

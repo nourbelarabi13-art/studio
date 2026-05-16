@@ -10,6 +10,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { ReadingProgress } from '@/lib/types';
+import { checkAchievements } from './achievement-actions';
 
 /**
  * Saves or updates reading progress for a user and novel.
@@ -23,7 +24,9 @@ export function saveReadingProgress(
   setDoc(progressRef, {
     ...progress,
     lastReadAt: new Date().toISOString()
-  }, { merge: true }).catch((error) => {
+  }, { merge: true }).then(() => {
+    checkAchievements(db, progress.uid);
+  }).catch((error) => {
     errorEmitter.emit('permission-error', new FirestorePermissionError({
       path: progressRef.path,
       operation: 'write',

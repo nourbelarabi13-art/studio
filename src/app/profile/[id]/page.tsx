@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, 
   User, 
@@ -18,7 +19,8 @@ import {
   Quote, 
   TrendingUp, 
   Zap,
-  Award
+  Award,
+  Trophy
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, orderBy } from "firebase/firestore";
@@ -28,6 +30,7 @@ import { toggleFollow } from "@/firebase/firestore/social-actions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { ACHIEVEMENTS } from "@/lib/achievements";
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -59,6 +62,12 @@ export default function ProfilePage() {
     );
   }, [db, id, sortOrder]);
   const { data: novels, loading: novelsLoading } = useCollection<Novel>(novelsQuery);
+
+  const readingProgressQuery = useMemoFirebase(() => {
+    if (!db || !id) return null;
+    return query(collection(db, "users", id as string, "progress"));
+  }, [db, id]);
+  const { data: readingProgress } = useCollection(readingProgressQuery);
 
   const popularStory = useMemo(() => {
     if (!novels || novels.length === 0) return null;
@@ -99,7 +108,15 @@ export default function ProfilePage() {
   }
 
   const isOwnProfile = currentUser?.uid === profile.uid;
-  const isTopWriter = (profile.totalViews || 0) > 1000 || (profile.followerCount || 0) > 100;
+  const isGrandArchivist = (profile.achievements?.length || 0) >= ACHIEVEMENTS.length - 1;
+
+  const statsForAchievements = {
+    publishedCount: profile.publishedCount || 0,
+    totalViews: profile.totalViews || 0,
+    totalLikes: profile.totalLikes || 0,
+    readingCount: readingProgress?.length || 0,
+    maxViews: novels?.reduce((max, n) => Math.max(max, n.views || 0), 0) || 0
+  };
 
   return (
     <div className="min-h-screen dreamy-fantasy-gradient">
@@ -114,9 +131,9 @@ export default function ProfilePage() {
                <User className="w-20 h-20 text-primary/20" />
                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            {isTopWriter && (
+            {isGrandArchivist && (
               <div className="absolute -bottom-3 -right-3 bg-primary text-white p-2.5 rounded-2xl shadow-xl ring-4 ring-white animate-bounce">
-                <Award className="w-6 h-6" />
+                <Trophy className="w-6 h-6" />
               </div>
             )}
           </div>
@@ -125,7 +142,12 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <h1 className="font-headline text-5xl font-bold">{profile.username}</h1>
-                {profile.role === 'writer' && (
+                {isGrandArchivist && (
+                  <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
+                    Grand Archivist
+                  </Badge>
+                )}
+                {profile.role === 'writer' && !isGrandArchivist && (
                   <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
                     Celestial Scribe
                   </Badge>
@@ -191,6 +213,51 @@ export default function ProfilePage() {
             </div>
           </div>
         </header>
+
+        {/* Achievements Section */}
+        <section className="space-y-8 animate-fade-in">
+          <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+            <Trophy className="w-6 h-6 text-primary" />
+            <h2 className="font-headline text-3xl font-bold">Achievements Vault</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ACHIEVEMENTS.map((def) => {
+              const isUnlocked = profile.achievements?.includes(def.id);
+              const currentVal = statsForAchievements[def.metric];
+              const progress = Math.min(100, (currentVal / def.threshold) * 100);
+              
+              return (
+                <div 
+                  key={def.id} 
+                  className={cn(
+                    "glass-morphism rounded-3xl p-6 border-primary/5 space-y-4 transition-all",
+                    isUnlocked ? "bg-white/90 shadow-md ring-1 ring-primary/10" : "opacity-60 grayscale-[0.8]"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner",
+                      isUnlocked ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                    )}>
+                      <def.icon className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-sm">{def.name}</p>
+                      <p className="text-[10px] text-muted-foreground italic leading-tight">{def.description}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                      <span>{isUnlocked ? "Manifested" : "Progress"}</span>
+                      <span>{Math.min(currentVal, def.threshold)} / {def.threshold}</span>
+                    </div>
+                    <Progress value={progress} className={cn("h-1", isUnlocked ? "bg-primary/20" : "bg-muted")} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Popular Story Highlight */}
         {popularStory && (

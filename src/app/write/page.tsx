@@ -51,7 +51,7 @@ import { generateCover } from "@/ai/flows/ai-cover-generator-flow";
 import { translateStory } from "@/ai/flows/translate-story-flow";
 import { cn } from "@/lib/utils";
 import { useFirestore, useUser, useDoc } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDocs, query, where, increment } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -59,6 +59,7 @@ import Image from "next/image";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { useLanguage } from "@/lib/i18n/context";
 import { createNotification } from "@/firebase/firestore/notification-actions";
+import { checkAchievements } from "@/firebase/firestore/achievement-actions";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
@@ -243,6 +244,12 @@ export default function WritePage() {
         const ref = await addDoc(collection(db, "novels"), novelData);
         finalId = ref.id;
       }
+
+      // Update published count and check achievements
+      await updateDoc(doc(db, "users", user.uid), {
+        publishedCount: increment(1)
+      });
+      await checkAchievements(db, user.uid);
       
       // Notify followers
       const followersQuery = query(collection(db, "follows"), where("followingId", "==", user.uid));
@@ -258,7 +265,7 @@ export default function WritePage() {
         });
       });
 
-      toast({ title: t.home.community_title, description: "Your story is now part of the archive." });
+      toast({ title: "Manifested", description: "Your story is now part of the archive." });
       router.push("/vault");
     } catch (error) { 
       toast({ title: "Ritual Interrupted", description: "The publishing failed.", variant: "destructive" });

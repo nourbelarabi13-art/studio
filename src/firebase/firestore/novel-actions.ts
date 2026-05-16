@@ -13,6 +13,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { createNotification } from './notification-actions';
+import { checkAchievements } from './achievement-actions';
 
 /**
  * Increments the view count for a novel and the author's total view count.
@@ -31,6 +32,8 @@ export async function incrementNovelView(db: Firestore, novelId: string) {
     if (novelData.authorId) {
       updateDoc(doc(db, 'users', novelData.authorId), {
         totalViews: increment(1)
+      }).then(() => {
+        checkAchievements(db, novelData.authorId);
       });
     }
   }).catch(async () => {
@@ -59,7 +62,9 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
     // Unlike
     return deleteDoc(likeRef).then(() => {
       updateDoc(novelRef, { likes: increment(-1) });
-      updateDoc(authorRef, { totalLikes: increment(-1) });
+      updateDoc(authorRef, { totalLikes: increment(-1) }).then(() => {
+        checkAchievements(db, novelData.authorId);
+      });
       return false;
     }).catch(() => {
        errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -72,7 +77,9 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
     // Like
     return setDoc(likeRef, { createdAt: new Date().toISOString() }).then(() => {
       updateDoc(novelRef, { likes: increment(1) });
-      updateDoc(authorRef, { totalLikes: increment(1) });
+      updateDoc(authorRef, { totalLikes: increment(1) }).then(() => {
+        checkAchievements(db, novelData.authorId);
+      });
       
       // Notify author
       if (novelData && novelData.authorId !== userId) {
