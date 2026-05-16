@@ -14,9 +14,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Sparkles, Send, Loader2, User, Ghost, X, MessageSquare, Wand2, BookOpen } from 'lucide-react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, addDoc, query, orderBy, limit, doc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
-import { AiChatMessage, UserProfile } from '@/lib/types';
+import { AiChatMessage } from '@/lib/types';
 import { askOracle } from '@/ai/flows/ai-assistant-flow';
 import { useLanguage } from '@/lib/i18n/context';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 export function AiAssistant() {
   const { user } = useUser();
   const db = useFirestore();
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const { toast } = useToast();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +35,6 @@ export function AiAssistant() {
   const [isProcessing, setIsProcessing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Persistence of chat history
   const chatQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(
@@ -45,7 +44,7 @@ export function AiAssistant() {
     );
   }, [db, user]);
 
-  const { data: messages, loading: messagesLoading } = useCollection<AiChatMessage>(chatQuery);
+  const { data: messages } = useCollection<AiChatMessage>(chatQuery);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,6 +56,7 @@ export function AiAssistant() {
     const messageToSend = text || inputMessage;
     if (!messageToSend.trim() || !user || !db || isProcessing) return;
 
+    console.log("Whispering to the Oracle:", messageToSend);
     setInputMessage('');
     setIsProcessing(true);
 
@@ -66,7 +66,6 @@ export function AiAssistant() {
       createdAt: new Date().toISOString()
     };
 
-    // 1. Save user message to Firestore (non-blocking)
     addDoc(collection(db, 'users', user.uid, 'aiChats'), userMsg).catch(async (err) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: `users/${user.uid}/aiChats`,
@@ -76,7 +75,6 @@ export function AiAssistant() {
     });
 
     try {
-      // 2. Ask the Oracle
       const history = messages?.map(m => ({ role: m.role, content: m.content })) || [];
       const oracleResponse = await askOracle({
         uid: user.uid,
@@ -85,12 +83,14 @@ export function AiAssistant() {
         history
       });
 
-      // 3. Save AI response to Firestore (non-blocking)
+      console.log("Oracle's Response received:", oracleResponse);
+
       const aiMsg: Omit<AiChatMessage, 'id'> = {
         role: 'model',
         content: oracleResponse.response,
         createdAt: new Date().toISOString()
       };
+
       addDoc(collection(db, 'users', user.uid, 'aiChats'), aiMsg).catch(async (err) => {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: `users/${user.uid}/aiChats`,
@@ -99,10 +99,11 @@ export function AiAssistant() {
         }));
       });
 
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Oracle manifest failed:", error);
       toast({ 
-        title: "Oracle Silenced", 
-        description: "The celestial link was interrupted. Please try again.",
+        title: "Celestial Link Error", 
+        description: error.message || "The Oracle is currently silent. Please check your connection and try again.",
         variant: "destructive" 
       });
     } finally {
@@ -138,7 +139,7 @@ export function AiAssistant() {
         <div className="flex flex-col h-full overflow-hidden">
           <ScrollArea className="flex-1 p-8">
             <div className="space-y-8 pb-8">
-              {messages?.length === 0 && !isProcessing && (
+              {(!messages || messages.length === 0) && !isProcessing && (
                 <div className="text-center py-20 space-y-6">
                   <Ghost className="w-16 h-16 text-primary/10 mx-auto" />
                   <div className="space-y-2">
