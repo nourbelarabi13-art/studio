@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,8 @@ import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, limit, orderBy } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { incrementNovelView, toggleLikeNovel } from "@/firebase/firestore/novel-actions";
-import { Novel } from "@/lib/types";
+import { saveReadingProgress } from "@/firebase/firestore/reading-progress-actions";
+import { Novel, ReadingProgress } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 
@@ -89,6 +90,13 @@ export default function ReadingPage() {
 
   const { data: novel, loading } = useDoc<Novel>(novelRef);
 
+  // Firestore Progress Reference
+  const progressRef = useMemoFirebase(() => {
+    if (!db || !user || !id) return null;
+    return doc(db, "users", user.uid, "progress", id as string);
+  }, [db, user, id]);
+  const { data: cloudProgress } = useDoc<ReadingProgress>(progressRef);
+
   // Recommendations: Similar Stories
   const similarNovelsQuery = useMemoFirebase(() => {
     if (!db || !novel) return null;
@@ -107,27 +115,59 @@ export default function ReadingPage() {
     }
   }, [db, id]);
 
+  // Save Progress to Firestore
+  const updateProgress = useCallback((percentage: number, scrollY: number) => {
+    if (!db || !user || !novel || !id) return;
+    
+    saveReadingProgress(db, {
+      uid: user.uid,
+      novelId: id as string,
+      novelTitle: novel.title,
+      coverImage: novel.coverImage,
+      authorUsername: novel.authorUsername,
+      percentage: Math.round(percentage),
+      scrollPosition: scrollY,
+      chapterIndex: currentChapterIndex
+    });
+  }, [db, user, novel, id, currentChapterIndex]);
+
   useEffect(() => {
+    let lastSavedAt = 0;
+    const saveThreshold = 5000; // Save at most every 5 seconds
+
     const handleScroll = () => {
       const winScroll = document.documentElement.scrollTop;
       const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
       const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       setScrollProgress(scrolled);
-      if (id) localStorage.setItem(`read-pos-${id}`, winScroll.toString());
+      
+      const now = Date.now();
+      if (now - lastSavedAt > saveThreshold) {
+        updateProgress(scrolled, winScroll);
+        lastSavedAt = now;
+      }
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [id]);
+  }, [updateProgress]);
 
+  // Restore position from cloud or local
   useEffect(() => {
-    if (id && !loading) {
-      const pos = localStorage.getItem(`read-pos-${id}`);
-      if (pos && parseInt(pos) > 500) {
-        setSavedPosition(parseInt(pos));
+    if (!loading && (cloudProgress || id)) {
+      const cloudPos = cloudProgress?.scrollPosition;
+      const localPos = localStorage.getItem(`read-pos-${id}`);
+      const bestPos = cloudPos || (localPos ? parseInt(localPos) : null);
+
+      if (bestPos && bestPos > 500) {
+        setSavedPosition(bestPos);
         setShowRestorePosition(true);
+        if (cloudProgress?.chapterIndex !== undefined) {
+          setCurrentChapterIndex(cloudProgress.chapterIndex);
+        }
       }
     }
-  }, [id, loading]);
+  }, [id, loading, cloudProgress]);
 
   const restoreScrollPosition = () => {
     if (savedPosition !== null) {
@@ -324,7 +364,7 @@ export default function ReadingPage() {
             </Popover>
 
             <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-10 w-10 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
-              <Heart className={cn("w-5 h-5", novel.likes > 0 && "fill-primary text-primary")} />
+              <Heart className={cn("w-5 h-5", (novel.likes > 0) && "fill-primary text-primary")} />
             </Button>
           </div>
         </div>
@@ -352,7 +392,7 @@ export default function ReadingPage() {
             </Button>
             <Button 
               className="gap-3 bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-xl"
-              disabled={!novel.chapters || currentChapterIndex === novel.chapters.length - 1}
+              disabled={!novel.chapters || currentChapterIndex === (novel.chapters.length - 1)}
               onClick={() => { setCurrentChapterIndex(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             >
               {t.read.next}

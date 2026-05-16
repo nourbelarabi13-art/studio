@@ -3,11 +3,12 @@
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
-import { Genre, Novel } from "@/lib/types";
+import { Genre, Novel, ReadingProgress } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
@@ -15,6 +16,7 @@ import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/i18n/context";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
@@ -33,6 +35,17 @@ export default function Home() {
     date.setDate(date.getDate() - 7);
     setSevenDaysAgo(date.toISOString());
   }, []);
+
+  // Reading Progress Query
+  const progressQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(
+      collection(db, "users", user.uid, "progress"),
+      orderBy("lastReadAt", "desc"),
+      limit(4)
+    );
+  }, [db, user]);
+  const { data: progressData, loading: progressLoading } = useCollection<ReadingProgress>(progressQuery);
 
   // Archive Query
   const novelsQuery = useMemoFirebase(() => {
@@ -153,6 +166,41 @@ export default function Home() {
       </section>
 
       <main className="container mx-auto px-4 py-16 space-y-32">
+        {/* Continue Reading Section */}
+        {user && progressData && progressData.length > 0 && !searchQuery && (
+          <div className="space-y-12 animate-fade-in">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                <Clock className="text-primary w-8 h-8" />
+                {t.home.continue_reading}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {progressData.map((prog) => (
+                <Link href={`/read/${prog.novelId}`} key={prog.novelId} className="group">
+                  <div className="glass-morphism rounded-[2.5rem] p-6 border-primary/5 hover:border-primary/20 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col gap-6 h-full">
+                    <div className="relative aspect-[3/2] rounded-[1.8rem] overflow-hidden shadow-sm">
+                      <Image src={prog.coverImage} alt={prog.novelTitle} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <h3 className="font-headline text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{prog.novelTitle}</h3>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold italic">{prog.authorUsername}</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
+                        <span>Progress</span>
+                        <span className="text-primary">{prog.percentage}%</span>
+                      </div>
+                      <Progress value={prog.percentage} className="h-1.5 bg-primary/5" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Trending Section */}
         {trendingNovels && trendingNovels.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">

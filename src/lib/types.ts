@@ -46,6 +46,19 @@ export interface UserProfile {
   preferredGenres?: Genre[];
 }
 
+export interface ReadingProgress {
+  id?: string;
+  uid: string;
+  novelId: string;
+  novelTitle: string;
+  coverImage: string;
+  authorUsername: string;
+  percentage: number;
+  scrollPosition: number;
+  chapterIndex: number;
+  lastReadAt: string;
+}
+
 export interface Follow {
   followerId: string;
   followingId: string;

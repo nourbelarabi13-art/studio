@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     nav: {
@@ -27,6 +28,7 @@ export const translations = {
       search_placeholder: "Search titles or authors...",
       for_you: "For You",
       following: "Following",
+      continue_reading: "Continue Your Journey",
       no_results: "No chronicles match your search criteria.",
       no_stories: "No stories have blossomed here yet.",
       community_title: "The Dreamer's Sanctuary",
@@ -108,6 +110,7 @@ export const translations = {
       search_placeholder: "ابحث عن عناوين أو مؤلفين...",
       for_you: "لك",
       following: "المتابعة",
+      continue_reading: "واصل رحلتك",
       no_results: "لا توجد سجلات تطابق معايير بحثك.",
       no_stories: "لم تزدهر أي قصص هنا بعد.",
       community_title: "ملاذ الحالمين",
@@ -189,6 +192,7 @@ export const translations = {
       search_placeholder: "Rechercher des titres ou des auteurs...",
       for_you: "Pour Vous",
       following: "Abonnements",
+      continue_reading: "Continuez Votre Voyage",
       no_results: "Aucune chronique ne correspond à vos critères.",
       no_stories: "Aucune histoire n'a encore éclos ici.",
       community_title: "Le Sanctuaire des Rêveurs",

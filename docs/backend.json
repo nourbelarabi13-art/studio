@@ -13,7 +13,8 @@
         "ageConfirmed": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
         "followerCount": { "type": "integer", "default": 0 },
-        "followingCount": { "type": "integer", "default": 0 }
+        "followingCount": { "type": "integer", "default": 0 },
+        "language": { "type": "string", "enum": ["en", "ar", "fr"] }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]
     },
@@ -32,9 +33,27 @@
         "coverImage": { "type": "string" },
         "isDraft": { "type": "boolean" },
         "views": { "type": "integer", "default": 0 },
-        "likes": { "type": "integer", "default": 0 }
+        "likes": { "type": "integer", "default": 0 },
+        "language": { "type": "string", "enum": ["en", "ar", "fr"] }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
+    },
+    "ReadingProgress": {
+      "title": "Reading Progress",
+      "description": "A record of a user's progress through a chronicle.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "novelId": { "type": "string" },
+        "novelTitle": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "percentage": { "type": "number" },
+        "scrollPosition": { "type": "number" },
+        "chapterIndex": { "type": "integer" },
+        "lastReadAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "novelId", "percentage"]
     },
     "Follow": {
       "title": "Follow",
@@ -79,6 +98,10 @@
     "/users/{uid}": {
       "schema": "UserProfile",
       "description": "The user's personal profile scroll."
+    },
+    "/users/{uid}/progress/{novelId}": {
+      "schema": "ReadingProgress",
+      "description": "The user's reading progress for a specific chronicle."
     },
     "/novels/{novelId}": {
       "schema": "Novel",
