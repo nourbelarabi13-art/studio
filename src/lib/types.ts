@@ -35,6 +35,12 @@ export interface Novel {
   };
 }
 
+export interface ReadingPreferences {
+  fontSize: number;
+  lineHeight: number;
+  mode: 'light' | 'pink' | 'lavender' | 'midnight';
+}
+
 export interface UserProfile {
   uid: string;
   username: string;
@@ -51,6 +57,7 @@ export interface UserProfile {
   achievements?: string[];
   language: AppLanguage;
   preferredGenres?: Genre[];
+  readingPreferences?: ReadingPreferences;
 }
 
 export interface ReadingProgress {
@@ -64,7 +71,7 @@ export interface ReadingProgress {
   scrollPosition: number;
   chapterIndex: number;
   lastReadAt: string;
-  genres?: Genre[]; // Added for recommendation engine
+  genres?: Genre[];
 }
 
 export interface Follow {
@@ -108,5 +115,5 @@ export interface Bookmark {
   authorUsername: string;
   category: BookmarkCategory;
   createdAt: string;
-  genres?: Genre[]; // Added for recommendation engine
+  genres?: Genre[];
 }
