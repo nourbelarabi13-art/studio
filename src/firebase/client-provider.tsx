@@ -12,7 +12,6 @@ import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 export const FirebaseClientProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [mounted, setMounted] = useState(false);
   const [firebase, setFirebase] = useState<{
     firebaseApp: any;
     firestore: any;
@@ -20,10 +19,9 @@ export const FirebaseClientProvider: React.FC<{
   } | null>(null);
 
   useEffect(() => {
-    // Initialize Firebase only on the client
-    const services = initializeFirebase();
-    setFirebase(services);
-    setMounted(true);
+    // Initialize Firebase only on the client after initial mount
+    // to avoid mismatch between server-rendered and client-rendered HTML.
+    setFirebase(initializeFirebase());
   }, []);
 
   return (
@@ -33,13 +31,7 @@ export const FirebaseClientProvider: React.FC<{
       auth={firebase?.auth || null}
     >
       <FirebaseErrorListener />
-      {/* 
-        Prevents hydration flickering by waiting for client-side mount.
-        Visibility: hidden keeps the layout stable while React hydrates.
-      */}
-      <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
-        {children}
-      </div>
+      {children}
     </FirebaseProvider>
   );
 };
