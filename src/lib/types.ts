@@ -38,7 +38,7 @@ export interface Novel {
 export interface ReadingPreferences {
   fontSize: number;
   lineHeight: number;
-  mode: 'light' | 'pink' | 'lavender' | 'midnight';
+  mode: 'light' | 'sepia' | 'lavender' | 'midnight';
 }
 
 export interface UserProfile {

@@ -28,7 +28,9 @@ import {
   AlignLeft,
   Moon,
   Sun,
-  Clock
+  Clock,
+  Coffee,
+  X
 } from "lucide-react";
 import {
   Popover,
@@ -53,7 +55,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 import Link from "next/link";
 
-type ReadingMode = 'light' | 'pink' | 'lavender' | 'midnight';
+type ReadingMode = 'light' | 'sepia' | 'lavender' | 'midnight';
 
 export default function ReadingPage() {
   const { id } = useParams();
@@ -90,7 +92,6 @@ export default function ReadingPage() {
   }, [db, user]);
   const { data: currentUserProfile } = useDoc<UserProfile>(profileRef);
 
-  // Load preferences from profile
   useEffect(() => {
     if (currentUserProfile?.readingPreferences) {
       const prefs = currentUserProfile.readingPreferences;
@@ -263,7 +264,7 @@ export default function ReadingPage() {
 
   const modeStyles = {
     light: "bg-[#fffcfc] text-[#2c1818]",
-    pink: "bg-[#fdf2f5] text-[#4a1523]",
+    sepia: "bg-[#f4ecd8] text-[#5b4636]",
     lavender: "bg-[#f7f2fd] text-[#26154a]",
     midnight: "bg-[#0f0c13] text-[#d1c9e0] selection:bg-primary/30"
   };
@@ -289,6 +290,17 @@ export default function ReadingPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {isFocusMode && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="fixed bottom-8 right-8 z-[70] h-12 w-12 rounded-full bg-primary text-white shadow-2xl hover:bg-primary/90 opacity-40 hover:opacity-100 transition-all"
+          onClick={() => setIsFocusMode(false)}
+        >
+          <X className="w-6 h-6" />
+        </Button>
       )}
 
       <main className={cn(
@@ -398,7 +410,7 @@ export default function ReadingPage() {
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { id: 'light', color: 'bg-[#fffcfc]', label: t.read.mode_light, icon: Sun },
-                        { id: 'pink', color: 'bg-[#fdf2f5]', label: t.read.mode_pink, icon: Heart },
+                        { id: 'sepia', color: 'bg-[#f4ecd8]', label: 'Sepia', icon: Coffee },
                         { id: 'lavender', color: 'bg-[#f7f2fd]', label: t.read.mode_lavender, icon: Sparkles },
                         { id: 'midnight', color: 'bg-[#0f0c13]', label: 'Midnight', icon: Moon }
                       ].map(mode => (
