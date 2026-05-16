@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase";
 import { LanguageProvider } from "@/lib/i18n/context";
+import { StarryNightEffect } from "@/components/starry-night-effect";
 
 export const metadata: Metadata = {
   title: 'Rosaline Bela | A Dreamy Sanctuary for Readers & Writers',
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background text-foreground min-h-screen relative" suppressHydrationWarning>
         <FirebaseClientProvider>
           <LanguageProvider>
+            <StarryNightEffect />
             {children}
             <Toaster />
           </LanguageProvider>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -10,7 +9,6 @@ import { Slider } from "@/components/ui/slider";
 import { NovelCard } from "@/components/novel-card";
 import { StoryComments } from "@/components/story-comments";
 import { EndingPoll } from "@/components/ending-poll";
-import { StarryNightEffect } from "@/components/starry-night-effect";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -288,13 +286,8 @@ export default function ReadingPage() {
     midnight: "bg-[#0f0c13] text-[#d1c9e0] selection:bg-primary/30"
   };
 
-  // Only enable starry effect for the specific requested story
-  const isStarryStory = novel.title === "قضية المصحة النفسية";
-
   return (
     <div className={cn("min-h-screen transition-colors duration-500 relative", modeStyles[readingMode])}>
-      {isStarryStory && <StarryNightEffect />}
-      
       {!isFocusMode && <Navbar />}
       
       <div className={cn("fixed top-0 left-0 w-full h-1 z-[60] bg-primary/10", isFocusMode ? "top-0" : "top-16")}>
