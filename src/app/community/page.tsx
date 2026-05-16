@@ -9,23 +9,13 @@ import { Input } from "@/components/ui/input";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useUser, useFirestore, useCollection, useDoc } from "@/firebase";
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  orderBy, 
-  limit, 
-  doc,
-  serverTimestamp
-} from "firebase/firestore";
+import { useUser, useFirestore, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { 
   Loader2, 
   Send, 
   MessageSquare, 
-  Users, 
-  Sparkles, 
   Hash, 
   PenTool, 
   BookOpen, 
@@ -35,8 +25,6 @@ import {
 import { ChatMessage, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 const COMMUNITY_ROOMS = [
   { id: 'library-lounge', name: 'The Library Lounge', description: 'Public book discussions and recommendations.', category: 'Reader', roles: ['writer', 'reader'] },
@@ -45,13 +33,26 @@ const COMMUNITY_ROOMS = [
   { id: 'creative-mists', name: 'Creative Mists', description: 'Overcoming blocks and seeking inspiration.', category: 'Writer', roles: ['writer'] },
 ];
 
+const INITIAL_MOCK_MESSAGES: Record<string, ChatMessage[]> = {
+  'library-lounge': [
+    { id: 'm1', senderId: 'system', senderName: 'Archivist', text: 'Welcome to the Lounge. What chronicles are you exploring today?', createdAt: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'm2', senderId: 'user-a', senderName: 'VelvetWriter', text: 'I just finished "The Obsidian Gate". The ending was purely ethereal!', createdAt: new Date(Date.now() - 1800000).toISOString() },
+  ],
+  'genre-garden': [
+    { id: 'm3', senderId: 'system', senderName: 'Sentinel', text: 'The soil here is rich with various story types. Which genre calls to your spirit?', createdAt: new Date(Date.now() - 3600000).toISOString() },
+  ]
+};
+
 export default function CommunityPage() {
   const { user, loading: authLoading } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  
   const [activeRoomId, setActiveRoomId] = useState('library-lounge');
   const [messageText, setMessageText] = useState("");
+  const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MOCK_MESSAGES);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const profileRef = useMemoFirebase(() => {
@@ -76,58 +77,45 @@ export default function CommunityPage() {
     }
   }, [profile, activeRoom]);
 
-  const messagesQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(
-      collection(db, "chatRooms", activeRoomId, "messages"),
-      orderBy("createdAt", "asc"),
-      limit(50)
-    );
-  }, [db, activeRoomId]);
-  
-  const { data: messages, loading: messagesLoading } = useCollection<ChatMessage>(messagesQuery);
+  const currentMessages = roomMessages[activeRoomId] || [];
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [currentMessages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !db || !messageText.trim() || !profile) return;
+    if (!user || !messageText.trim() || !profile) return;
 
     const text = messageText;
     setMessageText("");
 
-    const messageData = {
+    const newMessage: ChatMessage = {
+      id: `msg-${Date.now()}`,
       senderId: user.uid,
       senderName: profile.username,
       text,
       createdAt: new Date().toISOString(),
     };
 
-    addDoc(collection(db, "chatRooms", activeRoomId, "messages"), messageData)
-      .catch(async (error) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: `chatRooms/${activeRoomId}/messages`,
-          operation: 'create',
-          requestResourceData: messageData
-        }));
-        toast({ title: "Whisper Lost", description: "Your message failed to reach the room.", variant: "destructive" });
-      });
+    setRoomMessages(prev => ({
+      ...prev,
+      [activeRoomId]: [...(prev[activeRoomId] || []), newMessage]
+    }));
   };
 
   const handleReport = (msgId: string) => {
     toast({
       title: "Guardian Summoned",
-      description: "Our sentinels will review this fragment for toxicity.",
+      description: "Our sentinels will review this fragment locally.",
     });
   };
 
   if (authLoading || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#fffcfc]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -136,7 +124,7 @@ export default function CommunityPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center dreamy-fantasy-gradient">
-        <Sparkles className="w-12 h-12 text-primary mb-6" />
+        <MessageSquare className="w-12 h-12 text-primary mb-6" />
         <h1 className="font-headline text-3xl font-bold mb-4">The Community Awaits</h1>
         <p className="text-muted-foreground italic max-w-md">This sanctuary is reserved for registered dreamers. Please manifest your presence to enter.</p>
         <Button onClick={() => router.push("/login")} className="mt-8 rounded-full px-12 h-14 bg-primary text-white shadow-xl shadow-primary/20">Sign in to the Sanctuary</Button>
@@ -207,9 +195,9 @@ export default function CommunityPage() {
           </div>
           
           <div className="glass-morphism rounded-[2rem] p-6 border-primary/10 bg-primary/5 hidden md:block">
-            <h3 className="font-headline text-lg font-bold mb-2">Sanctuary Peace</h3>
+            <h3 className="font-headline text-lg font-bold mb-2">Instant Whispers</h3>
             <p className="text-xs text-muted-foreground italic leading-relaxed">
-              "Words are manifestations. Speak with kindness, listen with grace, and keep the mists clear of toxicity."
+              "In this demonstration hall, your words manifest instantly through local magic. No waiting for the celestial mists to clear."
             </p>
           </div>
         </aside>
@@ -235,23 +223,18 @@ export default function CommunityPage() {
           </CardHeader>
 
           <ScrollArea className="flex-1 p-8 h-[60vh]">
-            {messagesLoading ? (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground italic">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                Waiting for the whispers...
-              </div>
-            ) : messages?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground italic opacity-50">
-                <MessageSquare className="w-12 h-12" />
-                Be the first to break the silence.
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {messages?.map((msg) => (
+            <div className="space-y-8">
+              {currentMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground italic py-20 opacity-50">
+                  <MessageSquare className="w-12 h-12" />
+                  Be the first to break the silence.
+                </div>
+              ) : (
+                currentMessages.map((msg) => (
                   <div 
                     key={msg.id} 
                     className={cn(
-                      "flex flex-col max-w-[85%]",
+                      "flex flex-col max-w-[85%] animate-fade-in",
                       msg.senderId === user.uid ? "ml-auto items-end" : "items-start"
                     )}
                   >
@@ -283,10 +266,10 @@ export default function CommunityPage() {
                       )}
                     </div>
                   </div>
-                ))}
-                <div ref={scrollRef} />
-              </div>
-            )}
+                ))
+              )}
+              <div ref={scrollRef} />
+            </div>
           </ScrollArea>
 
           <CardContent className="p-8 border-t border-primary/5 bg-white/40">
