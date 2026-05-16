@@ -6,17 +6,21 @@ import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
 
 interface FirebaseContextProps {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
-const FirebaseContext = createContext<FirebaseContextProps | undefined>(undefined);
+const FirebaseContext = createContext<FirebaseContextProps>({
+  firebaseApp: null,
+  firestore: null,
+  auth: null,
+});
 
 export const FirebaseProvider: React.FC<{
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
   children: React.ReactNode;
 }> = ({ firebaseApp, firestore, auth, children }) => {
   return (
@@ -29,7 +33,8 @@ export const FirebaseProvider: React.FC<{
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
   if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
+    // Fallback for safety, though with default value it won't be undefined
+    return { firebaseApp: null, firestore: null, auth: null };
   }
   return context;
 };

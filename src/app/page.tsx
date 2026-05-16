@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from "@/components/navbar";
@@ -6,7 +5,7 @@ import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, BookOpen, TrendingUp, Zap } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection } from "@/firebase";
@@ -19,7 +18,15 @@ const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sc
 export default function Home() {
   const db = useFirestore();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
+  const [sevenDaysAgo, setSevenDaysAgo] = useState<string | null>(null);
   const archiveRef = useRef<HTMLDivElement>(null);
+
+  // Calculate the 7-day window only on the client to prevent hydration mismatch
+  useEffect(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    setSevenDaysAgo(date.toISOString());
+  }, []);
 
   // Archive Query
   const novelsQuery = useMemoFirebase(() => {
@@ -39,19 +46,17 @@ export default function Home() {
 
   // Weekly Trending (By views, published in the last 7 days)
   const trendingQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    if (!db || !sevenDaysAgo) return null;
     
     return query(
       collection(db, "novels"),
       where("isDraft", "==", false),
-      where("publishedAt", ">=", sevenDaysAgo.toISOString()),
+      where("publishedAt", ">=", sevenDaysAgo),
       orderBy("publishedAt", "desc"),
       orderBy("views", "desc"),
       limit(4)
     );
-  }, [db]);
+  }, [db, sevenDaysAgo]);
   const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
 
   // Rising (New stories gaining popularity quickly)
@@ -72,7 +77,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen dreamy-fantasy-gradient">
+    <div className="min-h-screen">
       <Navbar />
       
       {/* Hero Section */}

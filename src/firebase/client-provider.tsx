@@ -1,24 +1,40 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FirebaseProvider } from './provider';
 import { initializeFirebase } from './init';
 import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 /**
  * A client-side wrapper for the FirebaseProvider that handles 
- * initialization internally and includes the error listener.
+ * initialization internally and ensures hydration safety.
  */
 export const FirebaseClientProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  // Initialize Firebase once on the client
-  const { firebaseApp, firestore, auth } = useMemo(() => initializeFirebase(), []);
+  const [mounted, setMounted] = useState(false);
+  const [firebase, setFirebase] = useState<{
+    firebaseApp: any;
+    firestore: any;
+    auth: any;
+  } | null>(null);
+
+  useEffect(() => {
+    const services = initializeFirebase();
+    setFirebase(services);
+    setMounted(true);
+  }, []);
 
   return (
-    <FirebaseProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
+    <FirebaseProvider 
+      firebaseApp={firebase?.firebaseApp || null} 
+      firestore={firebase?.firestore || null} 
+      auth={firebase?.auth || null}
+    >
       <FirebaseErrorListener />
-      {children}
+      <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
+        {children}
+      </div>
     </FirebaseProvider>
   );
 };
