@@ -3,9 +3,9 @@
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
-import { Genre, Novel, ReadingProgress } from "@/lib/types";
+import { Genre, Novel, ReadingProgress, AppLanguage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,15 +18,35 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/lib/i18n/context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
+const LANGUAGES: { code: AppLanguage; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'fr', label: 'Français' },
+];
+
+type SortOption = 'publishedAt' | 'views' | 'likes';
 
 export default function Home() {
   const db = useFirestore();
   const { user } = useUser();
   const { t } = useLanguage();
+  
+  // Filtering & Search State
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
+  const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>('publishedAt');
+  
   const [sevenDaysAgo, setSevenDaysAgo] = useState<string | null>(null);
   const archiveRef = useRef<HTMLDivElement>(null);
 
@@ -45,25 +65,35 @@ export default function Home() {
       limit(4)
     );
   }, [db, user]);
-  const { data: progressData, loading: progressLoading } = useCollection<ReadingProgress>(progressQuery);
+  const { data: progressData } = useCollection<ReadingProgress>(progressQuery);
 
-  // Archive Query
+  // Archive Query (Server-side Filtered where possible)
   const novelsQuery = useMemoFirebase(() => {
     if (!db) return null;
+    
+    // Start with a base query
     let q = query(
       collection(db, "novels"),
-      where("isDraft", "==", false),
-      orderBy("publishedAt", "desc")
+      where("isDraft", "==", false)
     );
+
+    // Apply structured filters (Genre & Language)
     if (selectedGenre !== 'All') {
       q = query(q, where("genres", "array-contains", selectedGenre));
     }
+    if (selectedLanguage !== 'All') {
+      q = query(q, where("language", "==", selectedLanguage));
+    }
+
+    // Apply Sorting
+    q = query(q, orderBy(sortBy, "desc"));
+
     return q;
-  }, [db, selectedGenre]);
+  }, [db, selectedGenre, selectedLanguage, sortBy]);
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
-  // Following Query
+  // Following & Personalized Feeds
   const followsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, "follows"), where("followerId", "==", user.uid));
@@ -81,9 +111,9 @@ export default function Home() {
       orderBy("publishedAt", "desc")
     );
   }, [db, followedIds]);
-  const { data: followingNovels, loading: followingLoading } = useCollection<Novel>(followingNovelsQuery);
+  const { data: followingNovels } = useCollection<Novel>(followingNovelsQuery);
 
-  // Client-side search filtering
+  // Client-side text search filtering
   const filteredNovels = useMemo(() => {
     if (!novels) return [];
     if (!searchQuery.trim()) return novels;
@@ -125,6 +155,14 @@ export default function Home() {
   const scrollToArchive = () => {
     archiveRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const currentSortLabel = useMemo(() => {
+    switch(sortBy) {
+      case 'views': return t.home.sort_popular;
+      case 'likes': return t.home.sort_liked;
+      default: return t.home.sort_latest;
+    }
+  }, [sortBy, t]);
 
   return (
     <div className="min-h-screen">
@@ -219,26 +257,116 @@ export default function Home() {
           </div>
         )}
 
-        {/* The Sanctuary Feeds */}
+        {/* The Sanctuary Advanced Archive */}
         <div ref={archiveRef} className="space-y-12 scroll-mt-20">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 border-b border-primary/10 pb-12">
-            <div className="space-y-3">
-              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
-                <BookOpen className="text-primary w-8 h-8" />
-                {t.home.archive_title}
-              </h2>
-              <p className="text-muted-foreground italic text-lg">{t.home.archive_desc}</p>
-            </div>
-            
-            <div className="flex flex-col gap-6 w-full lg:w-auto">
-              <div className="relative group max-w-md w-full ml-auto">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <div className="flex flex-col gap-8 border-b border-primary/10 pb-12">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+              <div className="space-y-3">
+                <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                  <BookOpen className="text-primary w-8 h-8" />
+                  {t.home.archive_title}
+                </h2>
+                <p className="text-muted-foreground italic text-lg">{t.home.archive_desc}</p>
+              </div>
+              
+              <div className="relative group max-w-xl w-full">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder={t.home.search_placeholder} 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 pr-11 bg-white/50 border-primary/10 h-12 rounded-full focus:bg-white transition-all shadow-sm"
+                  className="pl-12 pr-12 bg-white/50 border-primary/10 h-14 rounded-full focus:bg-white transition-all shadow-md text-lg"
                 />
+              </div>
+            </div>
+
+            {/* Filter & Sort Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="rounded-full border-primary/10 gap-2 h-10 px-5 text-muted-foreground hover:text-primary">
+                      <Filter className="w-4 h-4" />
+                      {t.home.filters}
+                      <ChevronDown className="w-3 h-3 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 p-4 rounded-3xl bg-white border-primary/10 shadow-xl">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+                      {t.home.language_filter}
+                    </DropdownMenuLabel>
+                    <div className="grid grid-cols-1 gap-1">
+                      <Button 
+                        variant={selectedLanguage === 'All' ? 'default' : 'ghost'} 
+                        size="sm"
+                        onClick={() => setSelectedLanguage('All')}
+                        className="justify-start rounded-xl h-9 text-xs"
+                      >
+                        All Languages
+                      </Button>
+                      {LANGUAGES.map(lang => (
+                        <Button 
+                          key={lang.code}
+                          variant={selectedLanguage === lang.code ? 'default' : 'ghost'} 
+                          size="sm"
+                          onClick={() => setSelectedLanguage(lang.code)}
+                          className="justify-start rounded-xl h-9 text-xs"
+                        >
+                          {lang.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="h-6 w-px bg-primary/10 mx-2 hidden sm:block" />
+
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setSelectedGenre('All')}
+                    className={cn("rounded-full transition-all h-9 px-5", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
+                  >
+                    All Genres
+                  </Button>
+                  {GENRES.map(genre => (
+                    <Button 
+                      key={genre} 
+                      variant={selectedGenre === genre ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedGenre(genre)}
+                      className={cn("rounded-full transition-all h-9 px-5", selectedGenre === genre ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
+                    >
+                      {genre}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">
+                  {filteredNovels.length} {t.home.results_found}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="rounded-full gap-2 h-10 px-5 text-primary hover:bg-primary/5">
+                      <SlidersHorizontal className="w-4 h-4" />
+                      <span className="text-sm font-bold">{currentSortLabel}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 p-2 rounded-2xl bg-white border-primary/10 shadow-xl" align="end">
+                    <DropdownMenuItem onClick={() => setSortBy('publishedAt')} className="rounded-xl cursor-pointer">
+                      {t.home.sort_latest}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('views')} className="rounded-xl cursor-pointer">
+                      {t.home.sort_popular}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('likes')} className="rounded-xl cursor-pointer">
+                      {t.home.sort_liked}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
@@ -259,26 +387,6 @@ export default function Home() {
                   {t.home.following}
                 </TabsTrigger>
               </TabsList>
-
-              <div className="flex flex-wrap gap-2 justify-end ml-4">
-                <Button 
-                  variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
-                  onClick={() => setSelectedGenre('All')}
-                  className={cn("rounded-full transition-all h-9 px-5", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
-                >
-                  All
-                </Button>
-                {GENRES.map(genre => (
-                  <Button 
-                    key={genre} 
-                    variant={selectedGenre === genre ? 'default' : 'ghost'}
-                    onClick={() => setSelectedGenre(genre)}
-                    className={cn("rounded-full transition-all h-9 px-5", selectedGenre === genre ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
-                  >
-                    {genre}
-                  </Button>
-                ))}
-              </div>
             </div>
 
             <TabsContent value="archive">
@@ -321,9 +429,7 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="following">
-              {followingLoading ? (
-                <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-              ) : followingNovels && followingNovels.length > 0 ? (
+              {followingNovels && followingNovels.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                   {followingNovels.map((novel) => (
                     <NovelCard key={novel.id} novel={novel} />
