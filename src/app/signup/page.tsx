@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -22,7 +23,7 @@ import { Sparkles, User, Mail, Lock, Loader2, Heart, PenTool, BookOpen } from "l
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useFirestore } from "@/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -55,45 +56,64 @@ export default function SignUpPage() {
   });
 
   async function onSubmit(values: z.infer<typeof signupSchema>) {
-    if (!auth || !db) return;
+    if (!auth || !db) {
+      toast({
+        variant: "destructive",
+        title: "Sanctuary Connection Lost",
+        description: "The celestial link is currently unstable. Please refresh the page.",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
+      // 1. Create the user in Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // Update auth profile with username for immediate display in UI
-      await updateProfile(user, { displayName: values.username });
+      try {
+        // 2. Immediately update the auth profile for UI consistency
+        await updateProfile(user, { displayName: values.username });
 
-      // Create detailed Firestore profile scroll
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        username: values.username,
-        email: values.email,
-        role: values.role,
-        ageConfirmed: values.ageConfirmed,
-        createdAt: new Date().toISOString(),
-        language: 'en',
-        followerCount: 0,
-        followingCount: 0,
-        totalViews: 0,
-        totalLikes: 0,
-        publishedCount: 0,
-        achievements: [],
-        readingPreferences: {
-          fontSize: 18,
-          lineHeight: 1.8,
-          mode: 'light'
-        }
-      });
+        // 3. Manifest the Persona Scroll in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          username: values.username,
+          email: values.email,
+          role: values.role,
+          ageConfirmed: values.ageConfirmed,
+          createdAt: new Date().toISOString(),
+          language: 'en',
+          followerCount: 0,
+          followingCount: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          publishedCount: 0,
+          achievements: [],
+          readingPreferences: {
+            fontSize: 18,
+            lineHeight: 1.8,
+            mode: 'light'
+          }
+        });
 
-      toast({
-        title: "Welcome, Traveler",
-        description: `Your space as a ${values.role} in the sanctuary is ready.`,
-      });
-      router.push("/");
+        toast({
+          title: "Welcome, Traveler",
+          description: `Your space as a ${values.role} in the sanctuary is ready.`,
+        });
+        
+        // 4. Ritual complete, move to the Archive
+        router.push("/");
+      } catch (firestoreError: any) {
+        // If Firestore fails, we have an orphaned Auth user. 
+        // We attempt to delete the Auth user to allow a clean retry.
+        console.error("Firestore manifestation failed:", firestoreError);
+        await deleteUser(user).catch(() => console.error("Could not cleanup orphaned user"));
+        
+        throw new Error("The Archive could not record your persona. Please try again.");
+      }
     } catch (error: any) {
-      // Interpret specific Firebase Auth errors for the user
       let errorMessage = "Something went wrong while setting up your sanctuary.";
       
       if (error.code === 'auth/email-already-in-use') {
@@ -102,6 +122,8 @@ export default function SignUpPage() {
         errorMessage = "Your secret phrase is too weak. Please choose a stronger one.";
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = "The email address provided is not recognized by the Archive.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       toast({

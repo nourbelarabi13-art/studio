@@ -1,3 +1,4 @@
+
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { openai } from 'genkitx-openai';
@@ -8,12 +9,13 @@ import { openai } from 'genkitx-openai';
  * Uses a defensive initialization pattern to prevent "undefined" plugin errors.
  */
 
-// Initialize plugins with safety checks to avoid runtime crashes
+// Initialize plugins with safety checks to avoid runtime crashes during module load
 const initializedPlugins = [
   googleAI(),
-  // Check if openai is available and initialize it correctly based on its export type
-  openai ? (typeof openai === 'function' ? (openai as any)() : openai) : null
-].filter(Boolean); // Ensure no "undefined" or "null" entries reach the Genkit engine
+  // Community plugins like openai can have varying export structures based on version.
+  // We use a safe check to ensure we only register initialized plugin objects.
+  typeof openai === 'function' ? (openai as any)() : openai
+].filter(Boolean);
 
 export const ai = genkit({
   plugins: initializedPlugins,
