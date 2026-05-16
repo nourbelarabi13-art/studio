@@ -23,7 +23,7 @@ import { Sparkles, User, Mail, Lock, Loader2, Heart, PenTool, BookOpen } from "l
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useFirestore } from "@/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -63,6 +63,10 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
+      // Update auth profile with username for immediate display
+      await updateProfile(user, { displayName: values.username });
+
+      // Create detailed Firestore profile
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         username: values.username,
@@ -70,6 +74,18 @@ export default function SignUpPage() {
         role: values.role,
         ageConfirmed: values.ageConfirmed,
         createdAt: new Date().toISOString(),
+        language: 'en',
+        followerCount: 0,
+        followingCount: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        publishedCount: 0,
+        achievements: [],
+        readingPreferences: {
+          fontSize: 18,
+          lineHeight: 1.8,
+          mode: 'light'
+        }
       });
 
       toast({
@@ -78,10 +94,19 @@ export default function SignUpPage() {
       });
       router.push("/");
     } catch (error: any) {
+      let errorMessage = "Something went wrong while setting up your sanctuary.";
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "This email address is already registered in our archive.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Your secret phrase is too weak. Please choose a stronger one.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "The email address provided is not recognized by the Archive.";
+      }
+
       toast({
         variant: "destructive",
         title: "Could not join",
-        description: error.message || "Something went wrong while setting up your sanctuary.",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
