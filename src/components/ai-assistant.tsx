@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Send, Loader2, User, Ghost, X, MessageSquare, Wand2, BookOpen } from 'lucide-react';
+import { Sparkles, Send, Loader2, User, Ghost, X, MessageSquare, Wand2, BookOpen, AlertCircle } from 'lucide-react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
@@ -56,7 +56,6 @@ export function AiAssistant() {
     const messageToSend = text || inputMessage;
     if (!messageToSend.trim() || !user || !db || isProcessing) return;
 
-    console.log("Whispering to the Oracle:", messageToSend);
     setInputMessage('');
     setIsProcessing(true);
 
@@ -83,8 +82,6 @@ export function AiAssistant() {
         history
       });
 
-      console.log("Oracle's Response received:", oracleResponse);
-
       const aiMsg: Omit<AiChatMessage, 'id'> = {
         role: 'model',
         content: oracleResponse.response,
@@ -101,9 +98,21 @@ export function AiAssistant() {
 
     } catch (error: any) {
       console.error("Oracle manifest failed:", error);
+      
+      let errorTitle = "Celestial Link Error";
+      let errorDesc = "The Oracle is currently silent. Please check your connection.";
+
+      if (error.message?.includes("API key not valid") || error.message?.includes("INVALID_ARGUMENT")) {
+        errorTitle = "Invalid API Key";
+        errorDesc = "The Oracle's Gemini API key is missing or invalid. Please update the .env file.";
+      } else if (error.message?.includes("fetch failed")) {
+        errorTitle = "Connection Failed";
+        errorDesc = "The link to the celestial realm was lost. Please try your whisper again.";
+      }
+
       toast({ 
-        title: "Celestial Link Error", 
-        description: error.message || "The Oracle is currently silent. Please check your connection and try again.",
+        title: errorTitle, 
+        description: errorDesc,
         variant: "destructive" 
       });
     } finally {

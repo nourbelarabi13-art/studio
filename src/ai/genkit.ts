@@ -14,12 +14,12 @@ const plugins: any[] = [
 
 // Robust OpenAI initialization handling multiple potential export patterns
 try {
+  // Try treating it as a function first (common pattern in some versions)
   if (typeof openai === 'function') {
     plugins.push(openai());
-  } else if ((openai as any)?.openai && typeof (openai as any).openai === 'function') {
-    plugins.push((openai as any).openai());
-  } else if (openai && typeof openai === 'object') {
-    // Handle cases where the plugin might be exported as a pre-initialized object or namespace
+  } 
+  // If it's the pre-initialized plugin object (standard for some versions of genkitx-openai)
+  else if (openai && typeof openai === 'object') {
     plugins.push(openai);
   }
 } catch (e) {
@@ -29,5 +29,5 @@ try {
 export const ai = genkit({
   // Filter out any potential undefined/null plugins to prevent 'version' read errors
   plugins: plugins.filter(Boolean),
-  model: 'googleai/gemini-1.5-flash', // Fallback to reliable Gemini if OpenAI link is weak
+  model: 'googleai/gemini-1.5-flash', 
 });
