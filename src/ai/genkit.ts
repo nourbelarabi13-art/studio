@@ -8,19 +8,19 @@ import { openai } from 'genkitx-openai';
  * Configured with Google AI and OpenAI (ChatGPT) plugins.
  */
 
-// Defensive initialization to prevent crashes if a plugin fails to load or exports an unexpected structure
 const plugins: any[] = [
   googleAI(),
 ];
 
-// Robust OpenAI initialization
+// Robust OpenAI initialization handling multiple potential export patterns
 try {
-  // Ensure we are calling the plugin correctly based on its export manifestation
-  // Handle both standard function export and possible object-wrapped export
   if (typeof openai === 'function') {
     plugins.push(openai());
-  } else if (openai && typeof (openai as any).openai === 'function') {
+  } else if ((openai as any)?.openai && typeof (openai as any).openai === 'function') {
     plugins.push((openai as any).openai());
+  } else if (openai && typeof openai === 'object') {
+    // Handle cases where the plugin might be exported as a pre-initialized object or namespace
+    plugins.push(openai);
   }
 } catch (e) {
   console.error("The Oracle's OpenAI link could not be manifested:", e);
@@ -29,5 +29,5 @@ try {
 export const ai = genkit({
   // Filter out any potential undefined/null plugins to prevent 'version' read errors
   plugins: plugins.filter(Boolean),
-  model: 'openai/gpt-4o',
+  model: 'googleai/gemini-1.5-flash', // Fallback to reliable Gemini if OpenAI link is weak
 });

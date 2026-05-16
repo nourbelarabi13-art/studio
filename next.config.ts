@@ -2,7 +2,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -32,7 +31,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    allowedDevOrigins: ['*.cloudworkstations.dev'],
+    // Flag removed to resolve unrecognized key error in Next 15.5.9 CLI
   },
 };
 

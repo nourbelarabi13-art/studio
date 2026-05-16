@@ -48,7 +48,9 @@ export function DynamicBackground() {
       <div 
         key={currentIndex}
         className={cn(
-          "absolute inset-0 transition-opacity [transition-duration:2000ms] ease-in-out",
+          "absolute inset-0 transition-opacity ease-in-out",
+          // Use explicit arbitrary value to avoid ambiguity warnings
+          "duration-&lsqb;2000ms&rsqb;",
           isTransitioning ? "opacity-100" : "opacity-0"
         )}
       >
