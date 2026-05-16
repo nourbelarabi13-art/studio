@@ -45,6 +45,8 @@ export const translations = {
       genres: "Genres",
       manifest_art: "Manifest AI Art",
       language: "Story Language",
+      select_language: "Select Writing Language",
+      language_help: "AI will automatically manifest translations when you publish.",
     },
     read: {
       views: "Views",
@@ -57,6 +59,7 @@ export const translations = {
       next: "Next Chapter",
       prev: "Previous Chapter",
       end: "You've reached the end of this fragment.",
+      original_lang: "Original Language",
     },
     settings: {
       title: "Sanctuary Settings",
@@ -114,6 +117,8 @@ export const translations = {
       genres: "الأنواع",
       manifest_art: "تجسيد فن الذكاء الاصطناعي",
       language: "لغة القصة",
+      select_language: "اختر لغة الكتابة",
+      language_help: "سيقوم الذكاء الاصطناعي تلقائيًا بإنشاء ترجمات عند النشر.",
     },
     read: {
       views: "مشاهدات",
@@ -126,6 +131,7 @@ export const translations = {
       next: "الفصل التالي",
       prev: "الفصل السابق",
       end: "لقد وصلت إلى نهاية هذا الجزء.",
+      original_lang: "اللغة الأصلية",
     },
     settings: {
       title: "إعدادات الملاذ",
@@ -183,6 +189,8 @@ export const translations = {
       genres: "Genres",
       manifest_art: "Manifester l'Art IA",
       language: "Langue de l'histoire",
+      select_language: "Choisir la langue d'écriture",
+      language_help: "L'IA manifestera automatiquement des traductions lors de la publication.",
     },
     read: {
       views: "Vues",
@@ -195,6 +203,7 @@ export const translations = {
       next: "Chapitre Suivant",
       prev: "Chapitre Précédent",
       end: "Vous avez atteint la fin de ce fragment.",
+      original_lang: "Langue originale",
     },
     settings: {
       title: "Paramètres du Sanctuaire",

@@ -10,17 +10,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Genre, AppLanguage } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
   Save, 
   Send, 
   Sparkles, 
   Trash2, 
-  CheckCircle2, 
   Zap,
   Loader2,
   Image as ImageIcon,
-  Heart,
   Wand2,
-  Languages
+  Languages,
+  Globe
 } from "lucide-react";
 import {
   Dialog,
@@ -53,7 +59,7 @@ export default function WritePage() {
   const { toast } = useToast();
   const { user } = useUser();
   const db = useFirestore();
-  const { t, language } = useLanguage();
+  const { t, language: appLanguage } = useLanguage();
   
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -63,6 +69,7 @@ export default function WritePage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [writingLanguage, setWritingLanguage] = useState<AppLanguage>(appLanguage);
   const deferredContent = useDeferredValue(content);
   
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
@@ -146,7 +153,7 @@ export default function WritePage() {
       publishedAt: null,
       views: 0,
       likes: 0,
-      language: language
+      language: writingLanguage
     };
     addDoc(collection(db, "novels"), novelData).then(() => {
       setIsSaving(false);
@@ -175,7 +182,7 @@ export default function WritePage() {
       }
 
       // 2. AI Translation
-      const targetLanguages = (['en', 'ar', 'fr'] as AppLanguage[]).filter(l => l !== language);
+      const targetLanguages = (['en', 'ar', 'fr'] as AppLanguage[]).filter(l => l !== writingLanguage);
       const translationResult = await translateStory({ title, content, targetLanguages });
 
       const novelData = {
@@ -190,7 +197,7 @@ export default function WritePage() {
         publishedAt: new Date().toISOString(),
         views: 0,
         likes: 0,
-        language: language,
+        language: writingLanguage,
         translations: translationResult.translations
       };
 
@@ -207,6 +214,8 @@ export default function WritePage() {
       toast({ title: "Error", variant: "destructive" });
     }
   };
+
+  const isRtl = writingLanguage === 'ar';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -256,8 +265,16 @@ export default function WritePage() {
                   {t.write.manifest_art}
                 </Button>
               </div>
-              <div className="flex-1 w-full">
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.write.title_placeholder} className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-20 h-auto" />
+              <div className="flex-1 w-full" dir={isRtl ? 'rtl' : 'ltr'}>
+                <Input 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  placeholder={t.write.title_placeholder} 
+                  className={cn(
+                    "bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-20 h-auto",
+                    isRtl && "text-right"
+                  )} 
+                />
               </div>
             </div>
             
@@ -274,13 +291,42 @@ export default function WritePage() {
               </div>
             )}
 
-            <div className="relative">
-              <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t.write.content_placeholder} className="writing-editor min-h-[60vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-20 text-foreground/90" />
-              <div className="absolute bottom-0 right-0 py-4 text-xs text-muted-foreground/40 font-bold uppercase tracking-widest">{wordCount} words</div>
+            <div className="relative" dir={isRtl ? 'rtl' : 'ltr'}>
+              <Textarea 
+                value={content} 
+                onChange={(e) => setContent(e.target.value)} 
+                placeholder={t.write.content_placeholder} 
+                className={cn(
+                  "writing-editor min-h-[60vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-20 text-foreground/90",
+                  isRtl && "text-right"
+                )} 
+              />
+              <div className={cn("absolute bottom-0 py-4 text-xs text-muted-foreground/40 font-bold uppercase tracking-widest", isRtl ? "left-0" : "right-0")}>
+                {wordCount} words
+              </div>
             </div>
           </div>
 
           <aside className="space-y-8">
+            {/* Writing Language Selector */}
+            <div className="glass-morphism rounded-3xl p-7 space-y-4 border-primary/10">
+              <h3 className="font-headline text-xl font-bold flex items-center gap-2">
+                <Globe className="w-4 h-4 text-primary" />
+                {t.write.select_language}
+              </h3>
+              <Select value={writingLanguage} onValueChange={(val) => setWritingLanguage(val as AppLanguage)}>
+                <SelectTrigger className="w-full rounded-2xl bg-white border-primary/10 focus:ring-primary/20">
+                  <SelectValue placeholder="Select Language" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-primary/10 rounded-2xl">
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="ar">العربية</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground italic leading-relaxed">{t.write.language_help}</p>
+            </div>
+
             <div className="glass-morphism rounded-3xl p-7 space-y-6 border-primary/10">
               <div className="flex items-center justify-between">
                 <h3 className="font-headline text-xl font-bold">{t.write.genres}</h3>
@@ -293,17 +339,6 @@ export default function WritePage() {
                   <Badge key={genre} variant={selectedGenres.includes(genre) ? "default" : "outline"} className={cn("cursor-pointer h-7 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider", selectedGenres.includes(genre) ? "bg-primary border-none shadow-sm" : "border-primary/10 text-muted-foreground hover:border-primary/40")} onClick={() => toggleGenre(genre)}>{genre}</Badge>
                 ))}
               </div>
-            </div>
-
-            <div className="glass-morphism rounded-3xl p-7 space-y-4 bg-primary/5 border-primary/10">
-              <h3 className="font-headline text-lg font-bold flex items-center gap-2">
-                <Languages className="w-4 h-4 text-primary" />
-                {t.write.language}
-              </h3>
-              <Badge variant="outline" className="rounded-full border-primary/20 text-primary capitalize">
-                {language === 'ar' ? 'العربية' : language === 'fr' ? 'Français' : 'English'}
-              </Badge>
-              <p className="text-[10px] text-muted-foreground italic leading-relaxed">AI will automatically manifest translations when you publish.</p>
             </div>
 
             <Button variant="ghost" className="w-full text-destructive/40 hover:text-destructive hover:bg-destructive/5 gap-2 rounded-full h-11 text-xs font-bold uppercase tracking-widest" onClick={() => { if (confirm("Clear your desk?")) { setTitle(""); setContent(""); setSelectedGenres([]); } }}>

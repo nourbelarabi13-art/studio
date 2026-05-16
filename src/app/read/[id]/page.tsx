@@ -17,7 +17,8 @@ import {
   Heart,
   Eye,
   Loader2,
-  Languages
+  Languages,
+  Globe
 } from "lucide-react";
 import {
   Dialog,
@@ -104,6 +105,8 @@ export default function ReadingPage() {
   const hasTranslation = !!novel.translations?.[appLanguage];
   const displayTitle = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.title : novel.title;
   const displayContent = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.content : novel.content;
+  const displayLang = (useTranslation && hasTranslation) ? appLanguage : novel.language;
+  const isRtl = displayLang === 'ar';
 
   return (
     <div className="min-h-screen dreamy-fantasy-gradient pb-24">
@@ -117,6 +120,10 @@ export default function ReadingPage() {
                 {genre}
               </Badge>
             ))}
+            <Badge variant="outline" className="border-primary/10 text-muted-foreground italic rounded-full bg-white/50 flex gap-1.5 items-center">
+              <Globe className="w-3 h-3" />
+              {novel.language === 'ar' ? 'العربية' : novel.language === 'fr' ? 'Français' : 'English'}
+            </Badge>
           </div>
           <h1 className="font-headline text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-tight">
             {displayTitle}
@@ -197,7 +204,13 @@ export default function ReadingPage() {
           </div>
         </div>
 
-        <article className="writing-editor prose prose-stone prose-lg max-w-none space-y-8 text-foreground/80 leading-relaxed font-body">
+        <article 
+          className={cn(
+            "writing-editor prose prose-stone prose-lg max-w-none space-y-8 text-foreground/80 leading-relaxed font-body",
+            isRtl && "text-right"
+          )}
+          dir={isRtl ? 'rtl' : 'ltr'}
+        >
           <div className="whitespace-pre-wrap">
             {displayContent}
           </div>
