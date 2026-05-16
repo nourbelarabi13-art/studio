@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase";
 
 export const metadata: Metadata = {
-  title: 'Rosa Novara | A Dark Fantasy Sanctuary for Writers',
-  description: 'A safe and creative platform for writing and reading novels.',
+  title: 'Rosaline Bela | A Dreamy Sanctuary for Readers & Writers',
+  description: 'An elegant and comfortable space for crafting and discovering soft fantasy chronicles.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

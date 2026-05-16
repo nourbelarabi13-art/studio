@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -16,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Mail, Lock, Sparkles, Loader2 } from "lucide-react";
+import { Mail, Lock, Sparkles, Loader2, Heart } from "lucide-react";
 import { useAuth } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -48,15 +47,15 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: "Manifestation Successful",
-        description: "Welcome back to the sanctuary, traveler.",
+        title: "Welcome back, Dreamer",
+        description: "Your sanctuary awaits your touch.",
       });
       router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "The Gates are Barred",
-        description: "Your secret phrase or scroll address does not match our records.",
+        title: "Access Denied",
+        description: "Your credentials don't seem to match our scrolls.",
       });
     } finally {
       setIsLoading(false);
@@ -64,12 +63,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center dark-fantasy-gradient p-8">
-      <div className="w-full max-w-md glass-morphism rounded-3xl p-10 space-y-8 animate-fade-in shadow-2xl border-white/10">
+    <div className="min-h-screen flex items-center justify-center dreamy-fantasy-gradient p-8">
+      <div className="w-full max-w-md glass-morphism rounded-[2rem] p-10 space-y-8 animate-fade-in shadow-xl">
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-block font-headline text-3xl font-bold text-primary mb-4 drop-shadow-lg">Rosa Novara</Link>
-          <h1 className="font-headline text-2xl font-bold text-white">Return to the Sanctuary</h1>
-          <p className="text-muted-foreground italic">Your scrolls await your touch.</p>
+          <Link href="/" className="inline-flex items-center gap-2 font-headline text-3xl font-bold text-primary mb-4">
+            <Heart className="w-6 h-6 fill-primary" />
+            Rosaline Bela
+          </Link>
+          <h1 className="font-headline text-2xl font-bold text-foreground">Enter the Sanctuary</h1>
+          <p className="text-muted-foreground italic">Your stories are waiting for you.</p>
         </div>
 
         <Form {...form}>
@@ -80,11 +82,11 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="w-4 h-4 text-accent" />
-                    Email
+                    <Mail className="w-4 h-4 text-primary/60" />
+                    Email Address
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="your@scroll.com" {...field} className="bg-background/40 border-white/5 h-12 focus:border-primary/50" />
+                    <Input placeholder="dreamer@rosaline.com" {...field} className="bg-white/50 border-primary/10 h-12 focus:border-primary" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -97,30 +99,30 @@ export default function LoginPage() {
                 <FormItem>
                   <div className="flex items-center justify-between">
                     <FormLabel className="flex items-center gap-2 text-muted-foreground">
-                      <Lock className="w-4 h-4 text-accent" />
-                      Password
+                      <Lock className="w-4 h-4 text-primary/60" />
+                      Secret Phrase
                     </FormLabel>
-                    <Link href="/forgot" className="text-xs text-accent hover:underline italic">Forgot your secret?</Link>
+                    <Link href="/forgot" className="text-xs text-primary hover:underline italic">Forgot it?</Link>
                   </div>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} className="bg-background/40 border-white/5 h-12 focus:border-primary/50" />
+                    <Input type="password" placeholder="••••••••" {...field} className="bg-white/50 border-primary/10 h-12 focus:border-primary" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg group">
+            <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg group">
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Manifest
-              {!isLoading && <Sparkles className="w-4 h-4 ml-2 group-hover:animate-pulse" />}
+              Return to Dreams
+              {!isLoading && <Sparkles className="w-4 h-4 ml-2" />}
             </Button>
           </form>
         </Form>
 
-        <div className="text-center space-y-4">
+        <div className="text-center">
           <p className="text-sm text-muted-foreground italic">
-            New to the Archive?{" "}
-            <Link href="/signup" className="text-accent hover:underline font-semibold">Forge your Identity</Link>
+            New to the Sanctuary?{" "}
+            <Link href="/signup" className="text-primary hover:underline font-semibold">Join our Archive</Link>
           </p>
         </div>
       </div>

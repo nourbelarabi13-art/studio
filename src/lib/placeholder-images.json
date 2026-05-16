@@ -1,52 +1,52 @@
 {
   "placeholderImages": [
     {
-      "id": "hero-fantasy",
-      "description": "An ethereal, dark gothic library with floating books and dim candle light",
-      "imageUrl": "https://picsum.photos/seed/dark-gothic-library/1920/1080",
-      "imageHint": "gothic library"
+      "id": "hero-dreamy",
+      "description": "A soft, sun-drenched library with light pink flowers and comfortable cushions",
+      "imageUrl": "https://picsum.photos/seed/dreamy-library/1920/1080",
+      "imageHint": "dreamy library"
     },
     {
       "id": "signup-bg",
-      "description": "Crumbling castle architecture in the moonlight",
-      "imageUrl": "https://picsum.photos/seed/castle/1000/1500",
-      "imageHint": "gothic castle"
+      "description": "Soft pastel clouds over a peaceful landscape at dawn",
+      "imageUrl": "https://picsum.photos/seed/pastel-dawn/1000/1500",
+      "imageHint": "pastel sky"
     },
     {
       "id": "novel-1",
-      "description": "Crumbling castle under a red moon",
-      "imageUrl": "https://picsum.photos/seed/castle/600/800",
-      "imageHint": "gothic castle moon"
+      "description": "An elegant book with a soft pink flower on top",
+      "imageUrl": "https://picsum.photos/seed/pink-flower-book/600/800",
+      "imageHint": "aesthetic book"
     },
     {
       "id": "novel-2",
-      "description": "Ethereal forest with purple mist",
-      "imageUrl": "https://picsum.photos/seed/forest/600/800",
-      "imageHint": "fantasy forest mist"
+      "description": "Lavender fields under a soft purple sky",
+      "imageUrl": "https://picsum.photos/seed/lavender-fields/600/800",
+      "imageHint": "lavender fields"
     },
     {
       "id": "novel-3",
-      "description": "Old leather book with glowing runes",
-      "imageUrl": "https://picsum.photos/seed/runes/600/800",
-      "imageHint": "magic book runes"
+      "description": "Golden light through a window onto a writing desk",
+      "imageUrl": "https://picsum.photos/seed/writing-desk/600/800",
+      "imageHint": "cozy desk"
     },
     {
       "id": "novel-4",
-      "description": "Mysterious figure in a velvet cloak",
-      "imageUrl": "https://picsum.photos/seed/cloak/600/800",
-      "imageHint": "mysterious hooded figure"
+      "description": "A peaceful garden path with soft light filters",
+      "imageUrl": "https://picsum.photos/seed/garden-path/600/800",
+      "imageHint": "dreamy garden"
     },
     {
       "id": "novel-5",
-      "description": "Victorian manor at midnight",
-      "imageUrl": "https://picsum.photos/seed/manor/600/800",
-      "imageHint": "victorian manor night"
+      "description": "Soft white curtains blowing in a gentle breeze",
+      "imageUrl": "https://picsum.photos/seed/white-curtains/600/800",
+      "imageHint": "soft breeze"
     },
     {
       "id": "novel-6",
-      "description": "Cyberpunk city with rain and neon",
-      "imageUrl": "https://picsum.photos/seed/neon/600/800",
-      "imageHint": "cyberpunk neon city"
+      "description": "Ethereal crystal glowing with soft blue light",
+      "imageUrl": "https://picsum.photos/seed/glow-crystal/600/800",
+      "imageHint": "fantasy crystal"
     }
   ]
 }

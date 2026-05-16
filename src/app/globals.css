@@ -1,30 +1,29 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 340 15% 8%;
-    --foreground: 0 0% 98%;
-    --card: 340 15% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 340 15% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 335 60% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 304 42% 15%;
-    --secondary-foreground: 304 42% 60%;
-    --muted: 340 10% 15%;
-    --muted-foreground: 340 5% 65%;
-    --accent: 304 42% 60%;
-    --accent-foreground: 340 15% 8%;
+    --background: 340 30% 98%;
+    --foreground: 340 20% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 340 20% 15%;
+    --popover: 340 30% 99%;
+    --popover-foreground: 340 20% 15%;
+    --primary: 330 40% 60%;
+    --primary-foreground: 340 10% 98%;
+    --secondary: 270 30% 95%;
+    --secondary-foreground: 270 30% 40%;
+    --muted: 340 10% 94%;
+    --muted-foreground: 340 10% 45%;
+    --accent: 270 40% 75%;
+    --accent-foreground: 270 40% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 340 10% 20%;
-    --input: 340 10% 20%;
-    --ring: 335 60% 40%;
-    --radius: 0.75rem;
+    --border: 340 15% 90%;
+    --input: 340 15% 90%;
+    --ring: 330 40% 60%;
+    --radius: 1rem;
   }
 }
 
@@ -33,16 +32,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground font-body antialiased selection:bg-primary/20;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
 }
 
-.dark-fantasy-gradient {
-  background: radial-gradient(circle at top right, hsla(335, 60%, 40%, 0.15), transparent),
-              radial-gradient(circle at bottom left, hsla(304, 42%, 60%, 0.1), transparent);
+.dreamy-fantasy-gradient {
+  background: radial-gradient(circle at top right, hsla(330, 40%, 60%, 0.1), transparent),
+              radial-gradient(circle at bottom left, hsla(270, 40%, 75%, 0.1), transparent),
+              linear-gradient(to bottom, hsla(340, 30%, 98%, 1), hsla(340, 30%, 95%, 1));
 }
 
 .writing-editor {
@@ -51,7 +51,7 @@
 }
 
 .glass-morphism {
-  @apply bg-card/60 backdrop-blur-md border border-white/5;
+  @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-sm;
 }
 
 ::-webkit-scrollbar {
@@ -63,5 +63,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full hover:bg-muted-foreground/50 transition-colors;
+  @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }

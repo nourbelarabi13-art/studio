@@ -14,17 +14,17 @@ import {
   Sparkles, 
   Trash2, 
   CheckCircle2, 
-  AlertTriangle,
   Zap,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Heart
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestGenres } from "@/ai/flows/ai-genre-suggestion-flow";
 import { checkContentSafety } from "@/ai/flows/ai-content-safety-check-flow";
 import { suggestStorySpark } from "@/ai/flows/ai-story-spark-flow";
 import { cn } from "@/lib/utils";
-import { useAuth, useFirestore, useUser, useDoc } from "@/firebase";
+import { useFirestore, useUser, useDoc } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -40,7 +40,6 @@ export default function WritePage() {
   const { user } = useUser();
   const db = useFirestore();
   
-  // Fetch user profile for the username
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
     return doc(db, "users", user.uid);
@@ -61,7 +60,6 @@ export default function WritePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const wordCount = useMemo(() => deferredContent.split(/\s+/).filter(Boolean).length, [deferredContent]);
-  const charCount = useMemo(() => deferredContent.length, [deferredContent]);
 
   const toggleGenre = (genre: Genre) => {
     setSelectedGenres(prev => 
@@ -73,242 +71,125 @@ export default function WritePage() {
 
   const handleSuggestGenres = async () => {
     if (!content || !title) {
-      toast({
-        title: "Incomplete Scrolls",
-        description: "Please provide a title and content before invoking the muse.",
-        variant: "destructive",
-      });
+      toast({ title: "Keep writing", description: "Give your story a title and a few words first.", variant: "destructive" });
       return;
     }
-
     setIsAnalyzing(true);
     try {
       const result = await suggestGenres({ title, storyContent: content });
-      const suggested = result.suggestedGenres as Genre[];
-      setSelectedGenres(suggested);
-      toast({
-        title: "The Muse Whispers",
-        description: `Suggested genres: ${suggested.join(", ")}`,
-      });
+      setSelectedGenres(result.suggestedGenres as Genre[]);
     } catch (error) {
-      toast({
-        title: "Silent Muse",
-        description: "The AI was unable to analyze your scrolls at this time.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
+      toast({ title: "Still thinking...", description: "We couldn't suggest genres right now.", variant: "destructive" });
+    } finally { setIsAnalyzing(false); }
   };
 
   const handleStorySpark = async () => {
     setIsSparking(true);
     try {
       const result = await suggestStorySpark({ title, currentContent: content });
-      toast({
-        title: "A Spark of Ink",
-        description: result.spark,
-        duration: 10000,
-      });
+      toast({ title: "A Spark of Light", description: result.spark, duration: 8000 });
     } catch (error) {
-      toast({
-        title: "The Shadows are Silent",
-        description: "No spark could be summoned.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSparking(false);
-    }
+      toast({ title: "Quiet Mind", description: "The muse is resting.", variant: "destructive" });
+    } finally { setIsSparking(false); }
   };
 
   const handleSaveDraft = async () => {
-    if (!user) {
-      toast({ title: "Unidentified Soul", description: "You must be logged in to save scrolls.", variant: "destructive" });
-      return;
-    }
+    if (!user) { toast({ title: "Who are you?", description: "Please log in to save.", variant: "destructive" }); return; }
     if (!title && !content) return;
-
     setIsSaving(true);
     const novelData = {
-      title: title || "Untitled Fragment",
+      title: title || "Untitled Dream",
       content,
       authorId: user.uid,
-      authorUsername: profile?.username || user.email?.split('@')[0] || "Traveler",
+      authorUsername: profile?.username || "Dreamer",
       genres: selectedGenres,
       coverImage,
       isDraft: true,
       createdAt: serverTimestamp(),
       publishedAt: null,
     };
-
-    addDoc(collection(db, "novels"), novelData)
-      .then(() => {
-        setIsSaving(false);
-        toast({ title: "Scrolls Preserved", description: `Draft "${title || 'Untitled Fragment'}" has been secured in your vault.` });
-        router.push("/vault");
-      })
-      .catch(async (err) => {
-        setIsSaving(false);
-        const permissionError = new FirestorePermissionError({
-          path: "novels",
-          operation: "create",
-          requestResourceData: novelData,
-        });
-        errorEmitter.emit("permission-error", permissionError);
-      });
+    addDoc(collection(db, "novels"), novelData).then(() => {
+      setIsSaving(false);
+      toast({ title: "Dream Tucked Away", description: "Draft secured in your vault." });
+      router.push("/vault");
+    }).catch(async () => {
+      setIsSaving(false);
+      errorEmitter.emit("permission-error", new FirestorePermissionError({ path: "novels", operation: "create" }));
+    });
   };
 
   const handlePublish = async () => {
-    if (!user) {
-      toast({ title: "Unidentified Soul", description: "You must be logged in to publish chronicles.", variant: "destructive" });
-      return;
-    }
+    if (!user) { toast({ title: "Identify yourself", description: "Log in to share your story.", variant: "destructive" }); return; }
     if (!content || !title || selectedGenres.length === 0) {
-      toast({
-        title: "Wait, Traveler",
-        description: "Ensure you have a title, content, and at least one genre essence.",
-        variant: "destructive",
-      });
+      toast({ title: "Almost there", description: "Check your title, content, and genres.", variant: "destructive" });
       return;
     }
-
     setIsCheckingSafety(true);
     try {
-      const safetyResult = await checkContentSafety({ 
-        novelTitle: title, 
-        novelContent: content 
-      });
-
+      const safetyResult = await checkContentSafety({ novelTitle: title, novelContent: content });
       if (!safetyResult.isSafe) {
-        toast({
-          title: "Guardian Intervention",
-          description: safetyResult.reasons[0] || "Your content carries heavy shadows that violate sanctuary rules.",
-          variant: "destructive",
-        });
+        toast({ title: "Gently Declined", description: safetyResult.reasons[0], variant: "destructive" });
         setIsCheckingSafety(false);
         return;
       }
-
       const novelData = {
-        title,
-        content,
-        authorId: user.uid,
-        authorUsername: profile?.username || user.email?.split('@')[0] || "Traveler",
-        genres: selectedGenres,
-        coverImage,
-        isDraft: false,
-        createdAt: serverTimestamp(),
-        publishedAt: serverTimestamp(),
+        title, content, authorId: user.uid, authorUsername: profile?.username || "Dreamer",
+        genres: selectedGenres, coverImage, isDraft: false, createdAt: serverTimestamp(), publishedAt: serverTimestamp(),
       };
-
-      addDoc(collection(db, "novels"), novelData)
-        .then(() => {
-          setIsCheckingSafety(false);
-          toast({ title: "Manifestation Complete", description: "Your chronicle has been published to the Archive." });
-          router.push("/");
-        })
-        .catch(async (err) => {
-          setIsCheckingSafety(false);
-          const permissionError = new FirestorePermissionError({
-            path: "novels",
-            operation: "create",
-            requestResourceData: novelData,
-          });
-          errorEmitter.emit("permission-error", permissionError);
-        });
-    } catch (error) {
-      setIsCheckingSafety(false);
-      toast({
-        title: "Binding Error",
-        description: "The AI failed to verify the content safety. Please try again.",
-        variant: "destructive",
+      addDoc(collection(db, "novels"), novelData).then(() => {
+        setIsCheckingSafety(false);
+        toast({ title: "Story Bloomed", description: "Published to the Archive." });
+        router.push("/");
+      }).catch(async () => {
+        setIsCheckingSafety(false);
+        errorEmitter.emit("permission-error", new FirestorePermissionError({ path: "novels", operation: "create" }));
       });
-    }
+    } catch (error) { setIsCheckingSafety(false); }
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      
       <main className="flex-1 container mx-auto px-4 py-12 max-w-5xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
           <div className="space-y-1">
-            <h1 className="font-headline text-4xl font-bold italic text-primary">The Novel Forge</h1>
-            <p className="text-muted-foreground text-sm italic opacity-80">Shape your soul into immortal words.</p>
+            <h1 className="font-headline text-4xl font-bold italic text-primary">The Writing Desk</h1>
+            <p className="text-muted-foreground text-sm italic">Let your thoughts flow freely.</p>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-            <Button 
-              variant="outline" 
-              className="gap-2 text-accent border-accent/20 hover:bg-accent/10 rounded-full h-12 px-6"
-              onClick={handleStorySpark}
-              disabled={isSparking}
-            >
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5" onClick={handleStorySpark} disabled={isSparking}>
               {isSparking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              Story Spark
+              Get a Spark
             </Button>
-            <Button 
-              variant="outline" 
-              className="gap-2 text-muted-foreground border-white/5 hover:bg-muted/30 rounded-full h-12 px-6"
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-            >
+            <Button variant="outline" className="gap-2 rounded-full border-primary/10 text-muted-foreground hover:bg-primary/5" onClick={handleSaveDraft} disabled={isSaving}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Draft
             </Button>
-            <Button 
-              onClick={handlePublish} 
-              disabled={isCheckingSafety}
-              className="gap-2 bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 rounded-full h-12 px-8"
-            >
-              {isCheckingSafety ? <Sparkles className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Publish Story
+            <Button onClick={handlePublish} disabled={isCheckingSafety} className="gap-2 bg-primary hover:bg-primary/90 rounded-full px-8 shadow-md">
+              {isCheckingSafety ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Publish
             </Button>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_320px] gap-12">
+        <div className="grid lg:grid-cols-[1fr_300px] gap-12">
           <div className="space-y-8">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              <div 
-                className="relative w-32 h-44 rounded-xl overflow-hidden cursor-pointer group shrink-0 border-2 border-dashed border-white/10 hover:border-primary/50 transition-colors"
-                onClick={() => setShowImageSelector(!showImageSelector)}
-              >
-                <Image src={coverImage} alt="Cover" fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                  <ImageIcon className="w-6 h-6 text-white" />
-                </div>
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <div className="relative w-28 h-36 rounded-2xl overflow-hidden cursor-pointer group shrink-0 border-2 border-dashed border-primary/10 hover:border-primary/40 transition-all" onClick={() => setShowImageSelector(!showImageSelector)}>
+                <Image src={coverImage} alt="Cover" fill className="object-cover opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/20"><ImageIcon className="w-6 h-6 text-primary" /></div>
               </div>
-
               <div className="flex-1 w-full">
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Your Chronicle Title..."
-                  className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-10 py-4 h-auto"
-                />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Story Title..." className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-20 h-auto" />
               </div>
             </div>
             
             {showImageSelector && (
-              <div className="glass-morphism rounded-3xl p-6 animate-fade-in border-primary/20">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-headline text-lg font-bold">Choose a Visual Essence</h4>
-                  <Button variant="ghost" size="sm" onClick={() => setShowImageSelector(false)}>Close</Button>
-                </div>
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+              <div className="glass-morphism rounded-3xl p-6 border-primary/10 animate-fade-in">
+                <h4 className="font-headline text-lg font-bold mb-4">Choose a Cover Essence</h4>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                   {PlaceHolderImages.map(img => (
-                    <div 
-                      key={img.id} 
-                      className={cn(
-                        "relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105",
-                        coverImage === img.imageUrl ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100"
-                      )}
-                      onClick={() => {
-                        setCoverImage(img.imageUrl);
-                        setShowImageSelector(false);
-                      }}
-                    >
+                    <div key={img.id} className={cn("relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer transition-all hover:scale-105", coverImage === img.imageUrl ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "opacity-60")} onClick={() => { setCoverImage(img.imageUrl); setShowImageSelector(false); }}>
                       <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
                     </div>
                   ))}
@@ -316,96 +197,42 @@ export default function WritePage() {
               </div>
             )}
 
-            <div className="relative group">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="The moon bled garnet across the obsidian fields..."
-                className="writing-editor min-h-[65vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-10 text-muted-foreground/90 selection:bg-primary/20"
-              />
-              <div className="absolute bottom-4 right-0 flex items-center gap-4 text-[9px] text-muted-foreground/20 uppercase tracking-[0.2em] font-bold pointer-events-none group-hover:text-muted-foreground/40 transition-colors">
-                <span>{charCount} Characters</span>
-                <span className="w-1 h-1 bg-muted-foreground/20 rounded-full" />
-                <span>{wordCount} Words</span>
-              </div>
+            <div className="relative">
+              <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Start your story here..." className="writing-editor min-h-[60vh] bg-transparent border-none resize-none focus-visible:ring-0 p-0 placeholder:italic placeholder:opacity-20 text-foreground/90" />
+              <div className="absolute bottom-0 right-0 py-4 text-xs text-muted-foreground/40 font-bold uppercase tracking-widest">{wordCount} words</div>
             </div>
           </div>
 
-          <aside className="space-y-10 animate-fade-in">
-            <div className="glass-morphism rounded-3xl p-8 space-y-6">
+          <aside className="space-y-8">
+            <div className="glass-morphism rounded-3xl p-7 space-y-6 border-primary/10">
               <div className="flex items-center justify-between">
-                <h3 className="font-headline text-xl font-bold flex items-center gap-2">
-                  Genre Grimoire
-                </h3>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-9 w-9 text-accent hover:text-accent/80 hover:bg-accent/10 rounded-full"
-                  onClick={handleSuggestGenres}
-                  disabled={isAnalyzing}
-                >
+                <h3 className="font-headline text-xl font-bold">Genres</h3>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full" onClick={handleSuggestGenres} disabled={isAnalyzing}>
                   <Sparkles className={cn("w-4 h-4", isAnalyzing && "animate-spin")} />
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground italic opacity-70 leading-relaxed">Infuse your story with elemental genre essences (up to three).</p>
-              
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {AVAILABLE_GENRES.map(genre => (
-                  <Badge
-                    key={genre}
-                    variant={selectedGenres.includes(genre) ? "default" : "outline"}
-                    className={cn(
-                      "cursor-pointer transition-all h-8 px-4 rounded-full text-[10px] uppercase font-bold tracking-widest",
-                      selectedGenres.includes(genre) 
-                        ? "bg-primary border-primary shadow-lg shadow-primary/20" 
-                        : "border-white/10 text-muted-foreground hover:border-accent hover:text-accent"
-                    )}
-                    onClick={() => toggleGenre(genre)}
-                  >
-                    {genre}
-                  </Badge>
+                  <Badge key={genre} variant={selectedGenres.includes(genre) ? "default" : "outline"} className={cn("cursor-pointer h-7 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider", selectedGenres.includes(genre) ? "bg-primary border-none shadow-sm" : "border-primary/10 text-muted-foreground hover:border-primary/40")} onClick={() => toggleGenre(genre)}>{genre}</Badge>
                 ))}
               </div>
-
-              {selectedGenres.length === 0 && (
-                <div className="flex items-center gap-2 text-[10px] text-destructive italic pt-2 font-bold uppercase tracking-wider animate-pulse">
-                  <AlertTriangle className="w-3 h-3" />
-                  At least one essence required
-                </div>
-              )}
             </div>
 
-            <div className="glass-morphism rounded-3xl p-8 space-y-6 border-accent/20">
-              <h3 className="font-headline text-xl font-bold">Guardian Sentinel</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed italic opacity-80">
-                "All manifestations are reviewed by the Sentinels to ensure the sanctuary remains a pure space for expression."
-              </p>
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground/70">
-                  <CheckCircle2 className="w-4 h-4 text-green-500/60" />
-                  <span>Safety Ritual Pending</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground/70">
-                  <CheckCircle2 className="w-4 h-4 text-green-500/60" />
-                  <span>Privacy Lock Active</span>
-                </div>
+            <div className="glass-morphism rounded-3xl p-7 space-y-4 bg-primary/5 border-primary/10">
+              <h3 className="font-headline text-lg font-bold flex items-center gap-2">
+                <Heart className="w-4 h-4 text-primary" />
+                Soft Guidelines
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed italic">Your story should be comfortable and safe for all our dreamers to read.</p>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground/70"><CheckCircle2 className="w-4 h-4 text-primary/40" /><span>Privacy Protected</span></div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground/70"><CheckCircle2 className="w-4 h-4 text-primary/40" /><span>Safety Check Active</span></div>
               </div>
             </div>
 
-            <Button 
-              variant="ghost" 
-              className="w-full text-destructive/60 hover:text-destructive hover:bg-destructive/5 gap-2 h-12 rounded-full text-xs font-bold uppercase tracking-widest"
-              onClick={() => {
-                if (confirm("Are you sure you wish to banish these scrolls to the void?")) {
-                  setTitle("");
-                  setContent("");
-                  setSelectedGenres([]);
-                  toast({ title: "Banished", description: "The scrolls have been reduced to ash." });
-                }
-              }}
-            >
+            <Button variant="ghost" className="w-full text-destructive/40 hover:text-destructive hover:bg-destructive/5 gap-2 rounded-full h-11 text-xs font-bold uppercase tracking-widest" onClick={() => { if (confirm("Clear your desk?")) { setTitle(""); setContent(""); setSelectedGenres([]); } }}>
               <Trash2 className="w-4 h-4" />
-              Discard Scrolls
+              Discard Story
             </Button>
           </aside>
         </div>

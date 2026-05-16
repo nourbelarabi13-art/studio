@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -18,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Shield, Sparkles, User, Mail, Lock, Loader2 } from "lucide-react";
+import { Sparkles, User, Mail, Lock, Loader2, Heart } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useFirestore } from "@/firebase";
@@ -28,9 +27,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username is too long"),
+  username: z.string().min(3, "Name must be at least 3 characters").max(20, "Name is too long"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Phrase must be at least 8 characters"),
   ageConfirmed: z.boolean().refine(v => v === true, "You must be 13 or older to join"),
 });
 
@@ -60,7 +59,6 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // Save user profile to Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         username: values.username,
@@ -70,15 +68,15 @@ export default function SignUpPage() {
       });
 
       toast({
-        title: "Identity Forged",
-        description: "Welcome to the Archive. Your journey begins now.",
+        title: "Welcome, Traveler",
+        description: "Your space in the sanctuary is ready.",
       });
       router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "The Ritual Failed",
-        description: error.message || "Could not forge your identity at this time.",
+        title: "Could not join",
+        description: error.message || "Something went wrong while setting up your sanctuary.",
       });
     } finally {
       setIsLoading(false);
@@ -87,44 +85,37 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:block relative overflow-hidden">
+      <div className="hidden lg:block relative overflow-hidden bg-primary/5">
         {signupImage && (
           <Image 
             src={signupImage.imageUrl} 
             alt={signupImage.description}
             fill
-            className="object-cover"
+            className="object-cover opacity-60"
             priority
             data-ai-hint={signupImage.imageHint}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end p-12 space-y-4">
-          <h2 className="font-headline text-4xl font-bold text-white leading-tight">
-            Join the Sanctuary of <br /><span className="text-primary italic">Velvet Ink</span>
+          <h2 className="font-headline text-4xl font-bold text-foreground leading-tight">
+            Join the Sanctuary of <br /><span className="text-primary italic">Soft Whispers</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-md italic">
-            "We value your privacy like a sacred scroll. Share your stories, keep your secrets."
+            "Your stories are precious, and your peace is our priority. Welcome home."
           </p>
-          <div className="flex items-center gap-6 pt-8 text-muted-foreground/60">
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              <span className="text-xs uppercase tracking-widest font-bold">Privacy First</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              <span className="text-xs uppercase tracking-widest font-bold">Creative Freedom</span>
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8 animate-fade-in">
           <div className="space-y-2 text-center lg:text-left">
-            <Link href="/" className="inline-block font-headline text-2xl font-bold text-primary mb-4">Rosa Novara</Link>
-            <h1 className="font-headline text-3xl font-bold">Forge Your Identity</h1>
-            <p className="text-muted-foreground italic">Begin your journey in the Dark Archive</p>
+            <Link href="/" className="inline-flex items-center gap-2 font-headline text-2xl font-bold text-primary mb-4">
+              <Heart className="w-5 h-5 fill-primary" />
+              Rosaline Bela
+            </Link>
+            <h1 className="font-headline text-3xl font-bold">Join the Archive</h1>
+            <p className="text-muted-foreground italic">Start your journey in our dreamy sanctuary</p>
           </div>
 
           <Form {...form}>
@@ -135,13 +126,12 @@ export default function SignUpPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-accent" />
-                      Persona Name (Username)
+                      <User className="w-4 h-4 text-primary/60" />
+                      Pen Name
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="E.g. Raven_Writer" {...field} className="bg-muted/30 border-white/5 focus:border-primary/50" />
+                      <Input placeholder="Your dreamer name" {...field} className="bg-white border-primary/10 h-11 focus:border-primary" />
                     </FormControl>
-                    <FormDescription className="text-[10px]">This is how you will be known to other travelers.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -152,11 +142,11 @@ export default function SignUpPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-accent" />
-                      Scroll Address (Email)
+                      <Mail className="w-4 h-4 text-primary/60" />
+                      Email Address
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="your@scroll.com" {...field} className="bg-muted/30 border-white/5 focus:border-primary/50" />
+                      <Input placeholder="your@dream.com" {...field} className="bg-white border-primary/10 h-11 focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -168,11 +158,11 @@ export default function SignUpPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-accent" />
-                      Secret Phrase (Password)
+                      <Lock className="w-4 h-4 text-primary/60" />
+                      Secret Phrase
                     </FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} className="bg-muted/30 border-white/5 focus:border-primary/50" />
+                      <Input type="password" placeholder="••••••••" {...field} className="bg-white border-primary/10 h-11 focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +172,7 @@ export default function SignUpPage() {
                 control={form.control}
                 name="ageConfirmed"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/20 border-white/5">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl border p-4 bg-primary/5 border-primary/10">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -190,26 +180,27 @@ export default function SignUpPage() {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Age Gate Affirmation
+                      <FormLabel className="text-sm font-semibold">
+                        I am 13 or older
                       </FormLabel>
                       <FormDescription className="text-xs">
-                        I confirm that I am at least 13 seasons of age.
+                        By checking this, you confirm you're of age to join our space.
                       </FormDescription>
                     </div>
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg">
+              <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Enter the Sanctuary
+                Begin Your Story
+                {!isLoading && <Sparkles className="w-4 h-4 ml-2" />}
               </Button>
             </form>
           </Form>
 
           <p className="text-center text-sm text-muted-foreground italic">
-            Already a traveler?{" "}
-            <Link href="/login" className="text-accent hover:underline font-semibold">Return to Login</Link>
+            Already a dreamer?{" "}
+            <Link href="/login" className="text-primary hover:underline font-semibold">Return to Sanctuary</Link>
           </p>
         </div>
       </div>
