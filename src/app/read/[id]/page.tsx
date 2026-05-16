@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { NovelCard } from "@/components/novel-card";
+import { StoryComments } from "@/components/story-comments";
+import { EndingPoll } from "@/components/ending-poll";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -526,7 +528,13 @@ export default function ReadingPage() {
           </div>
         </article>
 
-        <footer className="pt-24 border-t border-primary/10 space-y-16">
+        {novel.poll && novel.poll.active && (
+          <section className="pt-16 max-w-xl mx-auto">
+            <EndingPoll novel={novel} />
+          </section>
+        )}
+
+        <footer className="pt-24 border-t border-primary/10 space-y-24">
           <div className="flex items-center justify-between">
             <Button 
               variant="outline" 
@@ -568,7 +576,7 @@ export default function ReadingPage() {
           </div>
 
           {similarNovels && similarNovels.length > 1 && (
-            <section className="space-y-8 pt-16">
+            <section className="space-y-8">
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-primary" />
                 <h3 className="font-headline text-2xl font-bold italic">Similar Chronicles</h3>
@@ -583,6 +591,8 @@ export default function ReadingPage() {
               </div>
             </section>
           )}
+
+          <StoryComments novel={novel} />
         </footer>
       </main>
     </div>

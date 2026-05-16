@@ -12,10 +12,16 @@ export interface Chapter {
   order: number;
 }
 
+export interface StoryPoll {
+  question: string;
+  options: string[];
+  active: boolean;
+}
+
 export interface Novel {
   id: string;
   title: string;
-  content: string; // The full text or summary
+  content: string;
   chapters?: Chapter[];
   authorId: string;
   authorUsername: string;
@@ -28,12 +34,28 @@ export interface Novel {
   likes: number;
   language: AppLanguage;
   country?: string;
+  poll?: StoryPoll;
   translations?: {
     [key in AppLanguage]?: {
       title: string;
       content: string;
     }
   };
+}
+
+export interface Comment {
+  id?: string;
+  userId: string;
+  userName: string;
+  text: string;
+  parentId?: string;
+  createdAt: string;
+}
+
+export interface EndingVote {
+  userId: string;
+  choiceIndex: number;
+  createdAt: string;
 }
 
 export interface ReadingPreferences {

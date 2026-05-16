@@ -20,7 +20,15 @@
         "publishedCount": { "type": "integer", "default": 0 },
         "achievements": { "type": "array", "items": { "type": "string" } },
         "language": { "type": "string", "enum": ["en", "ar", "fr"] },
-        "country": { "type": "string" }
+        "country": { "type": "string" },
+        "readingPreferences": {
+          "type": "object",
+          "properties": {
+            "fontSize": { "type": "number" },
+            "lineHeight": { "type": "number" },
+            "mode": { "type": "string", "enum": ["light", "sepia", "lavender", "midnight"] }
+          }
+        }
       },
       "required": ["uid", "username", "email", "ageConfirmed", "role"]
     },
@@ -41,9 +49,41 @@
         "views": { "type": "integer", "default": 0 },
         "likes": { "type": "integer", "default": 0 },
         "language": { "type": "string", "enum": ["en", "ar", "fr"] },
-        "country": { "type": "string", "description": "The country of origin for the story." }
+        "country": { "type": "string" },
+        "poll": {
+          "type": "object",
+          "properties": {
+            "question": { "type": "string" },
+            "options": { "type": "array", "items": { "type": "string" } },
+            "active": { "type": "boolean" }
+          }
+        }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A community whisper regarding a chronicle.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "parentId": { "type": "string", "description": "ID of parent comment if this is a reply" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "text", "createdAt"]
+    },
+    "EndingVote": {
+      "title": "Ending Vote",
+      "description": "A user's choice for a story's direction.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "choiceIndex": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "choiceIndex", "createdAt"]
     },
     "ReadingProgress": {
       "title": "Reading Progress",
@@ -52,15 +92,9 @@
       "properties": {
         "uid": { "type": "string" },
         "novelId": { "type": "string" },
-        "novelTitle": { "type": "string" },
-        "coverImage": { "type": "string" },
-        "authorUsername": { "type": "string" },
         "percentage": { "type": "number" },
-        "scrollPosition": { "type": "number" },
-        "chapterIndex": { "type": "integer" },
         "lastReadAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "novelId", "percentage"]
+      }
     },
     "Bookmark": {
       "title": "Bookmark",
@@ -69,40 +103,19 @@
       "properties": {
         "uid": { "type": "string" },
         "novelId": { "type": "string" },
-        "novelTitle": { "type": "string" },
-        "coverImage": { "type": "string" },
-        "authorUsername": { "type": "string" },
-        "category": { "type": "string", "enum": ["favorite", "read-later"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "novelId", "category"]
-    },
-    "Follow": {
-      "title": "Follow",
-      "description": "A record of a user following another user.",
-      "type": "object",
-      "properties": {
-        "followerId": { "type": "string" },
-        "followingId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["followerId", "followingId"]
+        "category": { "type": "string", "enum": ["favorite", "read-later"] }
+      }
     },
     "Notification": {
       "title": "Notification",
       "description": "A whisper from the sanctuary regarding community activity.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "type": { "type": "string", "enum": ["like", "comment", "story", "follow"] },
         "message": { "type": "string" },
-        "fromUserId": { "type": "string" },
-        "fromUserName": { "type": "string" },
-        "targetId": { "type": "string", "description": "ID of the novel or comment" },
         "read": { "type": "boolean", "default": false },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["type", "message", "read", "createdAt"]
+      }
     },
     "ChatRoom": {
       "title": "Chat Room",
@@ -110,11 +123,8 @@
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "description": { "type": "string" },
-        "category": { "type": "string" },
-        "lastMessageAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "category"]
+        "category": { "type": "string" }
+      }
     },
     "ChatMessage": {
       "title": "ChatMessage",
@@ -125,8 +135,7 @@
         "senderName": { "type": "string" },
         "text": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["senderId", "senderName", "text"]
+      }
     }
   },
   "auth": {
@@ -135,35 +144,31 @@
   "firestore": {
     "/users/{uid}": {
       "schema": "UserProfile",
-      "description": "The user's personal profile scroll."
-    },
-    "/users/{uid}/progress/{novelId}": {
-      "schema": "ReadingProgress",
-      "description": "The user's reading progress for a specific chronicle."
-    },
-    "/users/{uid}/bookmarks/{novelId}": {
-      "schema": "Bookmark",
-      "description": "User's saved chronicles and favorites."
-    },
-    "/users/{uid}/notifications/{notificationId}": {
-      "schema": "Notification",
-      "description": "Whispers of community activity sent to a specific user."
+      "description": "User profile scroll."
     },
     "/novels/{novelId}": {
       "schema": "Novel",
-      "description": "A collection of all manifested chronicles and fragments."
+      "description": "Chronicle content."
     },
-    "/follows/{followId}": {
-      "schema": "Follow",
-      "description": "Users following others. followId is followerId_followingId"
+    "/novels/{novelId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Chronicle discussions."
+    },
+    "/novels/{novelId}/votes/{userId}": {
+      "schema": "EndingVote",
+      "description": "Ending preference votes."
+    },
+    "/users/{uid}/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "User whispers."
     },
     "/chatRooms/{roomId}": {
       "schema": "ChatRoom",
-      "description": "Community discussion rooms."
+      "description": "Community discussion spaces."
     },
-    "/chatRooms/{roomId}/messages/{messageId}": {
+    "/chatRooms/{roomId}/messages/{msgId}": {
       "schema": "ChatMessage",
-      "description": "Messages in a specific chat room."
+      "description": "Community chat messages."
     }
   }
 }

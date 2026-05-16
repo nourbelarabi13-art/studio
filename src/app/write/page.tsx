@@ -7,9 +7,10 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Genre, AppLanguage, Chapter } from "@/lib/types";
+import { Genre, AppLanguage, Chapter, StoryPoll } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select,
   SelectContent,
@@ -33,7 +34,8 @@ import {
   Layout,
   FileText,
   Clock,
-  MapPin
+  MapPin,
+  ListTodo
 } from "lucide-react";
 import {
   Dialog,
@@ -90,6 +92,11 @@ export default function WritePage() {
     { id: 'chap-1', title: 'Chapter 1', content: '', order: 0 }
   ]);
   const [activeChapterId, setActiveChapterId] = useState('chap-1');
+
+  // Poll State
+  const [isPollEnabled, setIsPollEnabled] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["Choice A", "Choice B"]);
   
   // UI State
   const [showManifestDialog, setShowManifestDialog] = useState(false);
@@ -108,11 +115,6 @@ export default function WritePage() {
   }, [chapters]);
 
   const estimatedReadingTime = useMemo(() => Math.ceil(totalWordCount / 200), [totalWordCount]);
-  
-  const manifestProgress = useMemo(() => {
-    const minWordsPerChapter = 200;
-    return Math.min(100, (totalWordCount / (chapters.length * minWordsPerChapter)) * 100);
-  }, [totalWordCount, chapters.length]);
 
   const handleChapterTitleChange = (newTitle: string) => {
     setChapters(prev => prev.map(c => c.id === activeChapterId ? { ...c, title: newTitle } : c));
@@ -129,26 +131,12 @@ export default function WritePage() {
     setActiveChapterId(newId);
   };
 
-  const removeChapter = (id: string) => {
-    if (chapters.length === 1) return;
-    setChapters(prev => prev.filter(c => c.id !== id));
-    if (activeChapterId === id) setActiveChapterId(chapters.find(c => c.id !== id)?.id || '');
-  };
-
-  const moveChapter = (index: number, direction: 'up' | 'down') => {
-    const newChapters = [...chapters];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newChapters.length) return;
-    [newChapters[index], newChapters[targetIndex]] = [newChapters[targetIndex], newChapters[index]];
-    setChapters(newChapters.map((c, i) => ({ ...c, order: i })));
-  };
-
   useEffect(() => {
     const timer = setTimeout(() => {
       if (user && db && (title || totalWordCount > 0)) saveProgress(true);
     }, 15000); 
     return () => clearTimeout(timer);
-  }, [title, chapters, selectedGenres, coverImage, writingLanguage, writingCountry]);
+  }, [title, chapters, selectedGenres, coverImage, writingLanguage, writingCountry, isPollEnabled, pollQuestion, pollOptions]);
 
   const saveProgress = async (isAuto = false) => {
     if (!user || !db) return;
@@ -168,7 +156,8 @@ export default function WritePage() {
       views: 0,
       likes: 0,
       language: writingLanguage,
-      country: writingCountry
+      country: writingCountry,
+      poll: isPollEnabled ? { question: pollQuestion, options: pollOptions, active: true } : null
     };
 
     try {
@@ -214,7 +203,8 @@ export default function WritePage() {
         likes: 0,
         language: writingLanguage,
         country: writingCountry,
-        translations: translationResult.translations
+        translations: translationResult.translations,
+        poll: isPollEnabled ? { question: pollQuestion, options: pollOptions, active: true } : null
       };
 
       let finalId = novelId;
@@ -289,7 +279,7 @@ export default function WritePage() {
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-primary" onClick={addChapter}><Plus className="w-4 h-4" /></Button>
               </div>
               <div className="space-y-2">
-                {chapters.map((chap, idx) => (
+                {chapters.map((chap) => (
                   <div key={chap.id} className={cn("p-3 rounded-2xl border cursor-pointer transition-all", activeChapterId === chap.id ? "bg-primary/5 border-primary/20" : "border-transparent hover:bg-primary/5")} onClick={() => setActiveChapterId(chap.id)}>
                     <p className={cn("text-sm font-bold truncate", activeChapterId === chap.id ? "text-primary" : "text-muted-foreground")}>{chap.title || "Untitled"}</p>
                   </div>
@@ -316,23 +306,13 @@ export default function WritePage() {
               <h3 className="font-headline text-xl font-bold flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Context</h3>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.write.language}</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Story Language</label>
                   <Select value={writingLanguage} onValueChange={(val) => setWritingLanguage(val as AppLanguage)}>
                     <SelectTrigger className="rounded-2xl border-primary/10"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-white rounded-2xl">
                       <SelectItem value="en">English 🇬🇧</SelectItem>
                       <SelectItem value="ar">العربية 🇸🇦</SelectItem>
                       <SelectItem value="fr">Français 🇫🇷</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.write.country}</label>
-                  <Select value={writingCountry} onValueChange={setWritingCountry}>
-                    <SelectTrigger className="rounded-2xl border-primary/10"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-white rounded-2xl">
-                      {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -344,6 +324,41 @@ export default function WritePage() {
                       <Badge key={genre} variant={selectedGenres.includes(genre) ? "default" : "outline"} className={cn("cursor-pointer rounded-full text-[9px]", selectedGenres.includes(genre) ? "bg-primary" : "text-muted-foreground")} onClick={() => setSelectedGenres(prev => prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev.slice(-2), genre])}>{genre}</Badge>
                     ))}
                   </div>
+                </div>
+
+                <div className="pt-6 border-t border-primary/5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Checkbox id="poll-enable" checked={isPollEnabled} onCheckedChange={(val) => setIsPollEnabled(!!val)} />
+                    <label htmlFor="poll-enable" className="text-xs font-bold uppercase tracking-widest text-muted-foreground cursor-pointer flex items-center gap-2">
+                      <ListTodo className="w-3.5 h-3.5" /> Enable Oracle Poll
+                    </label>
+                  </div>
+                  
+                  {isPollEnabled && (
+                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      <Input 
+                        placeholder="Ending Question..." 
+                        value={pollQuestion} 
+                        onChange={(e) => setPollQuestion(e.target.value)}
+                        className="h-10 text-xs rounded-xl bg-primary/5 border-none"
+                      />
+                      <div className="space-y-2">
+                        {pollOptions.map((opt, idx) => (
+                          <Input 
+                            key={idx}
+                            value={opt}
+                            onChange={(e) => {
+                              const newOpts = [...pollOptions];
+                              newOpts[idx] = e.target.value;
+                              setPollOptions(newOpts);
+                            }}
+                            className="h-8 text-[10px] rounded-lg border-primary/10"
+                          />
+                        ))}
+                        <Button variant="ghost" size="sm" onClick={() => setPollOptions([...pollOptions, `Choice ${pollOptions.length + 1}`])} className="w-full text-[9px] uppercase font-bold text-primary">Add Choice</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button variant="outline" className="w-full h-12 rounded-2xl gap-2 border-primary/10 text-primary" onClick={() => setShowManifestDialog(true)}><Wand2 className="w-4 h-4" /> AI Illustration</Button>
