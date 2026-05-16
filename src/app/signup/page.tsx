@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -63,10 +62,10 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // Update auth profile with username for immediate display
+      // Update auth profile with username for immediate display in UI
       await updateProfile(user, { displayName: values.username });
 
-      // Create detailed Firestore profile
+      // Create detailed Firestore profile scroll
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         username: values.username,
@@ -94,7 +93,9 @@ export default function SignUpPage() {
       });
       router.push("/");
     } catch (error: any) {
+      // Interpret specific Firebase Auth errors for the user
       let errorMessage = "Something went wrong while setting up your sanctuary.";
+      
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = "This email address is already registered in our archive.";
       } else if (error.code === 'auth/weak-password') {
@@ -105,7 +106,7 @@ export default function SignUpPage() {
 
       toast({
         variant: "destructive",
-        title: "Could not join",
+        title: "Ritual Interrupted",
         description: errorMessage,
       });
     } finally {
