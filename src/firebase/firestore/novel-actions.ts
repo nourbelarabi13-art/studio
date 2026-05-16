@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { createNotification } from './notification-actions';
 
 /**
  * Increments the view count for a novel.
@@ -30,12 +31,13 @@ export function incrementNovelView(db: Firestore, novelId: string) {
 
 /**
  * Toggles a like for a novel. 
- * For simplicity in this MVP, we track likes via a counter and a subcollection of user IDs.
  */
-export async function toggleLikeNovel(db: Firestore, novelId: string, userId: string) {
+export async function toggleLikeNovel(db: Firestore, novelId: string, userId: string, userName: string) {
   const likeRef = doc(db, 'novels', novelId, 'userLikes', userId);
   const novelRef = doc(db, 'novels', novelId);
 
+  const novelSnap = await getDoc(novelRef);
+  const novelData = novelSnap.data();
   const likeSnap = await getDoc(likeRef);
 
   if (likeSnap.exists()) {
@@ -53,6 +55,17 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
     // Like
     setDoc(likeRef, { createdAt: new Date().toISOString() }).then(() => {
       updateDoc(novelRef, { likes: increment(1) });
+      
+      // Notify author
+      if (novelData && novelData.authorId !== userId) {
+        createNotification(db, novelData.authorId, {
+          type: 'like',
+          message: `${userName} appreciated your chronicle "${novelData.title}".`,
+          fromUserId: userId,
+          fromUserName: userName,
+          targetId: novelId
+        });
+      }
     }).catch(() => {
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: likeRef.path,

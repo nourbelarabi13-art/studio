@@ -3,11 +3,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare, Bookmark as BookmarkIcon } from "lucide-react";
+import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, Heart, MessageSquare, Bookmark as BookmarkIcon, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useUser, useAuth, useDoc, useFirestore } from "@/firebase";
+import { useUser, useAuth, useDoc, useFirestore, useCollection } from "@/firebase";
 import { signOut } from "firebase/auth";
 import {
   DropdownMenu,
@@ -18,8 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
-import { doc } from "firebase/firestore";
-import { UserProfile } from "@/lib/types";
+import { doc, collection, query, where } from "firebase/firestore";
+import { UserProfile, Notification } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/context";
 
 export function Navbar() {
@@ -37,6 +37,12 @@ export function Navbar() {
   }, [user, db]);
   
   const { data: profile } = useDoc<UserProfile>(userProfileRef);
+
+  const notificationsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, "users", user.uid, "notifications"), where("read", "==", false));
+  }, [db, user]);
+  const { data: unreadNotifications } = useCollection<Notification>(notificationsQuery);
 
   const navLinks = [
     { name: t.nav.archive, href: "/", icon: Library, roles: ["writer", "reader"] },
@@ -74,7 +80,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-8">
           {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
             <Link
               key={link.href}
@@ -99,6 +105,26 @@ export function Navbar() {
           >
             <Search className="w-5 h-5" />
           </Button>
+
+          {user && (
+            <Link href="/notifications" className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "text-muted-foreground hover:text-primary hover:bg-primary/5",
+                  pathname === '/notifications' && "text-primary bg-primary/5"
+                )}
+              >
+                <Bell className="w-5 h-5" />
+                {unreadNotifications && unreadNotifications.length > 0 && (
+                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white ring-2 ring-white">
+                    {unreadNotifications.length > 9 ? '9+' : unreadNotifications.length}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
           
           {user ? (
             <DropdownMenu>

@@ -56,7 +56,7 @@ import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { incrementNovelView, toggleLikeNovel } from "@/firebase/firestore/novel-actions";
 import { saveReadingProgress } from "@/firebase/firestore/reading-progress-actions";
 import { toggleBookmark } from "@/firebase/firestore/bookmark-actions";
-import { Novel, ReadingProgress, BookmarkCategory } from "@/lib/types";
+import { Novel, ReadingProgress, BookmarkCategory, UserProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 
@@ -75,14 +75,12 @@ export default function ReadingPage() {
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [useTranslation, setUseTranslation] = useState(false);
   
-  // Custom reading controls
   const [fontSize, setFontSize] = useState(18);
   const [readingMode, setReadingMode] = useState<ReadingMode>('light');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showRestorePosition, setShowRestorePosition] = useState(false);
   const [savedPosition, setSavedPosition] = useState<number | null>(null);
   
-  // Chapter Navigation
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
 
   const novelRef = useMemoFirebase(() => {
@@ -92,21 +90,24 @@ export default function ReadingPage() {
 
   const { data: novel, loading } = useDoc<Novel>(novelRef);
 
-  // Firestore Progress Reference
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user]);
+  const { data: currentUserProfile } = useDoc<UserProfile>(profileRef);
+
   const progressRef = useMemoFirebase(() => {
     if (!db || !user || !id) return null;
     return doc(db, "users", user.uid, "progress", id as string);
   }, [db, user, id]);
   const { data: cloudProgress } = useDoc<ReadingProgress>(progressRef);
 
-  // Bookmark Reference
   const bookmarkRef = useMemoFirebase(() => {
     if (!db || !user || !id) return null;
     return doc(db, "users", user.uid, "bookmarks", id as string);
   }, [db, user, id]);
   const { data: bookmarkData } = useDoc(bookmarkRef);
 
-  // Recommendations: Similar Stories
   const similarNovelsQuery = useMemoFirebase(() => {
     if (!db || !novel) return null;
     return query(
@@ -124,7 +125,6 @@ export default function ReadingPage() {
     }
   }, [db, id]);
 
-  // Save Progress to Firestore
   const updateProgress = useCallback((percentage: number, scrollY: number) => {
     if (!db || !user || !novel || !id) return;
     
@@ -142,7 +142,7 @@ export default function ReadingPage() {
 
   useEffect(() => {
     let lastSavedAt = 0;
-    const saveThreshold = 5000; // Save at most every 5 seconds
+    const saveThreshold = 5000; 
 
     const handleScroll = () => {
       const winScroll = document.documentElement.scrollTop;
@@ -161,12 +161,10 @@ export default function ReadingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [updateProgress]);
 
-  // Restore position from cloud or local
   useEffect(() => {
     if (!loading && (cloudProgress || id)) {
       const cloudPos = cloudProgress?.scrollPosition;
-      const localPos = localStorage.getItem(`read-pos-${id}`);
-      const bestPos = cloudPos || (localPos ? parseInt(localPos) : null);
+      const bestPos = cloudPos || null;
 
       if (bestPos && bestPos > 500) {
         setSavedPosition(bestPos);
@@ -186,13 +184,13 @@ export default function ReadingPage() {
   };
 
   const handleLike = async () => {
-    if (!user) {
+    if (!user || !currentUserProfile) {
       toast({ title: "Identify Yourself", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
     setIsLiking(true);
-    await toggleLikeNovel(db, id as string, user.uid);
+    await toggleLikeNovel(db, id as string, user.uid, currentUserProfile.username);
     setIsLiking(false);
   };
 
@@ -226,7 +224,7 @@ export default function ReadingPage() {
   const estimatedReadingTime = useMemo(() => {
     if (!novel) return 0;
     const content = activeChapter ? activeChapter.content : novel.content;
-    const words = content.split(/\s+/).length;
+    const words = content ? content.split(/\s+/).length : 0;
     return Math.ceil(words / 200);
   }, [novel, activeChapter]);
 
@@ -288,17 +286,16 @@ export default function ReadingPage() {
           </div>
           
           <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-            {novel.title}
+            {displayTitle}
           </h1>
-          {activeChapter && <p className="font-headline text-2xl italic text-primary/60">{activeChapter.title}</p>}
 
           <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground italic">
-            <div className="flex items-center gap-3 text-foreground font-semibold">
+            <Link href={`/profile/${novel.authorId}`} className="flex items-center gap-3 text-foreground font-semibold hover:text-primary transition-colors">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                 <User className="w-4 h-4" />
               </div>
               {novel.authorUsername}
-            </div>
+            </Link>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary/40" />
               <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -468,7 +465,6 @@ export default function ReadingPage() {
             </div>
           </div>
 
-          {/* Similar Stories Recommendation */}
           {similarNovels && similarNovels.length > 1 && (
             <section className="space-y-8 pt-16">
               <div className="flex items-center gap-3">

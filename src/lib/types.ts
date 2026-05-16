@@ -3,6 +3,7 @@ export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sc
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
 export type BookmarkCategory = 'favorite' | 'read-later';
+export type NotificationType = 'like' | 'comment' | 'story' | 'follow';
 
 export interface Chapter {
   id: string;
@@ -63,6 +64,17 @@ export interface ReadingProgress {
 export interface Follow {
   followerId: string;
   followingId: string;
+  createdAt: string;
+}
+
+export interface Notification {
+  id?: string;
+  type: NotificationType;
+  message: string;
+  fromUserId?: string;
+  fromUserName?: string;
+  targetId?: string;
+  read: boolean;
   createdAt: string;
 }
 

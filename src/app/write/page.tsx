@@ -51,13 +51,14 @@ import { generateCover } from "@/ai/flows/ai-cover-generator-flow";
 import { translateStory } from "@/ai/flows/translate-story-flow";
 import { cn } from "@/lib/utils";
 import { useFirestore, useUser, useDoc } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDocs, query, where } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { useLanguage } from "@/lib/i18n/context";
+import { createNotification } from "@/firebase/firestore/notification-actions";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
@@ -102,7 +103,7 @@ export default function WritePage() {
 
   // Stats
   const totalWordCount = useMemo(() => {
-    return chapters.reduce((acc, chap) => acc + chap.content.split(/\s+/).filter(Boolean).length, 0);
+    return chapters.reduce((acc, chap) => acc + (chap.content ? chap.content.split(/\s+/).filter(Boolean).length : 0), 0);
   }, [chapters]);
 
   const estimatedReadingTime = useMemo(() => Math.ceil(totalWordCount / 200), [totalWordCount]);
@@ -157,7 +158,7 @@ export default function WritePage() {
       if (user && db && (title || totalWordCount > 0)) {
         saveProgress(true);
       }
-    }, 15000); // Auto-save every 15 seconds
+    }, 15000); 
     return () => clearTimeout(timer);
   }, [title, chapters, selectedGenres, coverImage, writingLanguage]);
 
@@ -167,7 +168,7 @@ export default function WritePage() {
 
     const novelData = {
       title: title || "Untitled Dream",
-      content: chapters.map(c => c.content).join('\n\n'), // Flattened content for search
+      content: chapters.map(c => c.content).join('\n\n'), 
       chapters,
       authorId: user.uid,
       authorUsername: profile?.username || "Dreamer",
@@ -235,13 +236,29 @@ export default function WritePage() {
         translations: translationResult.translations
       };
 
+      let finalId = novelId;
       if (novelId) {
         await updateDoc(doc(db, "novels", novelId), novelData);
       } else {
-        await addDoc(collection(db, "novels"), novelData);
+        const ref = await addDoc(collection(db, "novels"), novelData);
+        finalId = ref.id;
       }
       
-      toast({ title: "Manifested!", description: "Your story is now part of the archive." });
+      // Notify followers
+      const followersQuery = query(collection(db, "follows"), where("followingId", "==", user.uid));
+      const followersSnap = await getDocs(followersQuery);
+      followersSnap.forEach(followerDoc => {
+        const followerId = followerDoc.data().followerId;
+        createNotification(db, followerId, {
+          type: 'story',
+          message: `${profile?.username} published a new chronicle: "${title}"`,
+          fromUserId: user.uid,
+          fromUserName: profile?.username,
+          targetId: finalId || ""
+        });
+      });
+
+      toast({ title: t.home.community_title, description: "Your story is now part of the archive." });
       router.push("/vault");
     } catch (error) { 
       toast({ title: "Ritual Interrupted", description: "The publishing failed.", variant: "destructive" });
@@ -278,7 +295,6 @@ export default function WritePage() {
     <div className="min-h-screen bg-[#fffcfc] flex flex-col">
       <Navbar />
       
-      {/* Writing Toolbar */}
       <div className="sticky top-16 z-30 w-full glass-morphism border-b border-primary/10 px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
@@ -317,7 +333,6 @@ export default function WritePage() {
       <main className="flex-1 container mx-auto px-4 py-12 max-w-7xl">
         <div className="grid lg:grid-cols-[280px_1fr_300px] gap-12 items-start">
           
-          {/* Chapter Manager (Left Sidebar) */}
           <aside className="space-y-6 lg:sticky lg:top-36">
             <div className="glass-morphism rounded-[2rem] p-6 border-primary/10">
               <div className="flex items-center justify-between mb-6">
@@ -349,7 +364,7 @@ export default function WritePage() {
                         {chap.title || "Untitled Fragment"}
                       </p>
                       <p className="text-[9px] text-muted-foreground/40 font-mono">
-                        {chap.content.split(/\s+/).filter(Boolean).length} words
+                        {chap.content ? chap.content.split(/\s+/).filter(Boolean).length : 0} words
                       </p>
                     </button>
                     
@@ -378,7 +393,6 @@ export default function WritePage() {
             </div>
           </aside>
 
-          {/* Editor (Center) */}
           <div className="space-y-12 min-h-[80vh]">
             <div className="space-y-8 animate-fade-in">
               <div className="flex flex-col md:flex-row gap-8 items-start">
@@ -423,7 +437,6 @@ export default function WritePage() {
             </div>
           </div>
 
-          {/* Configuration (Right Sidebar) */}
           <aside className="space-y-8 lg:sticky lg:top-36">
             <div className="glass-morphism rounded-[2rem] p-7 space-y-6 border-primary/10">
               <h3 className="font-headline text-xl font-bold flex items-center gap-2">
@@ -491,7 +504,6 @@ export default function WritePage() {
         </div>
       </main>
 
-      {/* Manifest Dialog */}
       <Dialog open={showManifestDialog} onOpenChange={setShowManifestDialog}>
         <DialogContent className="bg-white rounded-[2.5rem] p-10 max-w-md border-primary/10">
           <DialogHeader>

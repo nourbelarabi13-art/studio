@@ -81,6 +81,22 @@
       },
       "required": ["followerId", "followingId"]
     },
+    "Notification": {
+      "title": "Notification",
+      "description": "A whisper from the sanctuary regarding community activity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["like", "comment", "story", "follow"] },
+        "message": { "type": "string" },
+        "fromUserId": { "type": "string" },
+        "fromUserName": { "type": "string" },
+        "targetId": { "type": "string", "description": "ID of the novel or comment" },
+        "read": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "message", "read", "createdAt"]
+    },
     "ChatRoom": {
       "title": "Chat Room",
       "description": "A discussion space for writers.",
@@ -121,6 +137,10 @@
     "/users/{uid}/bookmarks/{novelId}": {
       "schema": "Bookmark",
       "description": "User's saved chronicles and favorites."
+    },
+    "/users/{uid}/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Whispers of community activity sent to a specific user."
     },
     "/novels/{novelId}": {
       "schema": "Novel",
