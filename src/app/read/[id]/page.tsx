@@ -32,7 +32,8 @@ import {
   Clock,
   Coffee,
   X,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 import {
   Popover,
@@ -80,6 +81,7 @@ export default function ReadingPage() {
   const [savedPosition, setSavedPosition] = useState<number | null>(null);
   
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [isChapterCompleted, setIsChapterCompleted] = useState(false);
 
   const novelRef = useMemoFirebase(() => {
     if (!db || !id || id === 'undefined' || id === 'null') return null;
@@ -170,6 +172,12 @@ export default function ReadingPage() {
       const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
       setScrollProgress(scrolled);
       
+      if (scrolled > 95) {
+        setIsChapterCompleted(true);
+      } else {
+        setIsChapterCompleted(false);
+      }
+
       const now = Date.now();
       if (now - lastSavedAt > saveThreshold) {
         updateProgress(scrolled, winScroll);
@@ -245,6 +253,12 @@ export default function ReadingPage() {
     const words = content ? content.split(/\s+/).length : 0;
     return Math.ceil(words / 200);
   }, [novel, activeChapter]);
+
+  const handleNavigateChapter = (newIndex: number) => {
+    setCurrentChapterIndex(newIndex);
+    setIsChapterCompleted(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -371,7 +385,7 @@ export default function ReadingPage() {
                   {novel.chapters.map((chap, idx) => (
                     <DropdownMenuItem 
                       key={chap.id} 
-                      onClick={() => { setCurrentChapterIndex(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      onClick={() => handleNavigateChapter(idx)}
                       className={cn("rounded-xl cursor-pointer gap-3", currentChapterIndex === idx && "bg-primary/5 text-primary")}
                     >
                       <span className="text-[10px] font-bold opacity-30"># {idx + 1}</span>
@@ -530,6 +544,59 @@ export default function ReadingPage() {
           </div>
         </article>
 
+        {/* Chapter Completion Milestone Bar */}
+        <div className="py-20 space-y-12">
+          <div className="space-y-4">
+             <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                <span>Progress manifested</span>
+                <span>{Math.round(scrollProgress)}%</span>
+             </div>
+             <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden shadow-inner">
+               <div 
+                 className="h-full bg-primary transition-all duration-700 ease-out relative group" 
+                 style={{ width: `${scrollProgress}%` }}
+               >
+                 <div className="absolute inset-0 bg-white/20 animate-pulse" />
+               </div>
+             </div>
+          </div>
+
+          <div className={cn(
+            "transition-all duration-1000 flex flex-col items-center gap-10",
+            isChapterCompleted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+          )}>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
+              <Badge className="relative bg-primary text-white border-none px-8 py-3 rounded-full font-headline text-xl italic shadow-2xl flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6" />
+                Chapter Completed!
+              </Badge>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-6">
+              <Button 
+                variant="outline" 
+                className="rounded-full px-8 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg group transition-all"
+                disabled={currentChapterIndex === 0}
+                onClick={() => handleNavigateChapter(currentChapterIndex - 1)}
+              >
+                <span className="mr-2 transition-transform group-hover:-translate-x-1">⏮️</span>
+                Previous Chapter
+              </Button>
+              
+              {novel.chapters && currentChapterIndex < (novel.chapters.length - 1) && (
+                <Button 
+                  className="rounded-full px-8 h-14 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 font-headline text-lg group transition-all"
+                  onClick={() => handleNavigateChapter(currentChapterIndex + 1)}
+                >
+                  Next Chapter
+                  <span className="ml-2 transition-transform group-hover:translate-x-1">⏭️</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {novel.poll && novel.poll.active && (
           <section className="pt-16 max-w-xl mx-auto">
             <EndingPoll novel={novel} />
@@ -537,26 +604,6 @@ export default function ReadingPage() {
         )}
 
         <footer className="pt-24 border-t border-primary/10 space-y-24">
-          <div className="flex items-center justify-between">
-            <Button 
-              variant="outline" 
-              className="gap-3 border-primary/10 text-muted-foreground rounded-full px-8 h-12 hover:bg-primary/5"
-              disabled={currentChapterIndex === 0}
-              onClick={() => { setCurrentChapterIndex(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </Button>
-            <Button 
-              className="gap-3 bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-12 shadow-xl"
-              disabled={!novel.chapters || currentChapterIndex === (novel.chapters.length - 1)}
-              onClick={() => { setCurrentChapterIndex(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-          
           <div className={cn(
             "rounded-[3rem] p-12 text-center space-y-8 shadow-sm border",
             readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"
