@@ -3,15 +3,15 @@
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
-import { Genre, Novel, ReadingProgress, AppLanguage } from "@/lib/types";
+import { Genre, Novel, ReadingProgress, AppLanguage, Bookmark } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { DynamicBackground } from "@/components/dynamic-background";
 import { Input } from "@/components/ui/input";
@@ -23,8 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
@@ -56,6 +54,8 @@ export default function Home() {
     setSevenDaysAgo(date.toISOString());
   }, []);
 
+  // --- Core Data Fetching ---
+
   // Reading Progress Query
   const progressQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -70,30 +70,20 @@ export default function Home() {
   // Archive Query (Server-side Filtered where possible)
   const novelsQuery = useMemoFirebase(() => {
     if (!db) return null;
-    
-    // Start with a base query
-    let q = query(
-      collection(db, "novels"),
-      where("isDraft", "==", false)
-    );
-
-    // Apply structured filters (Genre & Language)
+    let q = query(collection(db, "novels"), where("isDraft", "==", false));
     if (selectedGenre !== 'All') {
       q = query(q, where("genres", "array-contains", selectedGenre));
     }
     if (selectedLanguage !== 'All') {
       q = query(q, where("language", "==", selectedLanguage));
     }
-
-    // Apply Sorting
     q = query(q, orderBy(sortBy, "desc"));
-
     return q;
   }, [db, selectedGenre, selectedLanguage, sortBy]);
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
-  // Following & Personalized Feeds
+  // Social Data for Recommendations
   const followsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, "follows"), where("followerId", "==", user.uid));
@@ -101,6 +91,51 @@ export default function Home() {
   const { data: follows } = useCollection(followsQuery);
   const followedIds = useMemo(() => follows?.map(f => f.followingId) || [], [follows]);
 
+  // Bookmark Data for Genre Preference
+  const bookmarksQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return query(collection(db, "users", user.uid, "bookmarks"), limit(20));
+  }, [db, user]);
+  const { data: bookmarks } = useCollection<Bookmark>(bookmarksQuery);
+
+  // --- Recommendation Logic ---
+
+  const preferredGenres = useMemo(() => {
+    const genreMap: Record<string, number> = {};
+    
+    // Extract genres from bookmarks
+    bookmarks?.forEach(b => {
+      b.genres?.forEach(g => {
+        genreMap[g] = (genreMap[g] || 0) + 2; // Bookmarks weighted higher
+      });
+    });
+
+    // Extract genres from progress
+    progressData?.forEach(p => {
+      p.genres?.forEach(g => {
+        genreMap[g] = (genreMap[g] || 0) + 1;
+      });
+    });
+
+    return Object.entries(genreMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([genre]) => genre as Genre);
+  }, [bookmarks, progressData]);
+
+  // Fetch novels in preferred genres
+  const recommendedGenresQuery = useMemoFirebase(() => {
+    if (!db || preferredGenres.length === 0) return null;
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      where("genres", "array-contains-any", preferredGenres),
+      limit(10)
+    );
+  }, [db, preferredGenres]);
+  const { data: genreRecommendedNovels } = useCollection<Novel>(recommendedGenresQuery);
+
+  // Fetch novels from followed authors
   const followingNovelsQuery = useMemoFirebase(() => {
     if (!db || followedIds.length === 0) return null;
     const chunks = followedIds.slice(0, 10); 
@@ -108,12 +143,51 @@ export default function Home() {
       collection(db, "novels"),
       where("isDraft", "==", false),
       where("authorId", "in", chunks),
-      orderBy("publishedAt", "desc")
+      orderBy("publishedAt", "desc"),
+      limit(10)
     );
   }, [db, followedIds]);
   const { data: followingNovels } = useCollection<Novel>(followingNovelsQuery);
 
-  // Client-side text search filtering
+  // Trending & Rising
+  const trendingQuery = useMemoFirebase(() => {
+    if (!db || !sevenDaysAgo) return null;
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      where("publishedAt", ">=", sevenDaysAgo),
+      orderBy("publishedAt", "desc"),
+      orderBy("views", "desc"),
+      limit(8)
+    );
+  }, [db, sevenDaysAgo]);
+  const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
+
+  const risingQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      orderBy("publishedAt", "desc"),
+      orderBy("views", "desc"),
+      limit(8)
+    );
+  }, [db]);
+  const { data: risingNovels } = useCollection<Novel>(risingQuery);
+
+  // --- Combined Recommendations ---
+
+  const personalizedRecommendations = useMemo(() => {
+    const combined = [
+      ...(followingNovels || []),
+      ...(genreRecommendedNovels || []),
+      ...(trendingNovels || []).slice(0, 4)
+    ];
+    // Remove duplicates
+    return combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+  }, [followingNovels, genreRecommendedNovels, trendingNovels]);
+
+  // Client-side text search filtering for Archive tab
   const filteredNovels = useMemo(() => {
     if (!novels) return [];
     if (!searchQuery.trim()) return novels;
@@ -124,33 +198,6 @@ export default function Home() {
       n.content.toLowerCase().includes(lowerQuery)
     );
   }, [novels, searchQuery]);
-
-  // Weekly Trending
-  const trendingQuery = useMemoFirebase(() => {
-    if (!db || !sevenDaysAgo) return null;
-    return query(
-      collection(db, "novels"),
-      where("isDraft", "==", false),
-      where("publishedAt", ">=", sevenDaysAgo),
-      orderBy("publishedAt", "desc"),
-      orderBy("views", "desc"),
-      limit(4)
-    );
-  }, [db, sevenDaysAgo]);
-  const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
-
-  // Rising
-  const risingQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(
-      collection(db, "novels"),
-      where("isDraft", "==", false),
-      orderBy("publishedAt", "desc"),
-      orderBy("views", "desc"),
-      limit(4)
-    );
-  }, [db]);
-  const { data: risingNovels } = useCollection<Novel>(risingQuery);
 
   const scrollToArchive = () => {
     archiveRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -216,7 +263,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {progressData.map((prog) => (
                 <Link href={`/read/${prog.novelId}`} key={prog.novelId} className="group">
-                  <div className="glass-morphism rounded-[2.5rem] p-6 border-primary/5 hover:border-primary/20 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col gap-6 h-full">
+                  <div className="glass-morphism rounded-[2.5rem] p-6 border-primary/5 border-primary/20 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col gap-6 h-full">
                     <div className="relative aspect-[3/2] rounded-[1.8rem] overflow-hidden shadow-sm">
                       <Image src={prog.coverImage} alt={prog.novelTitle} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                       <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
@@ -239,6 +286,24 @@ export default function Home() {
           </div>
         )}
 
+        {/* Personalized "For You" Section (Homepage Highlight) */}
+        {user && personalizedRecommendations.length > 0 && !searchQuery && (
+          <div className="space-y-12 animate-fade-in">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                <Sparkles className="text-primary w-8 h-8" />
+                Recommended for You
+              </h2>
+              <p className="text-muted-foreground italic text-lg ml-11">Chronicles manifested according to your preferences.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {personalizedRecommendations.slice(0, 4).map((novel) => (
+                <NovelCard key={novel.id} novel={novel} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Trending Section */}
         {trendingNovels && trendingNovels.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">
@@ -250,7 +315,7 @@ export default function Home() {
               <p className="text-muted-foreground italic text-lg ml-11">{t.home.trending_desc}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {trendingNovels.map((novel) => (
+              {trendingNovels.slice(0, 4).map((novel) => (
                 <NovelCard key={novel.id} novel={novel} badge="trending" />
               ))}
             </div>
@@ -292,30 +357,14 @@ export default function Home() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-64 p-4 rounded-3xl bg-white border-primary/10 shadow-xl">
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                      {t.home.language_filter}
-                    </DropdownMenuLabel>
-                    <div className="grid grid-cols-1 gap-1">
-                      <Button 
-                        variant={selectedLanguage === 'All' ? 'default' : 'ghost'} 
-                        size="sm"
-                        onClick={() => setSelectedLanguage('All')}
-                        className="justify-start rounded-xl h-9 text-xs"
-                      >
-                        All Languages
-                      </Button>
-                      {LANGUAGES.map(lang => (
-                        <Button 
-                          key={lang.code}
-                          variant={selectedLanguage === lang.code ? 'default' : 'ghost'} 
-                          size="sm"
-                          onClick={() => setSelectedLanguage(lang.code)}
-                          className="justify-start rounded-xl h-9 text-xs"
-                        >
-                          {lang.label}
-                        </Button>
-                      ))}
-                    </div>
+                    <DropdownMenuItem onClick={() => setSelectedLanguage('All')} className="rounded-xl cursor-pointer">
+                      All Languages
+                    </DropdownMenuItem>
+                    {LANGUAGES.map(lang => (
+                      <DropdownMenuItem key={lang.code} onClick={() => setSelectedLanguage(lang.code)} className="rounded-xl cursor-pointer">
+                        {lang.label}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -413,15 +462,13 @@ export default function Home() {
             <TabsContent value="for-you">
               <div className="space-y-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {[...(followingNovels || []), ...(trendingNovels || [])]
-                    .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i) 
-                    .map((novel, idx) => (
+                  {personalizedRecommendations.length > 0 ? (
+                    personalizedRecommendations.map((novel, idx) => (
                       <NovelCard key={novel.id} novel={novel} />
                     ))
-                  }
-                  {(!followingNovels?.length && !trendingNovels?.length) && (
+                  ) : (
                     <div className="col-span-full text-center py-20 italic text-muted-foreground">
-                      Follow some scribes to see your personalized feed bloom.
+                      Interact with more chronicles to let the sanctuary learn your heart's desires.
                     </div>
                   )}
                 </div>
@@ -481,7 +528,7 @@ export default function Home() {
               <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {risingNovels.map((novel) => (
+              {risingNovels.slice(0, 4).map((novel) => (
                 <NovelCard key={novel.id} novel={novel} badge="rising" />
               ))}
             </div>

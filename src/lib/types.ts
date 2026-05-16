@@ -64,6 +64,7 @@ export interface ReadingProgress {
   scrollPosition: number;
   chapterIndex: number;
   lastReadAt: string;
+  genres?: Genre[]; // Added for recommendation engine
 }
 
 export interface Follow {
@@ -107,4 +108,5 @@ export interface Bookmark {
   authorUsername: string;
   category: BookmarkCategory;
   createdAt: string;
+  genres?: Genre[]; // Added for recommendation engine
 }
