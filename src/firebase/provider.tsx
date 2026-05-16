@@ -11,6 +11,7 @@ interface FirebaseContextProps {
   auth: Auth | null;
 }
 
+// Provide a stable default value for the context to prevent errors during SSR
 const FirebaseContext = createContext<FirebaseContextProps>({
   firebaseApp: null,
   firestore: null,
@@ -32,8 +33,8 @@ export const FirebaseProvider: React.FC<{
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  // No longer throwing error during SSR, returning null context instead
-  return context || { firebaseApp: null, firestore: null, auth: null };
+  // This will now always return at least the default null-safe values
+  return context;
 };
 
 export const useFirebaseApp = () => useFirebase().firebaseApp;

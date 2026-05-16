@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, LayoutDashboard, UserPlus, LogIn, Heart } from "lucide-react";
+import { PenSquare, Library, User, Search, BookOpen, LogOut, Settings, LayoutDashboard, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useUser, useAuth, useDoc } from "@/firebase";
+import { useUser, useAuth, useDoc, useFirestore } from "@/firebase";
 import { signOut } from "firebase/auth";
 import {
   DropdownMenu,
@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc } from "firebase/firestore";
-import { getFirestore } from "firebase/firestore";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -26,11 +25,12 @@ export function Navbar() {
   const { toast } = useToast();
   const { user } = useUser();
   const auth = useAuth();
+  const db = useFirestore();
   
   const userProfileRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(getFirestore(), "users", user.uid);
-  }, [user]);
+    if (!user || !db) return null;
+    return doc(db, "users", user.uid);
+  }, [user, db]);
   
   const { data: profile } = useDoc(userProfileRef);
 
@@ -59,10 +59,15 @@ export function Navbar() {
   };
 
   const handleSearchClick = () => {
-    toast({
-      title: "Discover More",
-      description: "The Grand Library search is being updated for more magic.",
-    });
+    // Smooth scroll to archive if on home page
+    if (pathname === '/') {
+      const archive = document.querySelector('.scroll-mt-20');
+      if (archive) {
+        archive.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    router.push('/');
   };
 
   return (

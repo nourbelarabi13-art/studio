@@ -20,6 +20,7 @@ export const FirebaseClientProvider: React.FC<{
   } | null>(null);
 
   useEffect(() => {
+    // Initialize Firebase only on the client
     const services = initializeFirebase();
     setFirebase(services);
     setMounted(true);
@@ -32,6 +33,10 @@ export const FirebaseClientProvider: React.FC<{
       auth={firebase?.auth || null}
     >
       <FirebaseErrorListener />
+      {/* 
+        Prevents hydration flickering by waiting for client-side mount.
+        Visibility: hidden keeps the layout stable while React hydrates.
+      */}
       <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
         {children}
       </div>
