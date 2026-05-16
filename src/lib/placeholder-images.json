@@ -2,13 +2,13 @@
   "placeholderImages": [
     {
       "id": "hero-fantasy",
-      "description": "Dark gothic library with floating candles",
-      "imageUrl": "https://picsum.photos/seed/dark-library/1920/1080",
-      "imageHint": "dark gothic library"
+      "description": "An ethereal, dark gothic library with floating books and dim candle light",
+      "imageUrl": "https://picsum.photos/seed/dark-gothic-library/1920/1080",
+      "imageHint": "gothic library"
     },
     {
       "id": "signup-bg",
-      "description": "Crumbling castle architecture",
+      "description": "Crumbling castle architecture in the moonlight",
       "imageUrl": "https://picsum.photos/seed/castle/1000/1500",
       "imageHint": "gothic castle"
     },
