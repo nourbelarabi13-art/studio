@@ -22,12 +22,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Alegreya:ital,wght@0,400..900;1,400..900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background text-foreground min-h-screen" suppressHydrationWarning>
-        <LanguageProvider>
-          <FirebaseClientProvider>
+        <FirebaseClientProvider>
+          <LanguageProvider>
             {children}
             <Toaster />
-          </FirebaseClientProvider>
-        </LanguageProvider>
+          </LanguageProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

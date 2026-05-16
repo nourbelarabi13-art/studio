@@ -1,8 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppLanguage } from '@/lib/types';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { AppLanguage, UserProfile } from '@/lib/types';
 import { translations } from './translations';
+import { useUser, useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 
 interface LanguageContextProps {
   language: AppLanguage;
@@ -14,15 +17,26 @@ interface LanguageContextProps {
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  // Initialize to 'en' to ensure consistent server/client initial render
   const [language, setLanguage] = useState<AppLanguage>('en');
+  const { user } = useUser();
+  const db = useFirestore();
+
+  // Sync with Firestore profile if logged in
+  const profileRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, "users", user.uid);
+  }, [user, db]);
+
+  const { data: profile } = useDoc<UserProfile>(profileRef);
 
   useEffect(() => {
-    // This effect runs only on the client after initial hydration
+    // 1. Check localStorage first
     const savedLang = localStorage.getItem('rosaline-language') as AppLanguage;
     if (savedLang && ['en', 'ar', 'fr'].includes(savedLang)) {
       setLanguage(savedLang);
-    } else if (typeof navigator !== 'undefined') {
+    } 
+    // 2. Fallback to browser lang on first visit
+    else if (typeof navigator !== 'undefined') {
       const browserLang = navigator.language.split('-')[0] as AppLanguage;
       if (['en', 'ar', 'fr'].includes(browserLang)) {
         setLanguage(browserLang);
@@ -30,25 +44,39 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // 3. Sync with profile preference if it differs from current state
+  useEffect(() => {
+    if (profile?.language && profile.language !== language) {
+      setLanguage(profile.language);
+      localStorage.setItem('rosaline-language', profile.language);
+    }
+  }, [profile?.language]);
+
+  // Update global HTML attributes for RTL/LTR
+  useEffect(() => {
+    const dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = language;
+    
+    // Apply font-arabic to body if needed
+    if (language === 'ar') {
+      document.body.classList.add('font-arabic');
+    } else {
+      document.body.classList.remove('font-arabic');
+    }
+  }, [language]);
+
   const handleSetLanguage = (lang: AppLanguage) => {
     setLanguage(lang);
     localStorage.setItem('rosaline-language', lang);
   };
 
-  const t = translations[language] || translations.en;
+  const t = useMemo(() => translations[language] || translations.en, [language]);
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t, dir }}>
-      {/* 
-          The wrapping div is deterministic:
-          On server: dir="ltr", className=""
-          On first client pass: dir="ltr", className=""
-          After useEffect: state updates and re-renders with correct localized attributes
-      */}
-      <div dir={dir} className={language === 'ar' ? 'font-arabic' : ''}>
-        {children}
-      </div>
+      {children}
     </LanguageContext.Provider>
   );
 }

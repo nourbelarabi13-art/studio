@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -20,7 +19,7 @@ export default function SettingsPage() {
   const db = useFirestore();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
+  const { language: currentLang, setLanguage: updateAppLanguage, t } = useLanguage();
 
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -35,17 +34,15 @@ export default function SettingsPage() {
     setIsUpdating(true);
     try {
       await updateDoc(doc(db, "users", user.uid), updates);
+      if (updates.language) {
+        updateAppLanguage(updates.language);
+      }
       toast({ title: "Updated", description: "Your manifestation has been updated." });
     } catch (error) {
       toast({ variant: "destructive", title: "Error" });
     } finally {
       setIsUpdating(false);
     }
-  };
-
-  const handleLanguageChange = (lang: AppLanguage) => {
-    setLanguage(lang);
-    handleUpdatePreference({ language: lang });
   };
 
   if (authLoading || profileLoading) {
@@ -79,8 +76,9 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="p-8">
               <RadioGroup
-                defaultValue={language}
-                onValueChange={(val) => handleLanguageChange(val as AppLanguage)}
+                value={currentLang}
+                onValueChange={(val) => handleUpdatePreference({ language: val as AppLanguage })}
+                disabled={isUpdating}
                 className="grid grid-cols-1 sm:grid-cols-3 gap-4"
               >
                 {[
