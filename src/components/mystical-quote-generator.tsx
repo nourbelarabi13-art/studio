@@ -2,22 +2,26 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Quote } from "lucide-react";
+import { Sparkles, Quote, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const MYSTICAL_QUOTES = [
-  "The mists of time hold the ink of our souls.",
-  "الكلمات طاقة تتجسد في الغموض",
-  "القصص تولد من رحم الظلام",
-  "In every shadow, a story waits to be told.",
-  "الأحلام هي المسودات الحقيقية للحياة",
-  "Secrets are the skeletons of the sanctuary.",
-  "الكتابة هي فعل الإيمان في وجه النسيان",
-  "Every book is a mirror reflecting a different soul.",
-  "الغموض هو أجمل ما يمكن أن نختبره",
-  "Dreams are the whispers of the ink.",
-  "الصمت هو لغة الأرواح التي لم تجد كلماتها بعد.",
-  "A library is a cemetery of thoughts, waiting for a necromancer to wake them."
+interface LiteraryQuote {
+  ar: string;
+  en: string;
+  author: string;
+}
+
+const BILINGUAL_CATALOG: LiteraryQuote[] = [
+  { ar: "الجمال سينقذ العالم.", en: "Beauty will save the world.", author: "Fyodor Dostoevsky" },
+  { ar: "الخوف لا يمنع الموت، لكنه يمنع الحياة.", en: "Fear does not prevent death, it prevents life.", author: "Naguib Mahfouz" },
+  { ar: "لا يرى الإنسان جيدًا إلا بالقلب.", en: "It is only with the heart that one can see rightly.", author: "Antoine de Saint-Exupéry" },
+  { ar: "أعظم سعادة في الحياة أن نحب ونُحَب.", en: "The greatest happiness of life is the conviction that we are loved.", author: "Victor Hugo" },
+  { ar: "الكتاب يجب أن يكون الفأس التي تكسر البحر المتجمد داخلنا.", en: "A book must be the axe for the frozen sea within us.", author: "Franz Kafka" },
+  { ar: "قد تنسى من ضحكت معه، لكنك لن تنسى من بكيت معه.", en: "You may forget with whom you laughed, but you will never forget with whom you wept.", author: "Gibran Khalil Gibran" },
+  { ar: "في أعماق الشتاء اكتشفت أن داخلي صيفًا لا يُقهَر.", en: "In the midst of winter, I found there was, within me, an invincible summer.", author: "Albert Camus" },
+  { ar: "على هذه الأرض ما يستحق الحياة.", en: "On this earth, there is that which deserves life.", author: "Mahmoud Darwish" },
+  { ar: "نحن مصنوعون من المادة نفسها التي تُصنع منها الأحلام.", en: "We are such stuff as dreams are made on.", author: "William Shakespeare" },
+  { ar: "التعليم كالماء والهواء.", en: "Education is like water and air.", author: "Taha Hussein" }
 ];
 
 export function MysticalQuoteGenerator() {
@@ -25,50 +29,59 @@ export function MysticalQuoteGenerator() {
   const [isVisible, setIsVisible] = useState(true);
 
   const consultOracle = () => {
-    if (!isVisible) return; // Prevent spamming during transition
+    if (!isVisible) return;
     setIsVisible(false);
     setTimeout(() => {
-      setIndex((prev) => (prev + 1) % MYSTICAL_QUOTES.length);
+      setIndex((prev) => (prev + 1) % BILINGUAL_CATALOG.length);
       setIsVisible(true);
     }, 600);
   };
 
-  return (
-    <section className="py-24 px-4 bg-[#0f0c13] relative overflow-hidden">
-      {/* Decorative background glows */}
-      <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 opacity-50" />
-      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] -translate-y-1/2 opacity-50" />
+  const currentQuote = BILINGUAL_CATALOG[index];
 
-      <div className="container mx-auto max-w-4xl relative z-10">
-        <div className="glass-morphism rounded-[3.5rem] p-12 md:p-20 border-primary/20 shadow-2xl bg-white/[0.02] backdrop-blur-2xl text-center space-y-12 border-t-white/10 transition-all duration-500 hover:border-primary/30">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] border border-primary/20">
-              <Sparkles className="w-3.5 h-3.5" />
-              Manifestation of Thought
+  return (
+    <section className="py-16 px-4 bg-[#0f0c13]/50 relative overflow-hidden">
+      {/* Decorative background glows */}
+      <div className="absolute top-1/2 left-1/4 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 opacity-30" />
+      <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-accent/5 rounded-full blur-[100px] -translate-y-1/2 opacity-30" />
+
+      <div className="container mx-auto max-w-2xl relative z-10">
+        <div className="glass-morphism rounded-[2.5rem] p-8 md:p-12 border-primary/20 shadow-2xl bg-white/[0.02] backdrop-blur-2xl text-center space-y-8 border-t-white/10 transition-all duration-500 hover:border-primary/30">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] border border-primary/20">
+              <Sparkles className="w-3 h-3" />
+              Literary Oracle
             </div>
-            <h2 className="font-headline text-3xl font-bold text-primary/80 italic tracking-tight">The Oracle Whispers...</h2>
           </div>
 
           <div className={cn(
-            "transition-all duration-[800ms] ease-in-out min-h-[160px] flex flex-col items-center justify-center gap-6",
-            isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4"
+            "transition-all duration-[600ms] ease-in-out min-h-[180px] flex flex-col items-center justify-center gap-4",
+            isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-98 translate-y-2"
           )}>
-            <Quote className="w-8 h-8 text-primary/20 rotate-180" />
-            <p className="font-headline text-2xl md:text-4xl font-bold text-white/90 leading-snug italic max-w-2xl mx-auto">
-              "{MYSTICAL_QUOTES[index]}"
+            <div className="space-y-4">
+              <p className="font-arabic text-2xl md:text-3xl font-bold text-white/95 leading-relaxed">
+                {currentQuote.ar}
+              </p>
+              <div className="w-12 h-px bg-primary/20 mx-auto" />
+              <p className="font-body text-lg md:text-xl text-muted-foreground leading-relaxed italic">
+                "{currentQuote.en}"
+              </p>
+            </div>
+            
+            <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest mt-2">
+              — {currentQuote.author}
             </p>
-            <Quote className="w-8 h-8 text-primary/20" />
           </div>
 
-          <div className="pt-8">
+          <div className="pt-4 flex flex-col items-center gap-3">
             <Button 
               onClick={consultOracle}
-              className="rounded-full px-12 h-16 bg-primary text-white hover:bg-primary/90 font-headline text-xl gap-4 shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95 group"
+              className="rounded-full px-8 h-12 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary font-headline text-sm gap-3 transition-all hover:scale-105 active:scale-95 group"
             >
-              <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-500" />
+              <BookOpen className="w-4 h-4 group-hover:rotate-6 transition-transform" />
               Consult the Oracle
             </Button>
-            <p className="mt-4 text-[10px] text-muted-foreground uppercase tracking-widest opacity-40 font-bold">
+            <p className="text-[8px] text-muted-foreground/40 uppercase tracking-[0.3em] font-bold">
               اقتباس جديد
             </p>
           </div>
