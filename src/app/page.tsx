@@ -1,28 +1,52 @@
-
 "use client";
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
-import { MOCK_NOVELS } from "@/lib/mock-data";
-import { Genre } from "@/lib/types";
+import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Compass, Flame, Clock } from "lucide-react";
+import { Compass, Flame, Clock, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 
 const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function Home() {
+  const db = useFirestore();
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const archiveRef = useRef<HTMLDivElement>(null);
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-fantasy');
 
-  const filteredNovels = selectedGenre === 'All' 
-    ? MOCK_NOVELS 
-    : MOCK_NOVELS.filter(n => n.genres.includes(selectedGenre as Genre));
+  const novelsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    let q = query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      orderBy("publishedAt", "desc")
+    );
+    if (selectedGenre !== 'All') {
+      q = query(q, where("genres", "array-contains", selectedGenre));
+    }
+    return q;
+  }, [db, selectedGenre]);
+
+  const { data: novels, loading } = useCollection<Novel>(novelsQuery);
+
+  const trendingQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      orderBy("publishedAt", "desc"),
+      limit(3)
+    );
+  }, [db]);
+  const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
 
   const scrollToArchive = () => {
     archiveRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -107,17 +131,28 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredNovels.map((novel, idx) => (
-              <div 
-                key={novel.id} 
-                className="animate-fade-in" 
-                style={{ animationDelay: `${idx * 0.05}s` }}
-              >
-                <NovelCard novel={novel} />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-4">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <p className="italic">Consulting the oracle...</p>
+            </div>
+          ) : novels?.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground italic">
+              No chronicles have been manifested for this essence yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {novels?.map((novel, idx) => (
+                <div 
+                  key={novel.id} 
+                  className="animate-fade-in" 
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  <NovelCard novel={novel} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
@@ -130,7 +165,7 @@ export default function Home() {
               <p className="text-muted-foreground italic">Evocative tales trending in the sanctuary.</p>
             </div>
             <div className="space-y-6">
-              {MOCK_NOVELS.slice(0, 3).map(novel => (
+              {trendingNovels?.map(novel => (
                 <Link key={novel.id} href={`/read/${novel.id}`} className="flex items-center gap-6 group/item cursor-pointer">
                   <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0 shadow-lg group-hover/item:shadow-primary/20 transition-all">
                     <Image src={novel.coverImage} alt={novel.title} fill className="object-cover group-hover/item:scale-110 transition-transform duration-500" />
@@ -158,7 +193,7 @@ export default function Home() {
               <p className="text-muted-foreground italic">Newly manifested fragments waiting for a reader.</p>
             </div>
             <div className="space-y-6">
-              {MOCK_NOVELS.slice(3, 6).map(novel => (
+              {novels?.slice(0, 3).map(novel => (
                 <Link key={novel.id} href={`/read/${novel.id}`} className="flex items-center gap-6 group/item cursor-pointer">
                   <div className="relative w-16 h-20 rounded-lg overflow-hidden shrink-0 shadow-lg group-hover/item:shadow-accent/20 transition-all">
                     <Image src={novel.coverImage} alt={novel.title} fill className="object-cover group-hover/item:scale-110 transition-transform duration-500" />

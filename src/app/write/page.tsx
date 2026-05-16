@@ -1,7 +1,7 @@
-
 "use client";
 
 import { useState, useDeferredValue, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,23 +16,45 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Zap,
-  Loader2
+  Loader2,
+  Image as ImageIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestGenres } from "@/ai/flows/ai-genre-suggestion-flow";
 import { checkContentSafety } from "@/ai/flows/ai-content-safety-check-flow";
 import { suggestStorySpark } from "@/ai/flows/ai-story-spark-flow";
 import { cn } from "@/lib/utils";
+import { useAuth, useFirestore, useUser, useDoc } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
+import Image from "next/image";
+import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
 
 export default function WritePage() {
+  const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
+  const db = useFirestore();
+  
+  // Fetch user profile for the username
+  const profileRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, "users", user.uid);
+  }, [user, db]);
+  const { data: profile } = useDoc(profileRef);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const deferredContent = useDeferredValue(content);
   
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
+  const [coverImage, setCoverImage] = useState(PlaceHolderImages[0].imageUrl);
+  const [showImageSelector, setShowImageSelector] = useState(false);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSparking, setIsSparking] = useState(false);
   const [isCheckingSafety, setIsCheckingSafety] = useState(false);
@@ -99,20 +121,48 @@ export default function WritePage() {
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
+    if (!user) {
+      toast({ title: "Unidentified Soul", description: "You must be logged in to save scrolls.", variant: "destructive" });
+      return;
+    }
     if (!title && !content) return;
+
     setIsSaving(true);
-    // Simulate API delay
-    setTimeout(() => {
-      setIsSaving(false);
-      toast({
-        title: "Scrolls Preserved",
-        description: `Draft "${title || 'Untitled Fragment'}" has been secured in your vault.`,
+    const novelData = {
+      title: title || "Untitled Fragment",
+      content,
+      authorId: user.uid,
+      authorUsername: profile?.username || user.email?.split('@')[0] || "Traveler",
+      genres: selectedGenres,
+      coverImage,
+      isDraft: true,
+      createdAt: serverTimestamp(),
+      publishedAt: null,
+    };
+
+    addDoc(collection(db, "novels"), novelData)
+      .then(() => {
+        setIsSaving(false);
+        toast({ title: "Scrolls Preserved", description: `Draft "${title || 'Untitled Fragment'}" has been secured in your vault.` });
+        router.push("/vault");
+      })
+      .catch(async (err) => {
+        setIsSaving(false);
+        const permissionError = new FirestorePermissionError({
+          path: "novels",
+          operation: "create",
+          requestResourceData: novelData,
+        });
+        errorEmitter.emit("permission-error", permissionError);
       });
-    }, 800);
   };
 
   const handlePublish = async () => {
+    if (!user) {
+      toast({ title: "Unidentified Soul", description: "You must be logged in to publish chronicles.", variant: "destructive" });
+      return;
+    }
     if (!content || !title || selectedGenres.length === 0) {
       toast({
         title: "Wait, Traveler",
@@ -135,21 +185,44 @@ export default function WritePage() {
           description: safetyResult.reasons[0] || "Your content carries heavy shadows that violate sanctuary rules.",
           variant: "destructive",
         });
+        setIsCheckingSafety(false);
         return;
       }
 
-      toast({
-        title: "Manifestation Complete",
-        description: "Your chronicle has been published to the Archive.",
-      });
+      const novelData = {
+        title,
+        content,
+        authorId: user.uid,
+        authorUsername: profile?.username || user.email?.split('@')[0] || "Traveler",
+        genres: selectedGenres,
+        coverImage,
+        isDraft: false,
+        createdAt: serverTimestamp(),
+        publishedAt: serverTimestamp(),
+      };
+
+      addDoc(collection(db, "novels"), novelData)
+        .then(() => {
+          setIsCheckingSafety(false);
+          toast({ title: "Manifestation Complete", description: "Your chronicle has been published to the Archive." });
+          router.push("/");
+        })
+        .catch(async (err) => {
+          setIsCheckingSafety(false);
+          const permissionError = new FirestorePermissionError({
+            path: "novels",
+            operation: "create",
+            requestResourceData: novelData,
+          });
+          errorEmitter.emit("permission-error", permissionError);
+        });
     } catch (error) {
+      setIsCheckingSafety(false);
       toast({
         title: "Binding Error",
-        description: "The ink failed to bind. Please try again.",
+        description: "The AI failed to verify the content safety. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsCheckingSafety(false);
     }
   };
 
@@ -196,13 +269,53 @@ export default function WritePage() {
 
         <div className="grid lg:grid-cols-[1fr_320px] gap-12">
           <div className="space-y-8">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Your Chronicle Title..."
-              className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-10 py-4 h-auto"
-            />
+            <div className="flex flex-col md:flex-row gap-8 items-start">
+              <div 
+                className="relative w-32 h-44 rounded-xl overflow-hidden cursor-pointer group shrink-0 border-2 border-dashed border-white/10 hover:border-primary/50 transition-colors"
+                onClick={() => setShowImageSelector(!showImageSelector)}
+              >
+                <Image src={coverImage} alt="Cover" fill className="object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                  <ImageIcon className="w-6 h-6 text-white" />
+                </div>
+              </div>
+
+              <div className="flex-1 w-full">
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Your Chronicle Title..."
+                  className="bg-transparent border-none text-5xl md:text-6xl font-headline font-bold focus-visible:ring-0 px-0 placeholder:opacity-10 py-4 h-auto"
+                />
+              </div>
+            </div>
             
+            {showImageSelector && (
+              <div className="glass-morphism rounded-3xl p-6 animate-fade-in border-primary/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-headline text-lg font-bold">Choose a Visual Essence</h4>
+                  <Button variant="ghost" size="sm" onClick={() => setShowImageSelector(false)}>Close</Button>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                  {PlaceHolderImages.map(img => (
+                    <div 
+                      key={img.id} 
+                      className={cn(
+                        "relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-105",
+                        coverImage === img.imageUrl ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100"
+                      )}
+                      onClick={() => {
+                        setCoverImage(img.imageUrl);
+                        setShowImageSelector(false);
+                      }}
+                    >
+                      <Image src={img.imageUrl} alt={img.description} fill className="object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="relative group">
               <Textarea
                 value={content}
@@ -279,7 +392,18 @@ export default function WritePage() {
               </div>
             </div>
 
-            <Button variant="ghost" className="w-full text-destructive/60 hover:text-destructive hover:bg-destructive/5 gap-2 h-12 rounded-full text-xs font-bold uppercase tracking-widest">
+            <Button 
+              variant="ghost" 
+              className="w-full text-destructive/60 hover:text-destructive hover:bg-destructive/5 gap-2 h-12 rounded-full text-xs font-bold uppercase tracking-widest"
+              onClick={() => {
+                if (confirm("Are you sure you wish to banish these scrolls to the void?")) {
+                  setTitle("");
+                  setContent("");
+                  setSelectedGenres([]);
+                  toast({ title: "Banished", description: "The scrolls have been reduced to ash." });
+                }
+              }}
+            >
               <Trash2 className="w-4 h-4" />
               Discard Scrolls
             </Button>

@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -13,6 +12,23 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "username", "email", "ageConfirmed"]
+    },
+    "Novel": {
+      "title": "Novel",
+      "description": "A chronicle manifested by a traveler.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "genres": { "type": "array", "items": { "type": "string" } },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "coverImage": { "type": "string" },
+        "isDraft": { "type": "boolean" }
+      },
+      "required": ["title", "content", "authorId", "genres", "isDraft"]
     }
   },
   "auth": {
@@ -22,6 +38,10 @@
     "/users/{uid}": {
       "schema": "UserProfile",
       "description": "The user's personal profile scroll."
+    },
+    "/novels/{novelId}": {
+      "schema": "Novel",
+      "description": "A collection of all manifested chronicles and fragments."
     }
   }
 }
