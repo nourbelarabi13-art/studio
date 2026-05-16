@@ -1,7 +1,9 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { 
   PenSquare, 
   Library, 
@@ -15,7 +17,8 @@ import {
   Bookmark as BookmarkIcon, 
   Bell,
   Globe,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -181,19 +184,37 @@ export function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5 rounded-full px-2 pr-4 h-10">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <User className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary relative overflow-hidden">
+                    {profile?.avatar ? (
+                      <Image src={profile.avatar} alt={profile.username} fill className="object-cover" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
                   </div>
                   <span className="hidden sm:inline font-medium">{profile?.username || "Dreamer"}</span>
                   <ChevronDown className="w-3 h-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-primary/10 text-muted-foreground rounded-2xl p-2 shadow-2xl">
-                <DropdownMenuLabel className="font-headline text-foreground px-3">{profile?.username}</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-64 bg-card border-primary/10 text-muted-foreground rounded-2xl p-2 shadow-2xl">
+                <DropdownMenuLabel className="font-headline py-4 px-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-foreground text-lg">{profile?.username}</span>
+                    {profile?.status && (
+                      <span className="text-[10px] text-primary italic font-bold flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        {profile.status}
+                      </span>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-primary/5" />
                 <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
                   <User className="w-4 h-4" />
                   {t.nav.profile}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/profile/edit')} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary font-bold">
+                  <Sparkles className="w-4 h-4" />
+                  Refine Persona
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
                   <Settings className="w-4 h-4" />

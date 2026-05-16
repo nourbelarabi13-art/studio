@@ -1,16 +1,17 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useUser, useFirestore, useCollection } from '@/firebase';
+import { useState, useMemo } from 'react';
+import Image from 'next/image';
+import { useUser, useFirestore, useCollection, useDoc } from '@/firebase';
 import { collection, query, orderBy, where, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
-import { Comment, Novel } from '@/lib/types';
+import { Comment, Novel, UserProfile } from '@/lib/types';
 import { addComment, deleteComment } from '@/firebase/firestore/comment-actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Send, Trash2, Reply, Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare, Send, Trash2, Reply, Loader2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -27,6 +28,12 @@ export function StoryComments({ novel }: StoryCommentsProps) {
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user]);
+  const { data: profile } = useDoc<UserProfile>(profileRef);
+
   const commentsQuery = useMemoFirebase(() => {
     if (!db || !novel.id) return null;
     return query(
@@ -41,14 +48,14 @@ export function StoryComments({ novel }: StoryCommentsProps) {
     e.preventDefault();
     if (!user || !db || !newComment.trim()) return;
     setIsSubmitting(true);
-    addComment(db, novel.id, novel.title, novel.authorId, user.uid, user.displayName || 'Dreamer', newComment);
+    addComment(db, novel.id, novel.title, novel.authorId, user.uid, profile?.username || user.displayName || 'Dreamer', newComment);
     setNewComment("");
     setIsSubmitting(false);
   };
 
   const handleReply = (parentId: string) => {
     if (!user || !db || !replyText.trim()) return;
-    addComment(db, novel.id, novel.title, novel.authorId, user.uid, user.displayName || 'Dreamer', replyText, parentId);
+    addComment(db, novel.id, novel.title, novel.authorId, user.uid, profile?.username || user.displayName || 'Dreamer', replyText, parentId);
     setReplyText("");
     setReplyTo(null);
   };
@@ -65,15 +72,20 @@ export function StoryComments({ novel }: StoryCommentsProps) {
 
       {user ? (
         <form onSubmit={handleSubmit} className="space-y-4 bg-white/40 p-6 rounded-[2rem] border border-primary/5">
-          <Textarea 
-            placeholder="Whisper your thoughts into the mists..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="bg-white border-primary/10 rounded-2xl min-h-[100px] focus:border-primary transition-all"
-            disabled={isSubmitting}
-          />
+          <div className="flex gap-4 items-start">
+             <Avatar className="w-10 h-10 border border-primary/10">
+               {profile?.avatar ? <AvatarImage src={profile.avatar} className="object-cover" /> : <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>}
+             </Avatar>
+             <Textarea 
+               placeholder="Whisper your thoughts into the mists..."
+               value={newComment}
+               onChange={(e) => setNewComment(e.target.value)}
+               className="bg-white border-primary/10 rounded-2xl min-h-[100px] focus:border-primary transition-all"
+               disabled={isSubmitting}
+             />
+          </div>
           <div className="flex justify-end">
-            <Button disabled={!newComment.trim() || isSubmitting} className="rounded-full bg-primary gap-2 shadow-lg shadow-primary/10">
+            <Button disabled={!newComment.trim() || isSubmitting} className="rounded-full bg-primary gap-2 shadow-lg shadow-primary/10 h-12 px-8">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Manifest Whisper
             </Button>
@@ -93,7 +105,11 @@ export function StoryComments({ novel }: StoryCommentsProps) {
             <div key={comment.id} className="space-y-4">
               <div className="flex gap-4 items-start group">
                 <Avatar className="w-10 h-10 border border-primary/10">
-                  <AvatarFallback className="bg-primary/5 text-primary text-xs">{comment.userName[0]}</AvatarFallback>
+                  {comment.userAvatar ? (
+                    <AvatarImage src={comment.userAvatar} className="object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/5 text-primary text-xs">{comment.userName[0]}</AvatarFallback>
+                  )}
                 </Avatar>
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
@@ -142,7 +158,11 @@ export function StoryComments({ novel }: StoryCommentsProps) {
                 {replies.filter(r => r.parentId === comment.id).map(reply => (
                   <div key={reply.id} className="flex gap-4 items-start group">
                     <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-accent/10 text-accent text-[10px]">{reply.userName[0]}</AvatarFallback>
+                       {reply.userAvatar ? (
+                         <AvatarImage src={reply.userAvatar} className="object-cover" />
+                       ) : (
+                         <AvatarFallback className="bg-accent/10 text-accent text-[10px]">{reply.userName[0]}</AvatarFallback>
+                       )}
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">

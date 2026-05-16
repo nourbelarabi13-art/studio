@@ -18,7 +18,9 @@ import {
   Quote, 
   Zap,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Settings
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, orderBy } from "firebase/firestore";
@@ -29,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -139,9 +142,12 @@ export default function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           
           <div className="relative shrink-0">
-            <div className="w-40 h-40 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group">
-               <User className="w-20 h-20 text-primary/20" />
-               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="w-40 h-40 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden">
+               {profile.avatar ? (
+                 <Image src={profile.avatar} alt={profile.username} fill className="object-cover" />
+               ) : (
+                 <User className="w-20 h-20 text-primary/20" />
+               )}
             </div>
             {isGrandArchivist && (
               <div className="absolute -bottom-3 -right-3 bg-primary text-white p-2.5 rounded-2xl shadow-xl ring-4 ring-white">
@@ -151,7 +157,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex-1 space-y-6 text-center md:text-left">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <h1 className="font-headline text-5xl font-bold">{profile.username}</h1>
                 {isGrandArchivist && (
@@ -159,12 +165,15 @@ export default function ProfilePage() {
                     Grand Archivist
                   </Badge>
                 )}
-                {profile.role === 'writer' && !isGrandArchivist && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-4 py-1 text-[10px] uppercase tracking-widest font-bold">
-                    Celestial Scribe
-                  </Badge>
-                )}
               </div>
+              
+              {profile.status && (
+                <div className="inline-flex items-center gap-2 bg-primary/5 text-primary px-4 py-1.5 rounded-full text-xs font-bold border border-primary/10">
+                   <Sparkles className="w-3 h-3" />
+                   {profile.status}
+                </div>
+              )}
+
               {profile.bio && (
                 <p className="text-muted-foreground italic text-lg leading-relaxed max-w-2xl">
                   <Quote className="inline-block w-4 h-4 mr-2 opacity-20" />
@@ -212,13 +221,23 @@ export default function ProfilePage() {
                 </Button>
               )}
               {isOwnProfile && (
-                <Button 
-                  variant="outline"
-                  className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg"
-                  onClick={() => router.push('/settings')}
-                >
-                  Settings
-                </Button>
+                <div className="flex gap-4">
+                  <Link href="/profile/edit">
+                    <Button 
+                      className="rounded-full px-10 h-14 bg-primary text-white hover:bg-primary/90 font-headline text-lg shadow-xl shadow-primary/20"
+                    >
+                      Refine Persona
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="outline"
+                    className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg"
+                    onClick={() => router.push('/settings')}
+                  >
+                    <Settings className="w-5 h-5 mr-2" />
+                    Settings
+                  </Button>
+                </div>
               )}
             </div>
           </div>

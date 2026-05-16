@@ -6,10 +6,10 @@ import {
   addDoc, 
   deleteDoc, 
   doc, 
-  updateDoc,
+  getDoc,
   Firestore 
 } from 'firebase/firestore';
-import { Comment } from '@/lib/types';
+import { Comment, UserProfile } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { createNotification } from './notification-actions';
@@ -17,7 +17,7 @@ import { createNotification } from './notification-actions';
 /**
  * Adds a comment to a novel.
  */
-export function addComment(
+export async function addComment(
   db: Firestore, 
   novelId: string, 
   novelTitle: string,
@@ -27,10 +27,15 @@ export function addComment(
   text: string, 
   parentId?: string
 ) {
+  // Fetch latest user avatar to ensure comment reflects persona
+  const profileSnap = await getDoc(doc(db, 'users', userId));
+  const avatar = profileSnap.exists() ? (profileSnap.data() as UserProfile).avatar : undefined;
+
   const commentsRef = collection(db, 'novels', novelId, 'comments');
   const commentData: Omit<Comment, 'id'> = {
     userId,
     userName,
+    userAvatar: avatar,
     text,
     parentId,
     createdAt: new Date().toISOString(),

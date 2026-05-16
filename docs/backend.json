@@ -10,6 +10,8 @@
         "username": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "bio": { "type": "string", "description": "A short manifesto of the dreamer's spirit." },
+        "status": { "type": "string", "description": "Current mood or activity (e.g., 'Writing my first myth')." },
+        "avatar": { "type": "string", "description": "Base64 data URI or URL of the user's avatar." },
         "role": { "type": "string", "enum": ["writer", "reader"], "default": "reader" },
         "ageConfirmed": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },

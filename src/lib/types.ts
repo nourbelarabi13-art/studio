@@ -18,6 +18,12 @@ export interface StoryPoll {
   active: boolean;
 }
 
+export interface ReadingPreferences {
+  fontSize: number;
+  lineHeight: number;
+  mode: 'light' | 'sepia' | 'lavender' | 'midnight';
+}
+
 export interface Novel {
   id: string;
   title: string;
@@ -25,6 +31,7 @@ export interface Novel {
   chapters?: Chapter[];
   authorId: string;
   authorUsername: string;
+  authorAvatar?: string;
   genres: Genre[];
   publishedAt: string | null;
   createdAt: string;
@@ -55,6 +62,8 @@ export interface UserProfile {
   username: string;
   email: string;
   bio?: string;
+  status?: string;
+  avatar?: string;
   role: UserRole;
   ageConfirmed: boolean;
   createdAt: string;
@@ -112,4 +121,20 @@ export interface Bookmark {
   category: BookmarkCategory;
   createdAt: string;
   genres?: Genre[];
+}
+
+export interface Comment {
+  id?: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  text: string;
+  parentId?: string;
+  createdAt: string;
+}
+
+export interface EndingVote {
+  userId: string;
+  choiceIndex: number;
+  createdAt: string;
 }
