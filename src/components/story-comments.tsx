@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { collection, query, orderBy, where, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
 import { Comment, Novel } from '@/lib/types';
 import { addComment, deleteComment } from '@/firebase/firestore/comment-actions';
@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MessageSquare, Send, Trash2, Reply, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface StoryCommentsProps {
   novel: Novel;
@@ -23,6 +25,7 @@ export function StoryComments({ novel }: StoryCommentsProps) {
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const commentsQuery = useMemoFirebase(() => {
     if (!db || !novel.id) return null;
@@ -37,8 +40,10 @@ export function StoryComments({ novel }: StoryCommentsProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !db || !newComment.trim()) return;
+    setIsSubmitting(true);
     addComment(db, novel.id, novel.title, novel.authorId, user.uid, user.displayName || 'Dreamer', newComment);
     setNewComment("");
+    setIsSubmitting(false);
   };
 
   const handleReply = (parentId: string) => {
@@ -65,10 +70,11 @@ export function StoryComments({ novel }: StoryCommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="bg-white border-primary/10 rounded-2xl min-h-[100px] focus:border-primary transition-all"
+            disabled={isSubmitting}
           />
           <div className="flex justify-end">
-            <Button disabled={!newComment.trim()} className="rounded-full bg-primary gap-2 shadow-lg shadow-primary/10">
-              <Send className="w-4 h-4" />
+            <Button disabled={!newComment.trim() || isSubmitting} className="rounded-full bg-primary gap-2 shadow-lg shadow-primary/10">
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Manifest Whisper
             </Button>
           </div>

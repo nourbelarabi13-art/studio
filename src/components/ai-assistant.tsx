@@ -21,6 +21,8 @@ import { askOracle } from '@/ai/flows/ai-assistant-flow';
 import { useLanguage } from '@/lib/i18n/context';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function AiAssistant() {
   const { user } = useUser();
@@ -64,10 +66,16 @@ export function AiAssistant() {
       createdAt: new Date().toISOString()
     };
 
-    try {
-      // 1. Save user message to Firestore
-      await addDoc(collection(db, 'users', user.uid, 'aiChats'), userMsg);
+    // 1. Save user message to Firestore (non-blocking)
+    addDoc(collection(db, 'users', user.uid, 'aiChats'), userMsg).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: `users/${user.uid}/aiChats`,
+        operation: 'create',
+        requestResourceData: userMsg
+      }));
+    });
 
+    try {
       // 2. Ask the Oracle
       const history = messages?.map(m => ({ role: m.role, content: m.content })) || [];
       const oracleResponse = await askOracle({
@@ -77,13 +85,19 @@ export function AiAssistant() {
         history
       });
 
-      // 3. Save AI response to Firestore
+      // 3. Save AI response to Firestore (non-blocking)
       const aiMsg: Omit<AiChatMessage, 'id'> = {
         role: 'model',
         content: oracleResponse.response,
         createdAt: new Date().toISOString()
       };
-      await addDoc(collection(db, 'users', user.uid, 'aiChats'), aiMsg);
+      addDoc(collection(db, 'users', user.uid, 'aiChats'), aiMsg).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: `users/${user.uid}/aiChats`,
+          operation: 'create',
+          requestResourceData: aiMsg
+        }));
+      });
 
     } catch (error) {
       toast({ 

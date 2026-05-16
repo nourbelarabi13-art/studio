@@ -132,7 +132,7 @@ export default function ReadingPage() {
     }
   }, [db, id]);
 
-  const updatePreferences = async (updates: Partial<ReadingPreferences>) => {
+  const updatePreferences = useCallback((updates: Partial<ReadingPreferences>) => {
     if (!db || !user) return;
     const newPrefs = {
       fontSize,
@@ -143,7 +143,7 @@ export default function ReadingPage() {
     updateDoc(doc(db, "users", user.uid), {
       readingPreferences: newPrefs
     });
-  };
+  }, [db, user, fontSize, lineHeight, readingMode]);
 
   const updateProgress = useCallback((percentage: number, scrollY: number) => {
     if (!db || !user || !novel || !id) return;
@@ -201,34 +201,34 @@ export default function ReadingPage() {
     }
   };
 
-  const handleLike = async () => {
+  const handleLike = () => {
     if (!user || !currentUserProfile) {
       toast({ title: "Identify Yourself", variant: "destructive" });
       return;
     }
     if (!db || !id) return;
     setIsLiking(true);
-    await toggleLikeNovel(db, id as string, user.uid, currentUserProfile.username);
-    setIsLiking(false);
+    toggleLikeNovel(db, id as string, user.uid, currentUserProfile.username)
+      .finally(() => setIsLiking(false));
   };
 
-  const handleBookmark = async (category: BookmarkCategory) => {
+  const handleBookmark = (category: BookmarkCategory) => {
     if (!user) {
       toast({ title: "Identify Yourself", variant: "destructive" });
       return;
     }
     if (!db || !id || !novel) return;
     setIsBookmarking(true);
-    const added = await toggleBookmark(db, user.uid, id as string, {
+    toggleBookmark(db, user.uid, id as string, {
       title: novel.title,
       coverImage: novel.coverImage,
       authorUsername: novel.authorUsername
-    }, category);
-    setIsBookmarking(false);
-    
-    toast({
-      title: added ? "Chronicle Secured" : "Chronicle Released",
-      description: added ? `Added to your ${category === 'favorite' ? 'Favorites' : 'Read Later'} collection.` : "Removed from your archive.",
+    }, category).then((added) => {
+      setIsBookmarking(false);
+      toast({
+        title: added ? "Chronicle Secured" : "Chronicle Released",
+        description: added ? `Added to your ${category === 'favorite' ? 'Favorites' : 'Read Later'} collection.` : "Removed from your archive.",
+      });
     });
   };
 

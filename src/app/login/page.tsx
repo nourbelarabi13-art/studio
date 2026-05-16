@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -111,7 +112,7 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg group">
+            <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg group transition-transform hover:scale-[1.02] active:scale-[0.98]">
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Return to Dreams
               {!isLoading && <Sparkles className="w-4 h-4 ml-2" />}

@@ -27,6 +27,8 @@ import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "fireb
 import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Name must be at least 3 characters").max(20, "Name is too long"),
@@ -77,7 +79,7 @@ export default function SignUpPage() {
         await updateProfile(user, { displayName: values.username });
 
         // 3. Manifest the Persona Scroll in Firestore
-        await setDoc(doc(db, "users", user.uid), {
+        const userProfileData = {
           uid: user.uid,
           username: values.username,
           email: values.email,
@@ -96,7 +98,9 @@ export default function SignUpPage() {
             lineHeight: 1.8,
             mode: 'light'
           }
-        });
+        };
+
+        await setDoc(doc(db, "users", user.uid), userProfileData);
 
         toast({
           title: "Welcome, Traveler",
@@ -106,11 +110,13 @@ export default function SignUpPage() {
         // 4. Ritual complete, move to the Archive
         router.push("/");
       } catch (firestoreError: any) {
-        // If Firestore fails, we have an orphaned Auth user. 
-        // We attempt to delete the Auth user to allow a clean retry.
         console.error("Firestore manifestation failed:", firestoreError);
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: `users/${user.uid}`,
+          operation: 'create',
+          requestResourceData: values
+        }));
         await deleteUser(user).catch(() => console.error("Could not cleanup orphaned user"));
-        
         throw new Error("The Archive could not record your persona. Please try again.");
       }
     } catch (error: any) {
@@ -231,7 +237,7 @@ export default function SignUpPage() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field.role}
                         className="flex flex-col gap-3"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0 rounded-2xl border p-4 bg-white hover:bg-primary/5 transition-colors cursor-pointer border-primary/10">
@@ -291,7 +297,7 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg">
+              <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Begin Your Story
                 {!isLoading && <Sparkles className="w-4 h-4 ml-2" />}

@@ -8,9 +8,10 @@ import { Novel, EndingVote } from '@/lib/types';
 import { castEndingVote } from '@/firebase/firestore/vote-actions';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, Users, Sparkles } from 'lucide-react';
+import { CheckCircle2, Circle, Users, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface EndingPollProps {
   novel: Novel;
@@ -20,6 +21,7 @@ export function EndingPoll({ novel }: EndingPollProps) {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
+  const [isVotingIdx, setIsVotingIdx] = useState<number | null>(null);
 
   const votesQuery = useMemoFirebase(() => {
     if (!db || !novel.id) return null;
@@ -48,7 +50,11 @@ export function EndingPoll({ novel }: EndingPollProps) {
       return;
     }
     if (!db) return;
+    setIsVotingIdx(idx);
     castEndingVote(db, novel.id, user.uid, idx);
+    // Note: castEndingVote is non-blocking, but we can clear the voting state
+    // in the next frame to show instant feedback or trust Firestore's real-time update
+    setTimeout(() => setIsVotingIdx(null), 100);
     toast({ title: "Fate Cast", description: "Your choice has been woven into the story's destiny." });
   };
 
@@ -69,11 +75,12 @@ export function EndingPoll({ novel }: EndingPollProps) {
         {novel.poll.options.map((option, idx) => {
           const percentage = totalVotes > 0 ? (voteCounts[idx] / totalVotes) * 100 : 0;
           const isSelected = userVote?.choiceIndex === idx;
+          const isVotingThis = isVotingIdx === idx;
 
           return (
             <div key={idx} className="space-y-2">
               <button
-                disabled={!!userVote}
+                disabled={!!userVote || isVotingIdx !== null}
                 onClick={() => handleVote(idx)}
                 className={cn(
                   "w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group/btn",
@@ -85,7 +92,13 @@ export function EndingPoll({ novel }: EndingPollProps) {
                 )}
               >
                 <div className="flex items-center gap-4">
-                  {isSelected ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5 opacity-30" />}
+                  {isVotingThis ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : isSelected ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : (
+                    <Circle className="w-5 h-5 opacity-30" />
+                  )}
                   <span className="font-bold text-sm">{option}</span>
                 </div>
                 {userVote && (

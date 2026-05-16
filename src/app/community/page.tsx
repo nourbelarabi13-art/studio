@@ -35,6 +35,8 @@ import {
 import { ChatMessage, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const COMMUNITY_ROOMS = [
   { id: 'library-lounge', name: 'The Library Lounge', description: 'Public book discussions and recommendations.', category: 'Reader', roles: ['writer', 'reader'] },
@@ -91,23 +93,29 @@ export default function CommunityPage() {
     }
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !db || !messageText.trim() || !profile) return;
 
     const text = messageText;
     setMessageText("");
 
-    try {
-      await addDoc(collection(db, "chatRooms", activeRoomId, "messages"), {
-        senderId: user.uid,
-        senderName: profile.username,
-        text,
-        createdAt: new Date().toISOString(),
+    const messageData = {
+      senderId: user.uid,
+      senderName: profile.username,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+
+    addDoc(collection(db, "chatRooms", activeRoomId, "messages"), messageData)
+      .catch(async (error) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: `chatRooms/${activeRoomId}/messages`,
+          operation: 'create',
+          requestResourceData: messageData
+        }));
+        toast({ title: "Whisper Lost", description: "Your message failed to reach the room.", variant: "destructive" });
       });
-    } catch (error) {
-      toast({ title: "Whisper Lost", description: "Your message failed to reach the room.", variant: "destructive" });
-    }
   };
 
   const handleReport = (msgId: string) => {

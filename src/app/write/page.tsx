@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import {
   Trash2, 
   Zap,
   Loader2,
-  Image as ImageIcon,
+  ImageIcon,
   Wand2,
   Globe,
   Plus,
@@ -53,18 +53,17 @@ import { generateCover } from "@/ai/flows/ai-cover-generator-flow";
 import { translateStory } from "@/ai/flows/translate-story-flow";
 import { cn } from "@/lib/utils";
 import { useFirestore, useUser, useDoc } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, getDocs, query, where, increment } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDocs, query, where, increment, setDoc } from "firebase/firestore";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { useLanguage } from "@/lib/i18n/context";
 import { createNotification } from "@/firebase/firestore/notification-actions";
 import { checkAchievements } from "@/firebase/firestore/achievement-actions";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
-const COUNTRIES = [
-  "Morocco", "France", "United Kingdom", "Egypt", "Saudi Arabia", "United States", "Canada", "Other"
-];
 
 export default function WritePage() {
   const router = useRouter();
@@ -102,8 +101,6 @@ export default function WritePage() {
   const [showManifestDialog, setShowManifestDialog] = useState(false);
   const [isManifestingIllustration, setIsManifestingIllustration] = useState(false);
   const [manifestPrompt, setManifestPrompt] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isSparking, setIsSparking] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -113,8 +110,6 @@ export default function WritePage() {
   const totalWordCount = useMemo(() => {
     return chapters.reduce((acc, chap) => acc + (chap.content ? chap.content.split(/\s+/).filter(Boolean).length : 0), 0);
   }, [chapters]);
-
-  const estimatedReadingTime = useMemo(() => Math.ceil(totalWordCount / 200), [totalWordCount]);
 
   const handleChapterTitleChange = (newTitle: string) => {
     setChapters(prev => prev.map(c => c.id === activeChapterId ? { ...c, title: newTitle } : c));
@@ -131,14 +126,7 @@ export default function WritePage() {
     setActiveChapterId(newId);
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (user && db && (title || totalWordCount > 0)) saveProgress(true);
-    }, 15000); 
-    return () => clearTimeout(timer);
-  }, [title, chapters, selectedGenres, coverImage, writingLanguage, writingCountry, isPollEnabled, pollQuestion, pollOptions]);
-
-  const saveProgress = async (isAuto = false) => {
+  const saveProgress = useCallback((isAuto = false) => {
     if (!user || !db) return;
     if (!isAuto) setIsSaving(true);
 
@@ -151,7 +139,8 @@ export default function WritePage() {
       genres: selectedGenres,
       coverImage,
       isDraft: true,
-      createdAt: new Date().toISOString(),
+      createdAt: lastSaved?.toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       publishedAt: null,
       views: 0,
       likes: 0,
@@ -160,20 +149,52 @@ export default function WritePage() {
       poll: isPollEnabled ? { question: pollQuestion, options: pollOptions, active: true } : null
     };
 
-    try {
-      if (novelId) {
-        await updateDoc(doc(db, "novels", novelId), novelData);
-      } else {
-        const ref = await addDoc(collection(db, "novels"), novelData);
-        setNovelId(ref.id);
-      }
-      setLastSaved(new Date());
-    } catch (e) {
-      if (!isAuto) toast({ title: "Save Failed", variant: "destructive" });
-    } finally {
-      if (!isAuto) setIsSaving(false);
+    if (novelId) {
+      const ref = doc(db, "novels", novelId);
+      updateDoc(ref, novelData)
+        .then(() => {
+          setLastSaved(new Date());
+          if (!isAuto) setIsSaving(false);
+        })
+        .catch(async (e) => {
+          if (!isAuto) {
+            setIsSaving(false);
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: ref.path,
+              operation: 'update',
+              requestResourceData: novelData
+            }));
+          }
+        });
+    } else {
+      const collectionRef = collection(db, "novels");
+      addDoc(collectionRef, novelData)
+        .then((ref) => {
+          setNovelId(ref.id);
+          setLastSaved(new Date());
+          if (!isAuto) setIsSaving(false);
+        })
+        .catch(async (e) => {
+          if (!isAuto) {
+            setIsSaving(false);
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+              path: 'novels',
+              operation: 'create',
+              requestResourceData: novelData
+            }));
+          }
+        });
     }
-  };
+
+    if (isAuto) setLastSaved(new Date());
+  }, [user, db, novelId, title, chapters, selectedGenres, coverImage, writingLanguage, writingCountry, isPollEnabled, pollQuestion, pollOptions, profile, lastSaved]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (user && db && (title || totalWordCount > 0)) saveProgress(true);
+    }, 15000); 
+    return () => clearTimeout(timer);
+  }, [saveProgress, title, totalWordCount]);
 
   const handlePublish = async () => {
     if (!user || !db) return;
@@ -197,7 +218,7 @@ export default function WritePage() {
         genres: selectedGenres, 
         coverImage, 
         isDraft: false, 
-        createdAt: new Date().toISOString(), 
+        createdAt: lastSaved?.toISOString() || new Date().toISOString(), 
         publishedAt: new Date().toISOString(),
         views: 0,
         likes: 0,
@@ -207,26 +228,26 @@ export default function WritePage() {
         poll: isPollEnabled ? { question: pollQuestion, options: pollOptions, active: true } : null
       };
 
-      let finalId = novelId;
       if (novelId) {
-        await updateDoc(doc(db, "novels", novelId), novelData);
+        updateDoc(doc(db, "novels", novelId), novelData);
       } else {
-        const ref = await addDoc(collection(db, "novels"), novelData);
-        finalId = ref.id;
+        addDoc(collection(db, "novels"), novelData).then((ref) => setNovelId(ref.id));
       }
 
-      await updateDoc(doc(db, "users", user.uid), { publishedCount: increment(1) });
-      await checkAchievements(db, user.uid);
+      // Sync user stats non-blocking
+      updateDoc(doc(db, "users", user.uid), { publishedCount: increment(1) });
+      checkAchievements(db, user.uid);
       
       const followersQuery = query(collection(db, "follows"), where("followingId", "==", user.uid));
-      const followersSnap = await getDocs(followersQuery);
-      followersSnap.forEach(followerDoc => {
-        createNotification(db, followerDoc.data().followerId, {
-          type: 'story',
-          message: `${profile?.username} published a new chronicle: "${title}"`,
-          fromUserId: user.uid,
-          fromUserName: profile?.username,
-          targetId: finalId || ""
+      getDocs(followersQuery).then(followersSnap => {
+        followersSnap.forEach(followerDoc => {
+          createNotification(db, followerDoc.data().followerId, {
+            type: 'story',
+            message: `${profile?.username} published a new chronicle: "${title}"`,
+            fromUserId: user.uid,
+            fromUserName: profile?.username,
+            targetId: novelId || ""
+          });
         });
       });
 
@@ -260,7 +281,7 @@ export default function WritePage() {
 
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="rounded-full gap-2 text-primary" onClick={() => saveProgress()} disabled={isSaving}>
-            <Save className="w-3.5 h-3.5" />
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Save Draft
           </Button>
           <Button onClick={handlePublish} disabled={isPublishing} className="rounded-full bg-primary hover:bg-primary/90 px-8 shadow-lg shadow-primary/10">
@@ -292,6 +313,9 @@ export default function WritePage() {
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <div className="relative w-32 h-44 rounded-2xl overflow-hidden cursor-pointer group border-2 border-dashed border-primary/10" onClick={() => setShowManifestDialog(true)}>
                 <Image src={coverImage} alt="Cover" fill className="object-cover opacity-80" />
+                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                   <ImageIcon className="w-8 h-8 text-white" />
+                </div>
               </div>
               <div className="flex-1 w-full space-y-4">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untethered Dream..." className="bg-transparent border-none text-5xl font-headline font-bold focus-visible:ring-0 px-0 h-auto" />
