@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Mail, Lock, Sparkles } from "lucide-react";
+import { Mail, Lock, Sparkles, Loader2 } from "lucide-react";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,6 +28,11 @@ const loginSchema = z.object({
 });
 
 export default function LoginPage() {
+  const auth = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -31,9 +41,26 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof loginSchema>) {
-    console.log(values);
-    // Logic for auth
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
+    if (!auth) return;
+    setIsLoading(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Manifestation Successful",
+        description: "Welcome back to the sanctuary, traveler.",
+      });
+      router.push("/");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "The Gates are Barred",
+        description: "Your secret phrase or scroll address does not match our records.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -82,9 +109,10 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg group">
+            <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg group">
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Manifest
-              <Sparkles className="w-4 h-4 ml-2 group-hover:animate-pulse" />
+              {!isLoading && <Sparkles className="w-4 h-4 ml-2 group-hover:animate-pulse" />}
             </Button>
           </form>
         </Form>

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,9 +18,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Shield, Sparkles, User, Mail, Lock } from "lucide-react";
+import { Shield, Sparkles, User, Mail, Lock, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useAuth, useFirestore } from "@/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username is too long"),
@@ -29,6 +35,11 @@ const signupSchema = z.object({
 });
 
 export default function SignUpPage() {
+  const auth = useAuth();
+  const db = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const signupImage = PlaceHolderImages.find(img => img.id === 'signup-bg');
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -41,8 +52,37 @@ export default function SignUpPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof signupSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof signupSchema>) {
+    if (!auth || !db) return;
+    setIsLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Save user profile to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        username: values.username,
+        email: values.email,
+        ageConfirmed: values.ageConfirmed,
+        createdAt: new Date().toISOString(),
+      });
+
+      toast({
+        title: "Identity Forged",
+        description: "Welcome to the Archive. Your journey begins now.",
+      });
+      router.push("/");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "The Ritual Failed",
+        description: error.message || "Could not forge your identity at this time.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -160,7 +200,8 @@ export default function SignUpPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg">
+              <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 font-headline text-lg">
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Enter the Sanctuary
               </Button>
             </form>
