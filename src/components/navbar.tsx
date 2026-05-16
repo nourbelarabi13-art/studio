@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -37,6 +36,7 @@ import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc, collection, query, where } from "firebase/firestore";
 import { UserProfile, Notification, AppLanguage } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/context";
+import { AmbientPlayer } from "@/components/ambient-player";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -119,6 +119,9 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Ambient Music Player */}
+          <AmbientPlayer />
+
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
