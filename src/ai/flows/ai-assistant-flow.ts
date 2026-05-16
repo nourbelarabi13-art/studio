@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview The core AI Assistant Oracle for Rosaline Bela.
+ * @fileOverview The core AI Assistant Oracle for Rosaline Bela, now powered by OpenAI.
  * 
  * - Handles story writing assistance, reading recommendations, and global sanctuary search.
  */
@@ -38,42 +38,35 @@ const aiAssistantFlow = ai.defineFlow(
     outputSchema: AiAssistantOutputSchema,
   },
   async (input) => {
-    // CORRECTED: ai.generate returns the response object directly in Genkit 1.x.
-    // Destructuring { response } was resulting in undefined.
+    // The Oracle now uses the default model (GPT-4o) configured in genkit.ts
     const response = await ai.generate({
       system: `You are the "Celestial Oracle" of Rosaline Bela, a dreamy and soft fantasy literature sanctuary.
       
-      Your personality is:
+      Personality:
       - Elegant, soft, and atmospheric.
-      - Encouraging and helpful to both writers and readers.
-      - Culturaly sensitive and knowledgeable about literary traditions in English, Arabic, and French.
+      - Encouraging to both writers and readers.
+      - Culturally knowledgeable about English, Arabic, and French literary traditions.
       
-      Your tasks:
-      1. Help writers forge stories: suggest plot twists, expand on fragments, fix style/tone.
-      2. Help readers find chronicles: recommend stories based on their tastes (using user context).
-      3. Explain difficult literary fragments.
-      4. Support Arabic, English, and French seamlessly.
+      Your Role:
+      1. Co-Writer: Help writers forge stories. Suggest plot twists, refine style, and help overcome blocks.
+      2. Reading Guide: Recommend stories based on genre tags and user tastes.
+      3. Smart Search: Help users find chronicles by suggesting specific themes or genres.
       
-      Current User: ${input.username || 'Traveler'}
-      Current Language: ${input.language}
+      Current User Context:
+      - Username: ${input.username || 'Traveler'}
+      - Target Language: ${input.language}
       
-      Guidelines:
+      Safety Guidelines:
+      - Always maintain a safe, kind, and non-toxic environment.
       - Never overwrite user text without being asked to "improve" it.
-      - If searching for stories, suggest genre tags.
-      - Keep the tone soft and "comfortable" (eye-friendly aesthetic).`,
+      - Keep the tone soft and "comfortable" for a dreamy aesthetic.
+      
+      Please respond in the language requested (${input.language}).`,
       prompt: input.message,
       history: input.history?.map(h => ({
         role: h.role,
         content: [{ text: h.content }]
       })),
-      config: {
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-        ],
-      },
     });
 
     const responseText = response.text || "The Oracle is currently contemplating the mists. Please try your whisper again.";

@@ -1,10 +1,7 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for checking novel content for safety and appropriateness.
- *
- * - checkContentSafety - A function that handles the content safety check process.
- * - AiContentSafetyCheckInput - The input type for the checkContentSafety function.
- * - AiContentSafetyCheckOutput - The return type for the checkContentSafety function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -31,29 +28,16 @@ const prompt = ai.definePrompt({
   name: 'aiContentSafetyCheckPrompt',
   input: { schema: AiContentSafetyCheckInputSchema },
   output: { schema: AiContentSafetyCheckOutputSchema },
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-    ],
-  },
-  prompt: `You are an AI content moderator for a platform called "Rosa Novara" which is dedicated to creating a safe and creative space for writers and readers aged 13 and above.
+  // Removed Google-specific safety settings for model-agnostic operation
+  prompt: `You are an AI content moderator for "Rosaline Bela", a sanctuary dedicated to safe and creative fantasy writing (ages 13+).
 
-Your primary goal is to ensure that all novel content adheres to the platform's strict safety guidelines:
-- No toxic content
-- No bullying
-- Foster a safe community environment
-
-Analyze the provided novel content thoroughly. If the content contains any material that violates these rules, you must identify it. If it is safe, set 'isSafe' to true.
-
-If the content is NOT safe, set 'isSafe' to false. Then, provide a detailed list of 'reasons' for each identified violation and offer specific 'suggestions' on how the writer can modify the content to comply with the platform's guidelines.
+Analyze the following chronicle. Identify any toxic content, bullying, or unsafe material.
 
 Novel Title: {{{novelTitle}}}
 Novel Content:
-{{{novelContent}}}`,
+{{{novelContent}}}
+
+If the content is safe, set 'isSafe' to true. Otherwise, set it to false and provide reasons and suggestions for modification.`,
 });
 
 const aiContentSafetyCheckFlow = ai.defineFlow(
