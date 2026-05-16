@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
 import { Genre, Novel } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Coffee, Loader2, BookOpen } from "lucide-react";
+import { Sparkles, Heart, Coffee, Loader2, BookOpen, TrendingUp, Zap } from "lucide-react";
 import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,6 +23,7 @@ export default function Home() {
   const archiveRef = useRef<HTMLDivElement>(null);
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-dreamy');
 
+  // Archive Query
   const novelsQuery = useMemoFirebase(() => {
     if (!db) return null;
     let q = query(
@@ -37,16 +39,35 @@ export default function Home() {
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
+  // Weekly Trending (By views, published in the last 7 days)
   const trendingQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    return query(
+      collection(db, "novels"),
+      where("isDraft", "==", false),
+      where("publishedAt", ">=", sevenDaysAgo.toISOString()),
+      orderBy("publishedAt", "desc"),
+      orderBy("views", "desc"),
+      limit(4)
+    );
+  }, [db]);
+  const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
+
+  // Rising (New stories gaining popularity quickly - for MVP we use newest with high views)
+  const risingQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(
       collection(db, "novels"),
       where("isDraft", "==", false),
       orderBy("publishedAt", "desc"),
-      limit(3)
+      orderBy("views", "desc"),
+      limit(4)
     );
   }, [db]);
-  const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
+  const { data: risingNovels } = useCollection<Novel>(risingQuery);
 
   const scrollToArchive = () => {
     archiveRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,8 +123,44 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-16 space-y-24">
-        {/* Categories Section */}
+      <main className="container mx-auto px-4 py-16 space-y-32">
+        {/* Trending Section */}
+        {trendingNovels && trendingNovels.length > 0 && (
+          <div className="space-y-12">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                <TrendingUp className="text-orange-500 w-8 h-8" />
+                Trending This Week
+              </h2>
+              <p className="text-muted-foreground italic text-lg ml-11">The stories captivating the community right now.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {trendingNovels.map((novel) => (
+                <NovelCard key={novel.id} novel={novel} badge="trending" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rising Section */}
+        {risingNovels && risingNovels.length > 0 && (
+          <div className="space-y-12">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-4xl font-bold flex items-center gap-3 text-foreground">
+                <Zap className="text-primary w-8 h-8" />
+                Rising Stories
+              </h2>
+              <p className="text-muted-foreground italic text-lg ml-11">Fresh manifestations gaining popularity quickly.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {risingNovels.map((novel) => (
+                <NovelCard key={novel.id} novel={novel} badge="rising" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Categories Section (The Archive) */}
         <div ref={archiveRef} className="space-y-12 scroll-mt-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-primary/10 pb-8">
             <div className="space-y-3">
@@ -157,64 +214,6 @@ export default function Home() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8">
-          <div className="glass-morphism rounded-3xl p-10 space-y-8 border-primary/10 hover:border-primary/30 transition-all group">
-            <div className="space-y-2">
-              <h3 className="font-headline text-3xl font-bold flex items-center gap-3 text-foreground">
-                <Heart className="text-primary w-6 h-6 group-hover:scale-110 transition-transform" />
-                Beloved Tales
-              </h3>
-              <p className="text-muted-foreground italic">Warmly received in our sanctuary.</p>
-            </div>
-            <div className="space-y-6">
-              {trendingNovels?.map(novel => (
-                <Link key={novel.id} href={`/read/${novel.id}`} className="flex items-center gap-6 group/item cursor-pointer">
-                  <div className="relative w-16 h-20 rounded-xl overflow-hidden shrink-0 shadow-sm transition-all group-hover/item:shadow-md">
-                    <Image src={novel.coverImage} alt={novel.title} fill className="object-cover group-hover/item:scale-105 transition-transform" />
-                  </div>
-                  <div>
-                    <h4 className="font-headline text-lg font-semibold group-hover/item:text-primary transition-colors mb-0.5">{novel.title}</h4>
-                    <p className="text-xs text-muted-foreground italic mb-1">by {novel.authorUsername}</p>
-                    <div className="flex gap-2">
-                      {novel.genres.slice(0, 1).map(g => (
-                        <span key={g} className="text-[9px] uppercase tracking-widest font-bold text-primary">{g}</span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="glass-morphism rounded-3xl p-10 space-y-8 border-accent/20 hover:border-accent/40 transition-all group">
-            <div className="space-y-2">
-              <h3 className="font-headline text-3xl font-bold flex items-center gap-3 text-foreground">
-                <Coffee className="text-accent w-6 h-6" />
-                Freshly Brewed
-              </h3>
-              <p className="text-muted-foreground italic">New fragments freshly emerged from the mind.</p>
-            </div>
-            <div className="space-y-6">
-              {novels?.slice(0, 3).map(novel => (
-                <Link key={novel.id} href={`/read/${novel.id}`} className="flex items-center gap-6 group/item cursor-pointer">
-                  <div className="relative w-16 h-20 rounded-xl overflow-hidden shrink-0 shadow-sm transition-all group-hover/item:shadow-md">
-                    <Image src={novel.coverImage} alt={novel.title} fill className="object-cover group-hover/item:scale-105 transition-transform" />
-                  </div>
-                  <div>
-                    <h4 className="font-headline text-lg font-semibold group-hover/item:text-primary transition-colors mb-0.5">{novel.title}</h4>
-                    <p className="text-xs text-muted-foreground italic mb-1">by {novel.authorUsername}</p>
-                    <div className="flex gap-2">
-                      {novel.genres.slice(0, 1).map(g => (
-                        <span key={g} className="text-[9px] uppercase tracking-widest font-bold text-primary">{g}</span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
       </main>
 

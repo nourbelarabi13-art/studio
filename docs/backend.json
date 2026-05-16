@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -26,7 +27,9 @@
         "publishedAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" },
         "coverImage": { "type": "string" },
-        "isDraft": { "type": "boolean" }
+        "isDraft": { "type": "boolean" },
+        "views": { "type": "integer", "default": 0 },
+        "likes": { "type": "integer", "default": 0 }
       },
       "required": ["title", "content", "authorId", "genres", "isDraft"]
     }

@@ -12,6 +12,8 @@ export interface Novel {
   createdAt: string;
   coverImage: string;
   isDraft: boolean;
+  views: number;
+  likes: number;
 }
 
 export interface UserProfile {
