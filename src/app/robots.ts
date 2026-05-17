@@ -1,7 +1,7 @@
 
 /**
- * Dynamic robots generator retired in favor of static public/robots.txt 
- * to ensure 100% compatibility with static export ritual.
+ * Dynamic robots generator disabled for static export compatibility.
+ * To provide a robots.txt, place a static file in the /public folder.
  */
 export default function robots() {
   return null;
