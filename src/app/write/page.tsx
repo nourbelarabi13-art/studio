@@ -14,6 +14,7 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { checkAchievements } from "@/firebase/firestore/achievement-actions";
 import { createNotification } from "@/firebase/firestore/notification-actions";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 
 // Sub-components
@@ -31,6 +32,8 @@ export default function WritePage() {
   const { language: appLanguage } = useLanguage();
   const [isPending, startTransition] = useTransition();
   
+  const defaultWritingImage = PlaceHolderImages.find(img => img.id === 'writing-default')?.imageUrl || '';
+
   const profileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
     return doc(db, "users", user.uid);
@@ -120,7 +123,7 @@ export default function WritePage() {
       authorId: user.uid,
       authorUsername: profile?.username || "Dreamer",
       genres: selectedGenres,
-      coverImage: 'https://picsum.photos/seed/writing/600/800',
+      coverImage: defaultWritingImage,
       isDraft: true,
       updatedAt: new Date().toISOString(),
       language: writingLanguage,
@@ -145,14 +148,14 @@ export default function WritePage() {
       if (!isAuto) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: novelId ? `novels/${novelId}` : 'novels',
-          operation: novelId ? 'update' : 'create',
+          operation: 'write',
           requestResourceData: novelData
         }));
       }
     } finally {
       if (!isAuto) setIsSaving(false);
     }
-  }, [user, db, novelId, title, chapters, selectedGenres, writingLanguage, writingCountry, profile]);
+  }, [user, db, novelId, title, chapters, selectedGenres, writingLanguage, writingCountry, profile, defaultWritingImage]);
 
   // Periodic autosave every 30 seconds if changed
   useEffect(() => {
@@ -191,7 +194,7 @@ export default function WritePage() {
           createdAt: new Date().toISOString(),
           views: 0,
           likes: 0,
-          coverImage: 'https://picsum.photos/seed/writing/600/800',
+          coverImage: defaultWritingImage,
         });
         setNovelId(ref.id);
       }

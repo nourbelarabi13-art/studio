@@ -49,40 +49,16 @@
       "imageHint": "old books"
     },
     {
-      "id": "novel-1",
+      "id": "novel-default",
       "description": "An elegant book with a soft pink flower on top",
       "imageUrl": "https://picsum.photos/seed/pink-flower-book/600/800",
       "imageHint": "aesthetic book"
     },
     {
-      "id": "novel-2",
-      "description": "Lavender fields under a soft purple sky",
-      "imageUrl": "https://picsum.photos/seed/lavender-fields/600/800",
-      "imageHint": "lavender fields"
-    },
-    {
-      "id": "novel-3",
-      "description": "Golden light through a window onto a writing desk",
-      "imageUrl": "https://picsum.photos/seed/writing-desk/600/800",
-      "imageHint": "cozy desk"
-    },
-    {
-      "id": "novel-4",
-      "description": "A peaceful garden path with soft light filters",
-      "imageUrl": "https://picsum.photos/seed/garden-path/600/800",
-      "imageHint": "dreamy garden"
-    },
-    {
-      "id": "novel-5",
-      "description": "Soft white curtains blowing in a gentle breeze",
-      "imageUrl": "https://picsum.photos/seed/white-curtains/600/800",
-      "imageHint": "soft breeze"
-    },
-    {
-      "id": "novel-6",
-      "description": "Ethereal crystal glowing with soft blue light",
-      "imageUrl": "https://picsum.photos/seed/glow-crystal/600/800",
-      "imageHint": "fantasy crystal"
+      "id": "writing-default",
+      "description": "A clean sheet of paper with a classic pen",
+      "imageUrl": "https://picsum.photos/seed/writing-clean/600/800",
+      "imageHint": "writing paper"
     }
   ]
 }

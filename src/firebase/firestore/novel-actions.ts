@@ -34,6 +34,8 @@ export async function incrementNovelView(db: Firestore, novelId: string) {
         totalViews: increment(1)
       }).then(() => {
         checkAchievements(db, novelData.authorId);
+      }).catch(() => {
+        // Silent error for secondary updates
       });
     }
   }).catch(async () => {
@@ -75,7 +77,8 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
     });
   } else {
     // Like
-    return setDoc(likeRef, { createdAt: new Date().toISOString() }).then(() => {
+    const likeData = { createdAt: new Date().toISOString() };
+    return setDoc(likeRef, likeData).then(() => {
       updateDoc(novelRef, { likes: increment(1) });
       updateDoc(authorRef, { totalLikes: increment(1) }).then(() => {
         checkAchievements(db, novelData.authorId);
@@ -95,7 +98,8 @@ export async function toggleLikeNovel(db: Firestore, novelId: string, userId: st
     }).catch(() => {
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: likeRef.path,
-        operation: 'create'
+        operation: 'write',
+        requestResourceData: likeData
       }));
        return false;
     });

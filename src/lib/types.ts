@@ -18,6 +18,12 @@ export interface ReadingPreferences {
   mode: 'light' | 'sepia' | 'lavender' | 'midnight';
 }
 
+export interface StoryPoll {
+  question: string;
+  options: string[];
+  active: boolean;
+}
+
 export interface Novel {
   id: string;
   title: string;
@@ -35,6 +41,8 @@ export interface Novel {
   likes: number;
   language: AppLanguage;
   country?: string;
+  poll?: StoryPoll;
+  translations?: Record<string, { title: string; content: string }>;
 }
 
 export interface UserProfile {
@@ -120,5 +128,11 @@ export interface SideNote {
   chapterId?: string;
   title?: string;
   content: string;
+  createdAt: string;
+}
+
+export interface EndingVote {
+  userId: string;
+  choiceIndex: number;
   createdAt: string;
 }
