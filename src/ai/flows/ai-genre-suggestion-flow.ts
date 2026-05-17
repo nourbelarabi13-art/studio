@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   output: { schema: AiGenreSuggestionOutputSchema },
   prompt: `You are an expert literary analyst. Your task is to analyze the provided novel content and suggest up to three appropriate genre tags from the following list:
 
-Available Genres: Fantasy, Horror, Romance, Mystery, Drama, Sci-Fi
+Available Genres: Fantasy, Horror, Romance, Mystery, Drama, Sci-Fi, Historical, Psychological, Adventure, Poetry & Prose, Thriller
 
 Analyze the novel's title and story content to determine the most fitting genres. Respond with a JSON object containing an array of the suggested genres. Ensure the genres are from the provided list and avoid including any other text or explanation.
 

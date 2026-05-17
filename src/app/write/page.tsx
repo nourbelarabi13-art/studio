@@ -40,7 +40,10 @@ import { checkAchievements } from "@/firebase/firestore/achievement-actions";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
-const AVAILABLE_GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
+const AVAILABLE_GENRES: Genre[] = [
+  'Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi', 
+  'Historical', 'Psychological', 'Adventure', 'Poetry & Prose', 'Thriller'
+];
 
 export default function WritePage() {
   const router = useRouter();

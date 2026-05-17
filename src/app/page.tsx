@@ -26,7 +26,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const GENRES: Genre[] = ['Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi'];
+const GENRES: Genre[] = [
+  'Fantasy', 'Horror', 'Romance', 'Mystery', 'Drama', 'Sci-Fi', 
+  'Historical', 'Psychological', 'Adventure', 'Poetry & Prose', 'Thriller'
+];
+
 const LANGUAGES: { code: AppLanguage; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
   { code: 'ar', label: 'العربية', flag: '🇸🇦' },
@@ -166,7 +170,7 @@ export default function Home() {
   }, [db, sevenDaysAgo]);
   const { data: trendingNovels } = useCollection<Novel>(trendingQuery);
 
-  const risingQuery = useMemoFirebase(() => {
+  const risingNovelsQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(
       collection(db, "novels"),
@@ -176,7 +180,7 @@ export default function Home() {
       limit(8)
     );
   }, [db]);
-  const { data: risingNovels } = useCollection<Novel>(risingQuery);
+  const { data: risingNovels } = useCollection<Novel>(risingNovelsQuery);
 
   const personalizedRecommendations = useMemo(() => {
     const combined = [

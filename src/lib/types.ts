@@ -1,4 +1,4 @@
-export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi';
+export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi' | 'Historical' | 'Psychological' | 'Adventure' | 'Poetry & Prose' | 'Thriller';
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
 export type BookmarkCategory = 'favorite' | 'read-later';
