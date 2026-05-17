@@ -109,6 +109,7 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10 transition-colors duration-700">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Mobile Menu */}
         <div className="lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -154,6 +155,7 @@ export function Navbar() {
           </span>
         </Link>
 
+        {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
             <Link
@@ -170,6 +172,7 @@ export function Navbar() {
           ))}
         </div>
 
+        {/* Right Section: Toggle, Music, User */}
         <div className="flex items-center gap-1 sm:gap-4">
           <Button
             variant="ghost"
