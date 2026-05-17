@@ -290,7 +290,7 @@ export default function CommunityPage() {
                    >
                      <Camera className="w-6 h-6" />
                    </Button>
-                   <input type="file" fileInputRef={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                 </div>
               </div>
               <Button 
