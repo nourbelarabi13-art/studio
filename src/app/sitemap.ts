@@ -1,8 +1,30 @@
+import { MetadataRoute } from 'next';
+
 /**
- * sitemap.ts has been deactivated for static export compatibility.
- * To provide a sitemap.xml, please place a static sitemap.xml file 
- * in the /public folder of your project.
+ * Static Sitemap Manifest
+ * Standardized for output: 'export' compatibility.
  */
-export default function sitemap() {
-  return [];
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://rosaline-bela.netlify.app';
+  
+  return [
+    {
+      url: baseUrl,
+      lastModified: '2024-01-01T00:00:00.000Z',
+      changeFrequency: 'yearly',
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/community`,
+      lastModified: '2024-01-01T00:00:00.000Z',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/vault`,
+      lastModified: '2024-01-01T00:00:00.000Z',
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    }
+  ];
 }

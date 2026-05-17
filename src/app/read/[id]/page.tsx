@@ -61,6 +61,13 @@ import Link from "next/link";
 
 type ReadingMode = 'light' | 'sepia' | 'lavender' | 'midnight';
 
+/**
+ * Satisfy static export requirements for dynamic segments.
+ */
+export function generateStaticParams() {
+  return [{ id: 'manifest' }];
+}
+
 export default function ReadingPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -86,7 +93,7 @@ export default function ReadingPage() {
   const [isChapterCompleted, setIsChapterCompleted] = useState(false);
 
   const novelRef = useMemoFirebase(() => {
-    if (!db || !id || id === 'undefined' || id === 'null') return null;
+    if (!db || !id || id === 'undefined' || id === 'null' || id === 'manifest') return null;
     return doc(db, "novels", id as string);
   }, [db, id]);
 
@@ -108,13 +115,13 @@ export default function ReadingPage() {
   }, [currentUserProfile]);
 
   const progressRef = useMemoFirebase(() => {
-    if (!db || !user || !id || id === 'undefined' || id === 'null') return null;
+    if (!db || !user || !id || id === 'undefined' || id === 'null' || id === 'manifest') return null;
     return doc(db, "users", user.uid, "progress", id as string);
   }, [db, user, id]);
   const { data: cloudProgress } = useDoc<ReadingProgress>(progressRef);
 
   const bookmarkRef = useMemoFirebase(() => {
-    if (!db || !user || !id || id === 'undefined' || id === 'null') return null;
+    if (!db || !user || !id || id === 'undefined' || id === 'null' || id === 'manifest') return null;
     return doc(db, "users", user.uid, "bookmarks", id as string);
   }, [db, user, id]);
   const { data: bookmarkData } = useDoc(bookmarkRef);
@@ -131,7 +138,7 @@ export default function ReadingPage() {
   const { data: similarNovels } = useCollection<Novel>(similarNovelsQuery);
 
   useEffect(() => {
-    if (db && id && id !== 'undefined' && id !== 'null') {
+    if (db && id && id !== 'undefined' && id !== 'null' && id !== 'manifest') {
       incrementNovelView(db, id as string);
     }
   }, [db, id]);
@@ -150,7 +157,7 @@ export default function ReadingPage() {
   }, [db, user, fontSize, lineHeight, readingMode]);
 
   const updateProgress = useCallback((percentage: number, scrollY: number) => {
-    if (!db || !user || !novel || !id) return;
+    if (!db || !user || !novel || !id || id === 'manifest') return;
     
     saveReadingProgress(db, {
       uid: user.uid,
@@ -196,7 +203,7 @@ export default function ReadingPage() {
       const cloudPos = cloudProgress?.scrollPosition;
       if (cloudPos && cloudPos > 500) {
         setSavedPosition(cloudPos);
-        setShowRestorePosition(true);
+        setShowRestorePosition(false);
         if (cloudProgress?.chapterIndex !== undefined) {
           setCurrentChapterIndex(cloudProgress.chapterIndex);
         }
@@ -216,7 +223,7 @@ export default function ReadingPage() {
       toast({ title: "Identification Required", variant: "destructive" });
       return;
     }
-    if (!db || !id) return;
+    if (!db || !id || id === 'manifest') return;
     setIsLiking(true);
     toggleLikeNovel(db, id as string, user.uid, currentUserProfile.username)
       .finally(() => setIsLiking(false));
@@ -227,7 +234,7 @@ export default function ReadingPage() {
       toast({ title: "Identification Required", variant: "destructive" });
       return;
     }
-    if (!db || !id || !novel) return;
+    if (!db || !id || id === 'manifest' || !novel) return;
     setIsBookmarking(true);
     toggleBookmark(db, user.uid, id as string, {
       title: novel.title,
@@ -268,7 +275,7 @@ export default function ReadingPage() {
     </div>
   );
 
-  if (!novel) return (
+  if (!novel && id !== 'manifest') return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center gap-4">
       <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
       <h1 className="text-2xl font-bold">Chronicle Not Found</h1>
@@ -277,10 +284,10 @@ export default function ReadingPage() {
     </div>
   );
 
-  const hasTranslation = !!novel.translations?.[appLanguage];
-  const displayTitle = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.title : (activeChapter?.title || novel.title);
-  const displayContent = (useTranslation && hasTranslation) ? novel.translations![appLanguage]!.content : (activeChapter?.content || novel.content);
-  const isRtl = (useTranslation && hasTranslation) ? (appLanguage === 'ar') : (novel.language === 'ar');
+  const hasTranslation = !!novel?.translations?.[appLanguage];
+  const displayTitle = (useTranslation && hasTranslation) ? novel?.translations![appLanguage]!.title : (activeChapter?.title || novel?.title || "Untitled");
+  const displayContent = (useTranslation && hasTranslation) ? novel?.translations![appLanguage]!.content : (activeChapter?.content || novel?.content || "");
+  const isRtl = (useTranslation && hasTranslation) ? (appLanguage === 'ar') : (novel?.language === 'ar');
 
   const modeStyles = {
     light: "bg-[#fffcfc] text-[#2c1818]",
@@ -329,7 +336,7 @@ export default function ReadingPage() {
       )}>
         <header className="space-y-8 text-center border-b border-primary/10 pb-16">
           <div className="flex justify-center flex-wrap gap-2 mb-4">
-            {novel.genres.map(genre => (
+            {novel?.genres.map(genre => (
               <Badge key={genre} variant="outline" className={cn(
                 "border-primary/30 italic rounded-full px-4 h-6 text-[10px]",
                 readingMode === 'midnight' ? "bg-primary/20 text-primary-foreground" : "bg-primary/5 text-primary"
@@ -344,11 +351,11 @@ export default function ReadingPage() {
           </h1>
 
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-muted-foreground italic">
-            <Link href={`/profile/${novel.authorId}`} className="flex items-center gap-3 text-foreground font-semibold hover:text-primary transition-colors">
+            <Link href={`/profile/${novel?.authorId}`} className="flex items-center gap-3 text-foreground font-semibold hover:text-primary transition-colors">
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                 <User className="w-5 h-5" />
               </div>
-              <span className="text-sm sm:text-base">{novel.authorUsername}</span>
+              <span className="text-sm sm:text-base">{novel?.authorUsername}</span>
             </Link>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary/40" />
@@ -377,7 +384,7 @@ export default function ReadingPage() {
               {isFocusMode ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
             </Button>
 
-            {novel.chapters && novel.chapters.length > 0 && (
+            {novel?.chapters && novel.chapters.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-11 w-11 rounded-full text-primary">
@@ -532,7 +539,7 @@ export default function ReadingPage() {
             </DropdownMenu>
 
             <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-11 w-11 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
-              <Heart className={cn("w-6 h-6", (novel.likes > 0) && "fill-primary text-primary")} />
+              <Heart className={cn("w-6 h-6", (novel?.likes && novel.likes > 0) && "fill-primary text-primary")} />
             </Button>
 
             {user && (
@@ -562,29 +569,31 @@ export default function ReadingPage() {
           </div>
         </article>
 
-        <footer className="pt-24 border-t border-primary/10 space-y-24 relative z-10">
-          <div className={cn(
-            "rounded-[3rem] p-8 sm:p-12 text-center space-y-8 shadow-sm border",
-            readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"
-          )}>
-            <div className="space-y-2">
-              <h3 className="font-headline text-3xl sm:text-4xl font-bold">End of Chronicle</h3>
-              <p className="text-muted-foreground italic">Thank you for traveling this far.</p>
+        {novel && (
+          <footer className="pt-24 border-t border-primary/10 space-y-24 relative z-10">
+            <div className={cn(
+              "rounded-[3rem] p-8 sm:p-12 text-center space-y-8 shadow-sm border",
+              readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"
+            )}>
+              <div className="space-y-2">
+                <h3 className="font-headline text-3xl sm:text-4xl font-bold">End of Chronicle</h3>
+                <p className="text-muted-foreground italic">Thank you for traveling this far.</p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+                <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-16 font-headline text-xl shadow-xl gap-4 flex-1 sm:flex-none max-w-[280px]">
+                  <Heart className="w-6 h-6" />
+                  Appreciate
+                </Button>
+                <Button variant="outline" className="border-primary/20 rounded-full px-10 h-16 gap-4 text-primary hover:bg-primary/5 font-headline text-xl flex-1 sm:flex-none max-w-[280px]">
+                  <Share2 className="w-6 h-6" />
+                  Share
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-16 font-headline text-xl shadow-xl gap-4 flex-1 sm:flex-none max-w-[280px]">
-                <Heart className="w-6 h-6" />
-                Appreciate
-              </Button>
-              <Button variant="outline" className="border-primary/20 rounded-full px-10 h-16 gap-4 text-primary hover:bg-primary/5 font-headline text-xl flex-1 sm:flex-none max-w-[280px]">
-                <Share2 className="w-6 h-6" />
-                Share
-              </Button>
-            </div>
-          </div>
 
-          <StoryComments novel={novel} />
-        </footer>
+            <StoryComments novel={novel} />
+          </footer>
+        )}
       </main>
 
       <ReportModal 

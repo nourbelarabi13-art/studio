@@ -1,8 +1,16 @@
+import { MetadataRoute } from 'next';
+
 /**
- * robots.ts has been deactivated for static export compatibility.
- * To provide a custom robots.txt, please place a static robots.txt file 
- * in the /public folder of your project.
+ * Static Robots Manifest
+ * Ensures search engines can crawl the Archive safely.
  */
-export default function robots() {
-  return null;
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/settings/', '/profile/edit/'],
+    },
+    sitemap: 'https://rosaline-bela.netlify.app/sitemap.xml',
+  };
 }

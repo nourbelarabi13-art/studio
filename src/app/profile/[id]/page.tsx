@@ -41,35 +41,12 @@ import Image from "next/image";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import Link from "next/link";
 
-const SANCTUARY_BADGES = [
-  {
-    id: 'dream-reader',
-    name: 'Dream Reader',
-    arabicName: 'قارئ حالم',
-    icon: Moon,
-    color: 'from-purple-500/20 to-indigo-500/20',
-    iconColor: 'text-indigo-400',
-    glow: 'shadow-indigo-500/20'
-  },
-  {
-    id: 'mystic-writer',
-    name: 'Mystic Writer',
-    arabicName: 'كاتب غامض',
-    icon: PenTool,
-    color: 'from-primary/20 to-rose-500/20',
-    iconColor: 'text-primary',
-    glow: 'shadow-primary/20'
-  },
-  {
-    id: 'archive-explorer',
-    name: 'Archive Explorer',
-    arabicName: 'مستكشف الأرشيف',
-    icon: Library,
-    color: 'from-amber-500/20 to-orange-500/20',
-    iconColor: 'text-amber-500',
-    glow: 'shadow-amber-500/20'
-  }
-];
+/**
+ * Satisfy static export requirements for dynamic segments.
+ */
+export function generateStaticParams() {
+  return [{ id: 'manifest' }];
+}
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -90,7 +67,7 @@ export default function ProfilePage() {
 
   // Robust check for ID
   const validId = useMemo(() => {
-    if (!id || id === 'undefined' || id === 'null') return null;
+    if (!id || id === 'undefined' || id === 'null' || id === 'manifest') return null;
     return id as string;
   }, [id]);
 
@@ -198,7 +175,7 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  if (!validId) {
+  if (!validId && id !== 'manifest') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6 dreamy-fantasy-gradient">
         <AlertCircle className="w-16 h-16 text-destructive opacity-40" />
@@ -220,7 +197,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profile) {
+  if (!profile && id !== 'manifest') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6 dreamy-fantasy-gradient">
         <Library className="w-16 h-16 text-muted-foreground opacity-30" />
@@ -231,14 +208,14 @@ export default function ProfilePage() {
     );
   }
 
-  const isOwnProfile = currentUser?.uid === profile.uid;
-  const displayAvatar = (isOwnProfile && localAvatar) ? localAvatar : (profile.avatar || localAvatar);
-  const isGrandArchivist = (profile.achievements?.length || 0) >= ACHIEVEMENTS.length - 1;
+  const isOwnProfile = currentUser?.uid === profile?.uid;
+  const displayAvatar = (isOwnProfile && localAvatar) ? localAvatar : (profile?.avatar || localAvatar);
+  const isGrandArchivist = (profile?.achievements?.length || 0) >= ACHIEVEMENTS.length - 1;
 
   const statsForAchievements = {
-    publishedCount: profile.publishedCount || 0,
-    totalViews: profile.totalViews || 0,
-    totalLikes: profile.totalLikes || 0,
+    publishedCount: profile?.publishedCount || 0,
+    totalViews: profile?.totalViews || 0,
+    totalLikes: profile?.totalLikes || 0,
     readingCount: readingProgress?.length || 0,
     maxViews: novels?.reduce((max, n) => Math.max(max, n.views || 0), 0) || 0
   };
@@ -255,182 +232,184 @@ export default function ProfilePage() {
            <h2 className="font-headline text-xl font-bold">Traveler Profile</h2>
         </div>
 
-        <header className="glass-morphism rounded-[2.5rem] sm:rounded-[3.5rem] p-6 sm:p-14 flex flex-col items-center md:items-start gap-10 sm:gap-14 border-primary/10 shadow-2xl relative overflow-hidden group/header">
-          {(localBanner || profile.avatar) && (
-            <div className="absolute inset-0 z-0">
-               <Image src={localBanner || profile.avatar || ""} alt="Banner" fill className="object-cover opacity-20 blur-[3px]" />
-               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
-            </div>
-          )}
-          
-          {isOwnProfile && (
-            <div className="absolute top-6 right-6 z-30">
-               <Button 
-                 variant="ghost" 
-                 size="icon" 
-                 onClick={() => bannerInputRef.current?.click()}
-                 className="bg-white/30 backdrop-blur-md border border-white/40 text-white rounded-full h-12 w-12 hover:bg-white/50 transition-all md:opacity-0 group-header/header:opacity-100"
-               >
-                 <Camera className="w-5 h-5" />
-               </Button>
-               <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerUpload} />
-            </div>
-          )}
-
-          <div className="relative shrink-0 z-20">
-            <div className="w-36 h-36 sm:w-52 sm:h-52 rounded-[2rem] sm:rounded-[3rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group/avatar">
-               {displayAvatar ? (
-                 <Image src={displayAvatar} alt={profile.username} fill className="object-cover transition-transform duration-1000 group-hover/avatar:scale-110" />
-               ) : (
-                 <User className="w-20 h-20 text-primary/20" />
-               )}
-               {isOwnProfile && (
-                 <Link href="/profile/edit" className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 transition-all flex flex-col items-center justify-center text-white">
-                   <Camera className="w-10 h-10" />
-                   <span className="text-[10px] font-bold uppercase mt-2">Refine</span>
-                 </Link>
-               )}
-            </div>
-            {isGrandArchivist && (
-              <div className="absolute -bottom-3 -right-3 bg-primary text-white p-3 rounded-2xl shadow-2xl ring-4 ring-white">
-                <Trophy className="w-6 h-6" />
+        {profile && (
+          <header className="glass-morphism rounded-[2.5rem] sm:rounded-[3.5rem] p-6 sm:p-14 flex flex-col items-center md:items-start gap-10 sm:gap-14 border-primary/10 shadow-2xl relative overflow-hidden group/header">
+            {(localBanner || profile.avatar) && (
+              <div className="absolute inset-0 z-0">
+                 <Image src={localBanner || profile.avatar || ""} alt="Banner" fill className="object-cover opacity-20 blur-[3px]" />
+                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
               </div>
             )}
-          </div>
+            
+            {isOwnProfile && (
+              <div className="absolute top-6 right-6 z-30">
+                 <Button 
+                   variant="ghost" 
+                   size="icon" 
+                   onClick={() => bannerInputRef.current?.click()}
+                   className="bg-white/30 backdrop-blur-md border border-white/40 text-white rounded-full h-12 w-12 hover:bg-white/50 transition-all md:opacity-0 group-header/header:opacity-100"
+                 >
+                   <Camera className="w-5 h-5" />
+                 </Button>
+                 <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerUpload} />
+              </div>
+            )}
 
-          <div className="flex-1 space-y-8 text-center md:text-left w-full relative z-20">
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                <h1 className="font-headline text-4xl sm:text-6xl font-bold tracking-tight">{profile.username}</h1>
-                {isGrandArchivist && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-5 py-1.5 text-[10px] uppercase font-bold">
-                    Grand Archivist
-                  </Badge>
+            <div className="relative shrink-0 z-20">
+              <div className="w-36 h-36 sm:w-52 sm:h-52 rounded-[2rem] sm:rounded-[3rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group/avatar">
+                 {displayAvatar ? (
+                   <Image src={displayAvatar} alt={profile.username} fill className="object-cover transition-transform duration-1000 group-hover/avatar:scale-110" />
+                 ) : (
+                   <User className="w-20 h-20 text-primary/20" />
+                 )}
+                 {isOwnProfile && (
+                   <Link href="/profile/edit" className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 transition-all flex flex-col items-center justify-center text-white">
+                     <Camera className="w-10 h-10" />
+                     <span className="text-[10px] font-bold uppercase mt-2">Refine</span>
+                   </Link>
+                 )}
+              </div>
+              {isGrandArchivist && (
+                <div className="absolute -bottom-3 -right-3 bg-primary text-white p-3 rounded-2xl shadow-2xl ring-4 ring-white">
+                  <Trophy className="w-6 h-6" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 space-y-8 text-center md:text-left w-full relative z-20">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                  <h1 className="font-headline text-4xl sm:text-6xl font-bold tracking-tight">{profile.username}</h1>
+                  {isGrandArchivist && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-5 py-1.5 text-[10px] uppercase font-bold">
+                      Grand Archivist
+                    </Badge>
+                  )}
+                </div>
+                
+                {profile.status && (
+                  <div className="inline-flex items-center gap-2 bg-primary/5 text-primary px-5 py-2 rounded-full text-sm font-bold border border-primary/10 backdrop-blur-sm">
+                     <Sparkles className="w-4 h-4" />
+                     {profile.status}
+                  </div>
                 )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-4 w-full">
+                  {[
+                    { label: "Chronicles Read", arabic: "القصص المقروءة", value: readingProgress?.length || 0, icon: BookOpen },
+                    { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: profile.publishedCount ? profile.publishedCount * 3 : 0, icon: MessageSquare },
+                    { label: "Sanctuary Likes", arabic: "الإعجابات", value: profile.totalLikes || 0, icon: Heart }
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-primary/10 backdrop-blur-md rounded-[1.5rem] p-5 border border-primary/20 flex items-center md:items-start justify-between md:flex-col gap-2 shadow-sm transition-all hover:scale-[1.02] hover:bg-primary/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
+                           <stat.icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col">
+                          <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-white/70 leading-tight">{stat.label}</p>
+                          <p className="font-arabic text-[10px] text-white font-bold">{stat.arabic}</p>
+                        </div>
+                      </div>
+                      <span className="text-3xl sm:text-4xl font-headline font-bold text-white drop-shadow-md">{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="relative group/bio min-h-[60px] space-y-4 py-4">
+                  {isEditingBio ? (
+                    <div className="space-y-4 animate-fade-in w-full max-w-2xl">
+                      <Textarea 
+                        value={localBio}
+                        onChange={(e) => setLocalBio(e.target.value)}
+                        placeholder="Tell the sanctuary about your spirit..."
+                        className="bg-white border-primary/10 min-h-[160px] rounded-3xl italic leading-relaxed text-lg p-6 focus-visible:ring-primary/20 shadow-inner"
+                      />
+                      <div className="flex justify-center md:justify-start gap-3">
+                        <Button size="lg" onClick={handleSaveBio} disabled={isSavingBio} className="rounded-full bg-primary h-14 px-10 text-sm uppercase font-bold">
+                          {isSavingBio ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+                          Save
+                        </Button>
+                        <Button size="lg" variant="ghost" onClick={() => { setLocalBio(profile.bio || ""); setIsEditingBio(false); }} className="rounded-full h-14 px-8 text-sm font-bold text-muted-foreground">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                      <div className="flex-1 max-w-2xl">
+                        {localBio ? (
+                          <p className="text-muted-foreground italic text-lg sm:text-xl leading-loose text-center md:text-left">
+                            <Quote className="inline-block w-6 h-6 mr-3 opacity-20 align-top" />
+                            {localBio}
+                          </p>
+                        ) : isOwnProfile ? (
+                          <button onClick={() => setIsEditingBio(true)} className="text-muted-foreground/50 italic text-lg hover:text-primary transition-colors flex items-center gap-3 py-6 border-2 border-dashed border-primary/10 w-full justify-center rounded-3xl">
+                            <Edit3 className="w-6 h-6" /> Write your spirit's manifesto...
+                          </button>
+                        ) : null}
+                      </div>
+                      {isOwnProfile && localBio && (
+                        <Button variant="ghost" size="icon" onClick={() => setIsEditingBio(true)} className="h-12 w-12 rounded-full text-primary/40 hover:text-primary hover:bg-primary/5 shrink-0">
+                          <Edit3 className="w-5 h-5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
-              {profile.status && (
-                <div className="inline-flex items-center gap-2 bg-primary/5 text-primary px-5 py-2 rounded-full text-sm font-bold border border-primary/10 backdrop-blur-sm">
-                   <Sparkles className="w-4 h-4" />
-                   {profile.status}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-4 w-full">
-                {[
-                  { label: "Chronicles Read", arabic: "القصص المقروءة", value: readingProgress?.length || 0, icon: BookOpen },
-                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: profile.publishedCount ? profile.publishedCount * 3 : 0, icon: MessageSquare },
-                  { label: "Sanctuary Likes", arabic: "الإعجابات", value: profile.totalLikes || 0, icon: Heart }
-                ].map((stat, i) => (
-                  <div key={i} className="bg-primary/10 backdrop-blur-md rounded-[1.5rem] p-5 border border-primary/20 flex items-center md:items-start justify-between md:flex-col gap-2 shadow-sm transition-all hover:scale-[1.02] hover:bg-primary/20">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
-                         <stat.icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-white/70 leading-tight">{stat.label}</p>
-                        <p className="font-arabic text-[10px] text-white font-bold">{stat.arabic}</p>
-                      </div>
-                    </div>
-                    <span className="text-3xl sm:text-4xl font-headline font-bold text-white drop-shadow-md">{stat.value}</span>
+              <div className="flex items-center justify-center md:justify-start gap-12 pt-4">
+                <div className="text-center md:text-left">
+                  <div className="flex items-center gap-2 justify-center md:justify-start text-3xl font-bold text-foreground">
+                    <Eye className="w-5 h-5 text-primary" />
+                    {profile.totalViews || 0}
                   </div>
-                ))}
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Views</p>
+                </div>
+                <div className="text-center md:text-left">
+                  <div className="flex items-center gap-2 justify-center md:justify-start text-3xl font-bold text-foreground">
+                    <Users className="w-5 h-5 text-primary" />
+                    {profile.followerCount || 0}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Followers</p>
+                </div>
               </div>
 
-              <div className="relative group/bio min-h-[60px] space-y-4 py-4">
-                {isEditingBio ? (
-                  <div className="space-y-4 animate-fade-in w-full max-w-2xl">
-                    <Textarea 
-                      value={localBio}
-                      onChange={(e) => setLocalBio(e.target.value)}
-                      placeholder="Tell the sanctuary about your spirit..."
-                      className="bg-white border-primary/10 min-h-[160px] rounded-3xl italic leading-relaxed text-lg p-6 focus-visible:ring-primary/20 shadow-inner"
-                    />
-                    <div className="flex justify-center md:justify-start gap-3">
-                      <Button size="lg" onClick={handleSaveBio} disabled={isSavingBio} className="rounded-full bg-primary h-14 px-10 text-sm uppercase font-bold">
-                        {isSavingBio ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
-                        Save
-                      </Button>
-                      <Button size="lg" variant="ghost" onClick={() => { setLocalBio(profile.bio || ""); setIsEditingBio(false); }} className="rounded-full h-14 px-8 text-sm font-bold text-muted-foreground">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                    <div className="flex-1 max-w-2xl">
-                      {localBio ? (
-                        <p className="text-muted-foreground italic text-lg sm:text-xl leading-loose text-center md:text-left">
-                          <Quote className="inline-block w-6 h-6 mr-3 opacity-20 align-top" />
-                          {localBio}
-                        </p>
-                      ) : isOwnProfile ? (
-                        <button onClick={() => setIsEditingBio(true)} className="text-muted-foreground/50 italic text-lg hover:text-primary transition-colors flex items-center gap-3 py-6 border-2 border-dashed border-primary/10 w-full justify-center rounded-3xl">
-                          <Edit3 className="w-6 h-6" /> Write your spirit's manifesto...
-                        </button>
-                      ) : null}
-                    </div>
-                    {isOwnProfile && localBio && (
-                      <Button variant="ghost" size="icon" onClick={() => setIsEditingBio(true)} className="h-12 w-12 rounded-full text-primary/40 hover:text-primary hover:bg-primary/5 shrink-0">
-                        <Edit3 className="w-5 h-5" />
-                      </Button>
+              <div className="flex flex-wrap gap-4 pt-8 justify-center md:justify-start">
+                {!isOwnProfile && (
+                  <Button 
+                    size="lg" 
+                    onClick={handleFollow}
+                    disabled={isFollowingLoading}
+                    className={cn(
+                      "rounded-full px-12 h-16 font-headline text-xl shadow-2xl transition-all w-full sm:w-auto",
+                      followStatus ? "bg-secondary text-secondary-foreground" : "bg-primary text-white shadow-primary/20"
                     )}
+                  >
+                    {isFollowingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : followStatus ? "Unfollow" : "Follow Scribe"}
+                  </Button>
+                )}
+                {isOwnProfile && (
+                  <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                    <Link href="/profile/edit" className="w-full">
+                      <Button className="rounded-full px-12 h-16 bg-primary text-white hover:bg-primary/90 font-headline text-xl shadow-2xl shadow-primary/20 w-full">
+                        Refine Persona
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline"
+                      className="rounded-full px-10 h-16 border-primary/20 text-primary hover:bg-primary/5 font-headline text-xl w-full"
+                      onClick={() => router.push('/settings')}
+                    >
+                      <Settings className="w-6 h-6 mr-3" />
+                      Settings
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
-            
-            <div className="flex items-center justify-center md:justify-start gap-12 pt-4">
-              <div className="text-center md:text-left">
-                <div className="flex items-center gap-2 justify-center md:justify-start text-3xl font-bold text-foreground">
-                  <Eye className="w-5 h-5 text-primary" />
-                  {profile.totalViews || 0}
-                </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Views</p>
-              </div>
-              <div className="text-center md:text-left">
-                <div className="flex items-center gap-2 justify-center md:justify-start text-3xl font-bold text-foreground">
-                  <Users className="w-5 h-5 text-primary" />
-                  {profile.followerCount || 0}
-                </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Followers</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 pt-8 justify-center md:justify-start">
-              {!isOwnProfile && (
-                <Button 
-                  size="lg" 
-                  onClick={handleFollow}
-                  disabled={isFollowingLoading}
-                  className={cn(
-                    "rounded-full px-12 h-16 font-headline text-xl shadow-2xl transition-all w-full sm:w-auto",
-                    followStatus ? "bg-secondary text-secondary-foreground" : "bg-primary text-white shadow-primary/20"
-                  )}
-                >
-                  {isFollowingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : followStatus ? "Unfollow" : "Follow Scribe"}
-                </Button>
-              )}
-              {isOwnProfile && (
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                  <Link href="/profile/edit" className="w-full">
-                    <Button className="rounded-full px-12 h-16 bg-primary text-white hover:bg-primary/90 font-headline text-xl shadow-2xl shadow-primary/20 w-full">
-                      Refine Persona
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="outline"
-                    className="rounded-full px-10 h-16 border-primary/20 text-primary hover:bg-primary/5 font-headline text-xl w-full"
-                    onClick={() => router.push('/settings')}
-                  >
-                    <Settings className="w-6 h-6 mr-3" />
-                    Settings
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         <section className="space-y-10 px-2">
           <div className="flex items-center gap-4 border-b border-primary/5 pb-8">
@@ -439,7 +418,7 @@ export default function ProfilePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {ACHIEVEMENTS.map((def) => {
-              const isUnlocked = profile.achievements?.includes(def.id);
+              const isUnlocked = profile?.achievements?.includes(def.id);
               const currentVal = statsForAchievements[def.metric];
               const progress = Math.min(100, (currentVal / def.threshold) * 100);
               

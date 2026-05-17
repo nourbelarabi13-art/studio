@@ -47,6 +47,10 @@ export default function CommunityPage() {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
+  /**
+   * Use a fixed static date for INITIAL_MOCK_MESSAGES
+   * to ensure hydration consistency during static export.
+   */
   const INITIAL_MOCK_MESSAGES: Record<string, ChatMessage[]> = useMemo(() => ({
     'library-lounge': [
       { 
@@ -54,7 +58,7 @@ export default function CommunityPage() {
         senderId: 'system', 
         senderName: language === 'ar' ? 'أرشيف' : 'Archivist', 
         text: language === 'ar' ? 'مرحبًا بكم في القاعة. ما هي القصص التي تستكشفونها اليوم؟' : 'Welcome to the Lounge. What chronicles are you exploring today?', 
-        createdAt: new Date(Date.now() - 3600000).toISOString() 
+        createdAt: '2024-01-01T12:00:00.000Z' 
       },
     ]
   }), [language]);
@@ -286,7 +290,7 @@ export default function CommunityPage() {
                    >
                      <Camera className="w-6 h-6" />
                    </Button>
-                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                   <input type="file" fileInputRef={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                 </div>
               </div>
               <Button 
