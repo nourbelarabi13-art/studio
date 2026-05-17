@@ -1,11 +1,11 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  // Enable static export for Netlify manifestation
+  // Enable static export for flawless Netlify manifestation
   output: 'export',
-  // Ensure paths end with / for consistent static routing
+  // Ensure paths end with / for consistent static routing and SEO
   trailingSlash: true,
-  // Optimization: Skip heavy checks for faster static builds
+  // Optimization: Skip heavy checks for faster static production builds
   typescript: {
     ignoreBuildErrors: true,
   },
