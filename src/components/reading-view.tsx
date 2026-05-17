@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +24,6 @@ import {
   Sparkles,
   Maximize2,
   Minimize2,
-  AlignLeft,
   Moon,
   Sun,
   Clock,
@@ -298,9 +299,24 @@ export default function ReadingView({ id }: { id: string }) {
         </Button>
       )}
 
+      {/* Cover Image Hero Section */}
+      {!isFocusMode && novel?.coverImage && (
+        <div className="relative w-full h-[40vh] sm:h-[60vh] overflow-hidden">
+          <Image 
+            src={novel.coverImage} 
+            alt={novel.title} 
+            fill 
+            className="object-cover opacity-80" 
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-inherit to-transparent" />
+        </div>
+      )}
+
       <main className={cn(
         "container mx-auto px-6 sm:px-8 max-w-3xl space-y-16 animate-fade-in transition-all duration-700 relative z-10",
-        isFocusMode ? "py-24 sm:py-32" : "py-16 sm:py-24"
+        isFocusMode ? "py-24 sm:py-32" : (novel?.coverImage ? "py-10" : "py-16 sm:py-24")
       )}>
         <header className="space-y-8 text-center border-b border-primary/10 pb-16">
           <div className="flex justify-center flex-wrap gap-2 mb-4">

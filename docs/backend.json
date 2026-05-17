@@ -67,19 +67,6 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "userName", "text", "createdAt"]
-    },
-    "SideNote": {
-      "title": "Side Note",
-      "description": "A private scribe whisper within a chronicle.",
-      "type": "object",
-      "properties": {
-        "novelId": { "type": "string" },
-        "chapterId": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["novelId", "content", "createdAt"]
     }
   },
   "auth": {
@@ -94,9 +81,9 @@
       "schema": "Novel",
       "description": "Chronicle content."
     },
-    "/novels/{novelId}/notes/{noteId}": {
-      "schema": "SideNote",
-      "description": "Private scribe whispers."
+    "/novels/{novelId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Public whispers on a chronicle."
     }
   }
 }

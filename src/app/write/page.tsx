@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useCallback, useTransition, useDeferredValue, useEffect } from "react";
@@ -16,7 +17,7 @@ import { createNotification } from "@/firebase/firestore/notification-actions";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Layout, Globe, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Layout, Globe, Sparkles, ChevronLeft } from "lucide-react";
 
 // Sub-components
 import { EditorCore } from "@/components/write/editor-core";
@@ -47,6 +48,7 @@ export default function WritePage() {
   const [writingLanguage, setWritingLanguage] = useState<AppLanguage>(appLanguage);
   const [writingCountry, setWritingCountry] = useState<string>("Morocco");
   const [selectedGenres, setSelectedGenres] = useState<Genre[]>([]);
+  const [coverImage, setCoverImage] = useState<string>(defaultWritingImage);
   
   // Chapter State
   const [chapters, setChapters] = useState<Chapter[]>([
@@ -128,7 +130,7 @@ export default function WritePage() {
       authorId: user.uid,
       authorUsername: profile?.username || "Dreamer",
       genres: selectedGenres,
-      coverImage: defaultWritingImage,
+      coverImage: coverImage,
       isDraft: true,
       updatedAt: new Date().toISOString(),
       language: writingLanguage,
@@ -160,7 +162,7 @@ export default function WritePage() {
     } finally {
       if (!isAuto) setIsSaving(false);
     }
-  }, [user, db, novelId, title, chapters, selectedGenres, writingLanguage, writingCountry, profile, defaultWritingImage]);
+  }, [user, db, novelId, title, chapters, selectedGenres, writingLanguage, writingCountry, profile, coverImage]);
 
   // Periodic autosave every 30 seconds if changed
   useEffect(() => {
@@ -189,6 +191,7 @@ export default function WritePage() {
         publishedAt: new Date().toISOString(),
         language: writingLanguage,
         country: writingCountry,
+        coverImage: coverImage,
       };
 
       if (novelId) {
@@ -199,7 +202,6 @@ export default function WritePage() {
           createdAt: new Date().toISOString(),
           views: 0,
           likes: 0,
-          coverImage: defaultWritingImage,
         });
         setNovelId(ref.id);
       }
@@ -207,19 +209,6 @@ export default function WritePage() {
       await updateDoc(doc(db, "users", user.uid), { publishedCount: increment(1) });
       checkAchievements(db, user.uid);
       
-      // Notify followers
-      const followersQuery = query(collection(db, "follows"), where("followingId", "==", user.uid));
-      const followersSnap = await getDocs(followersQuery);
-      followersSnap.forEach(followerDoc => {
-        createNotification(db, followerDoc.data().followerId, {
-          type: 'story',
-          message: `${profile?.username} published a new chronicle: "${title || "Untitled"}"`,
-          fromUserId: user.uid,
-          fromUserName: profile?.username,
-          targetId: novelId || ""
-        });
-      });
-
       toast({ title: "Manifested", description: "Your story is now part of the global Archive." });
       router.push("/vault");
     } catch (error) { 
@@ -338,6 +327,8 @@ export default function WritePage() {
                 onGenreToggle={toggleGenre}
                 country={writingCountry}
                 setCountry={setWritingCountry}
+                coverImage={coverImage}
+                setCoverImage={setCoverImage}
               />
             )}
           </aside>
