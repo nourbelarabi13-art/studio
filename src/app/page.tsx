@@ -1,20 +1,47 @@
-
 'use client';
 
+import { useEffect } from 'react';
 import { StarryBackground } from "@/components/starry-background";
 import { MysticalQuoteGenerator } from "@/components/mystical-quote-generator";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { ProfileSection } from "@/components/profile-section";
 import { AmbientPlayer } from "@/components/ambient-player";
-import { BookOpen, Sparkles, Globe, Zap, ArrowRight } from "lucide-react";
+import { BookOpen, Sparkles, Globe, Zap, ArrowRight, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { useLanguage } from "@/lib/i18n/context";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useFirestore, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
+import { incrementGlobalViews } from "@/firebase/firestore/stats-actions";
 
 export default function Home() {
   const { t, language } = useLanguage();
+  const db = useFirestore();
+
+  // Increment view count on load
+  useEffect(() => {
+    if (db) {
+      incrementGlobalViews(db);
+    }
+  }, [db]);
+
+  // Fetch live statistics
+  const statsRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return doc(db, "stats", "site");
+  }, [db]);
+
+  const { data: liveStats, loading: statsLoading } = useDoc<{ totalViews: number; totalScribes: number; totalChronicles: number }>(statsRef);
+
+  // Format large numbers (e.g., 1200 -> 1.2k)
+  const formatStat = (num: number | undefined, fallback: string) => {
+    if (num === undefined || num === null) return fallback;
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+    return num.toString();
+  };
 
   return (
     <div className="min-h-screen relative flex flex-col items-center selection:bg-primary/30">
@@ -81,12 +108,23 @@ export default function Home() {
               
               <div className="grid grid-cols-2 gap-6 relative z-10">
                 {[
-                  { label: t.stats.scribes, value: '2.4k', icon: Globe, color: 'text-primary' },
-                  { label: t.stats.chronicles, value: '8.9k', icon: Zap, color: 'text-accent' },
+                  { label: t.stats.scribes, value: formatStat(liveStats?.totalScribes, '2.4k'), icon: Globe, color: 'text-primary' },
+                  { label: t.stats.chronicles, value: formatStat(liveStats?.totalChronicles, '8.9k'), icon: Zap, color: 'text-accent' },
+                  { label: language === 'ar' ? 'المشاهدات' : 'Global Views', value: formatStat(liveStats?.totalViews, '...'), icon: Eye, color: 'text-primary', fullWidth: true },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-white/5 rounded-3xl p-6 border border-white/5 hover:border-primary/20 transition-all hover:-translate-y-1">
-                    <p className="text-3xl sm:text-4xl font-headline font-bold mb-1">{stat.value}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</p>
+                  <div key={stat.label} className={cn(
+                    "bg-white/5 rounded-3xl p-6 border border-white/5 hover:border-primary/20 transition-all hover:-translate-y-1",
+                    stat.fullWidth && "col-span-2"
+                  )}>
+                    <div className="flex items-center justify-between">
+                       <div>
+                         <p className="text-3xl sm:text-4xl font-headline font-bold mb-1">
+                           {statsLoading && stat.value === '...' ? <Loader2 className="w-6 h-6 animate-spin text-primary/40" /> : stat.value}
+                         </p>
+                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{stat.label}</p>
+                       </div>
+                       <stat.icon className={cn("w-8 h-8 opacity-20", stat.color)} />
+                    </div>
                   </div>
                 ))}
               </div>
