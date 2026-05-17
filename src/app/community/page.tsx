@@ -47,10 +47,6 @@ export default function CommunityPage() {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
-  /**
-   * Use a fixed static date for INITIAL_MOCK_MESSAGES
-   * to ensure hydration consistency during static export.
-   */
   const INITIAL_MOCK_MESSAGES: Record<string, ChatMessage[]> = useMemo(() => ({
     'library-lounge': [
       { 
