@@ -46,7 +46,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, updateDoc, query, collection, where, limit } from "firebase/firestore";
