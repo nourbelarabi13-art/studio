@@ -8,6 +8,7 @@ import { NovelCard } from "@/components/novel-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Loader2, 
   User, 
@@ -20,10 +21,14 @@ import {
   Trophy,
   AlertCircle,
   Sparkles,
-  Settings
+  Settings,
+  Edit3,
+  Save,
+  X,
+  Camera
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
-import { doc, collection, query, where, orderBy } from "firebase/firestore";
+import { doc, collection, query, where, orderBy, updateDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { UserProfile, Novel } from "@/lib/types";
 import { toggleFollow } from "@/firebase/firestore/social-actions";
@@ -39,9 +44,15 @@ export default function ProfilePage() {
   const db = useFirestore();
   const { user: currentUser } = useUser();
   const { toast } = useToast();
+  
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState<'latest' | 'popular'>('latest');
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  
+  // Inline Bio State
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [localBio, setLocalBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
 
   const profileRef = useMemoFirebase(() => {
     if (!db || !id || id === 'undefined' || id === 'null') return null;
@@ -51,10 +62,23 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (id) {
-      const stored = localStorage.getItem(`rosaline_avatar_${id}`);
-      if (stored) setLocalAvatar(stored);
+      // Load Avatar from localStorage
+      const storedAvatar = localStorage.getItem(`rosaline_avatar_${id}`);
+      if (storedAvatar) setLocalAvatar(storedAvatar);
+      
+      // Load Bio from localStorage
+      const storedBio = localStorage.getItem(`rosaline_bio_${id}`);
+      if (storedBio) setLocalBio(storedBio);
     }
   }, [id]);
+
+  // Sync state with profile data when it arrives
+  useEffect(() => {
+    if (profile) {
+      const storedBio = localStorage.getItem(`rosaline_bio_${profile.uid}`);
+      setLocalBio(storedBio || profile.bio || "");
+    }
+  }, [profile]);
 
   const followRef = useMemoFirebase(() => {
     if (!db || !currentUser || !id || id === 'undefined' || id === 'null') return null;
@@ -94,6 +118,36 @@ export default function ProfilePage() {
       title: followed ? "Followed" : "Unfollowed",
       description: followed ? `You are now following ${profile?.username}.` : `You have stopped following ${profile?.username}.`,
     });
+  };
+
+  const handleSaveBio = async () => {
+    if (!db || !id || !profile) return;
+    setIsSavingBio(true);
+
+    try {
+      // 1. Save to local storage instantly
+      localStorage.setItem(`rosaline_bio_${profile.uid}`, localBio);
+
+      // 2. Persist to Firestore Archive
+      await updateDoc(doc(db, "users", profile.uid), {
+        bio: localBio,
+        updatedAt: new Date().toISOString()
+      });
+
+      toast({
+        title: "Manifesto Updated",
+        description: "Your new bio has been woven into your persona scroll.",
+      });
+      setIsEditingBio(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Ritual Interrupted",
+        description: "The Archive could not record your new bio.",
+      });
+    } finally {
+      setIsSavingBio(false);
+    }
   };
 
   if (id === 'undefined' || id === 'null') {
@@ -137,7 +191,6 @@ export default function ProfilePage() {
     maxViews: novels?.reduce((max, n) => Math.max(max, n.views || 0), 0) || 0
   };
 
-  // Prioritize local storage if viewing own profile or if cached
   const displayAvatar = (isOwnProfile && localAvatar) ? localAvatar : (profile.avatar || localAvatar);
 
   return (
@@ -171,8 +224,8 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex-1 space-y-6 text-center md:text-left">
-            <div className="space-y-3">
+          <div className="flex-1 space-y-6 text-center md:text-left w-full">
+            <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <h1 className="font-headline text-5xl font-bold">{profile.username}</h1>
                 {isGrandArchivist && (
@@ -189,12 +242,72 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {profile.bio && (
-                <p className="text-muted-foreground italic text-lg leading-relaxed max-w-2xl">
-                  <Quote className="inline-block w-4 h-4 mr-2 opacity-20" />
-                  {profile.bio}
-                </p>
-              )}
+              {/* Editable Bio Section */}
+              <div className="relative group/bio min-h-[60px] space-y-2">
+                {isEditingBio ? (
+                  <div className="space-y-3 animate-fade-in">
+                    <Textarea 
+                      value={localBio}
+                      onChange={(e) => setLocalBio(e.target.value)}
+                      placeholder="Tell the sanctuary about your spirit..."
+                      className="bg-primary/5 border-primary/10 min-h-[120px] rounded-2xl italic leading-relaxed text-lg focus-visible:ring-primary/20"
+                    />
+                    <div className="flex justify-center md:justify-start gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveBio} 
+                        disabled={isSavingBio}
+                        className="rounded-full bg-primary hover:bg-primary/90 gap-2 h-9 px-6 text-[10px] uppercase font-bold tracking-widest"
+                      >
+                        {isSavingBio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                        Save
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => {
+                          setLocalBio(profile.bio || "");
+                          setIsEditingBio(false);
+                        }}
+                        className="rounded-full gap-2 h-9 px-6 text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:bg-primary/5"
+                      >
+                        <X className="w-3 h-3" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {localBio ? (
+                      <div className="group/text flex flex-col md:flex-row items-start gap-4">
+                        <p className="text-muted-foreground italic text-lg leading-relaxed max-w-2xl flex-1">
+                          <Quote className="inline-block w-4 h-4 mr-2 opacity-20" />
+                          {localBio}
+                        </p>
+                        {isOwnProfile && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setIsEditingBio(true)}
+                            className="rounded-full h-8 w-8 text-primary/40 hover:text-primary hover:bg-primary/5 opacity-0 group-hover/bio:opacity-100 transition-opacity"
+                            title="Refine Manifesto"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : isOwnProfile ? (
+                      <button 
+                        onClick={() => setIsEditingBio(true)}
+                        className="text-muted-foreground/60 italic text-sm hover:text-primary transition-colors flex items-center gap-2 py-4"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        Write your spirit's manifesto...
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-10">
