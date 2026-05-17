@@ -17,7 +17,9 @@ import {
   Bell,
   Globe,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Moon,
+  Sun
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,7 @@ import { doc, collection, query, where } from "firebase/firestore";
 import { UserProfile, Notification, AppLanguage } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/context";
 import { AmbientPlayer } from "@/components/ambient-player";
+import { useCelestialTheme } from "@/lib/theme-context";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -46,6 +49,7 @@ export function Navbar() {
   const auth = useAuth();
   const db = useFirestore();
   const { t, language, setLanguage } = useLanguage();
+  const { theme, toggleTheme } = useCelestialTheme();
   
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -91,7 +95,7 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10 transition-colors duration-700">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
@@ -119,6 +123,26 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Celestial Night Mode Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full relative"
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Summon Celestial Night' : 'Return to Day'}
+          >
+            <div className="transition-all duration-500">
+              {theme === 'light' ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5 text-yellow-200" />
+              )}
+            </div>
+            {theme === 'celestial' && (
+               <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
+            )}
+          </Button>
+
           {/* Ambient Music Player */}
           <AmbientPlayer />
 
