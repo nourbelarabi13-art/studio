@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,7 +26,7 @@ export function PhotoGallery() {
   if (!img1 || !img2) return null;
 
   return (
-    <section className="w-full bg-[#0f0c13] overflow-hidden">
+    <section className="w-full bg-[#1a0f21] overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 w-full h-[300px] md:h-[450px]">
         {/* Slot 1 */}
         <div className="relative h-full w-full overflow-hidden border-r border-white/5 group">
@@ -49,8 +48,8 @@ export function PhotoGallery() {
           </div>
         </div>
       </div>
-      {/* Soft shadow transition to the rest of the page */}
-      <div className="h-12 w-full bg-gradient-to-b from-[#0f0c13] to-background" />
+      {/* Soft shadow transition to the rest of the page using the midnight plum hue */}
+      <div className="h-12 w-full bg-gradient-to-b from-[#1a0f21] to-background" />
     </section>
   );
 }
