@@ -3,6 +3,7 @@
   publish = "out"
   command = "npm run build"
 
+# قواعد إعادة التوجيه لضمان عمل المسارات الديناميكية (مثل صفحات القراءة) في المواقع الثابتة
 [[redirects]]
   from = "/*"
   to = "/index.html"
