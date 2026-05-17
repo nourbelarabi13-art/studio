@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://rosaline-bela.netlify.app/</loc>
-    <lastmod>2024-03-27</lastmod>
-  </url>
-  <url>
-    <loc>https://rosaline-bela.netlify.app/vault/</loc>
-    <lastmod>2024-03-27</lastmod>
-  </url>
-  <url>
-    <loc>https://rosaline-bela.netlify.app/community/</loc>
-    <lastmod>2024-03-27</lastmod>
-  </url>
+  <url><loc>https://rosaline-bela.netlify.app/</loc></url>
+  <url><loc>https://rosaline-bela.netlify.app/vault/</loc></url>
+  <url><loc>https://rosaline-bela.netlify.app/community/</loc></url>
+  <url><loc>https://rosaline-bela.netlify.app/library/</loc></url>
 </urlset>
