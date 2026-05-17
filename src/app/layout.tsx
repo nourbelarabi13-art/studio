@@ -8,9 +8,13 @@ import { CelestialThemeProvider } from "@/lib/theme-context";
 import { StarryNightEffect } from "@/components/starry-night-effect";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://rosaline-bela.netlify.app'),
   title: 'Rosaline Bela | A Dreamy Sanctuary for Readers & Writers',
   description: 'An elegant and comfortable space for crafting and discovering soft fantasy chronicles. Join the global archive of soft fantasy scribes.',
-  keywords: ['storytelling', 'fantasy', 'writing app', 'bilingual', 'arabic literature', 'creative writing'],
+  keywords: ['storytelling', 'fantasy', 'writing app', 'bilingual', 'arabic literature', 'creative writing', 'Rosaline Bela'],
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'Rosaline Bela Sanctuary',
     description: 'A midnight sanctuary where shadows turn to ink and every whisper becomes a myth.',
