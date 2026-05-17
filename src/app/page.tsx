@@ -4,31 +4,18 @@
 import { StarryBackground } from "@/components/starry-background";
 import { QuotesWidget } from "@/components/quotes-widget";
 import { ProfileSection } from "@/components/profile-section";
-import { BookOpen, Sparkles, Send, Globe, Zap } from "lucide-react";
+import { BookOpen, Sparkles, Globe, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/navbar";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function Home() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen relative flex flex-col items-center">
       <StarryBackground />
-      
-      {/* Navigation Ritual */}
-      <nav className="w-full h-20 flex items-center justify-between px-8 sm:px-12 border-b border-white/5 bg-background/40 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-2 group cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <BookOpen className="w-4 h-4 text-primary" />
-          </div>
-          <span className="font-headline text-xl font-bold tracking-tight text-primary">Rosaline Bela</span>
-        </div>
-        <div className="hidden sm:flex items-center gap-8">
-          {['Archive', 'Vault', 'Community'].map((item) => (
-            <button key={item} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-              {item}
-            </button>
-          ))}
-          <Button size="sm" className="rounded-full bg-primary hover:bg-primary/90 text-background font-bold px-6">Sign In</Button>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="container mx-auto px-6 py-12 sm:py-20 space-y-12 sm:space-y-20 relative z-10 max-w-5xl">
         
@@ -36,20 +23,20 @@ export default function Home() {
         <section className="text-center space-y-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-primary/20">
             <Sparkles className="w-3 h-3" />
-            Celestial Sanctuary Open
+            {t.hero.welcome}
           </div>
           <h1 className="font-headline text-5xl sm:text-7xl md:text-8xl font-bold leading-tight tracking-tight text-balance">
-            Forge Your <span className="text-primary italic">Eternal</span> Chronicle
+            {t.hero.title} <span className="text-primary italic">{t.hero.titleAccent}</span> Chronicle
           </h1>
           <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto italic font-light leading-relaxed">
-            A midnight sanctuary where shadows turn to ink and every whisper becomes a myth. Join the global archive of soft fantasy scribes.
+            {t.hero.subtitle}
           </p>
           <div className="flex flex-wrap justify-center gap-6 pt-4">
             <Button size="lg" className="rounded-full px-10 h-14 bg-primary text-background font-headline text-lg hover:scale-105 transition-transform shadow-xl shadow-primary/20">
-              Begin Drafting
+              {t.hero.start}
             </Button>
             <Button size="lg" variant="outline" className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg hover:scale-105 transition-transform">
-              Explore Library
+              {t.hero.explore}
             </Button>
           </div>
         </section>
@@ -60,12 +47,12 @@ export default function Home() {
             <QuotesWidget />
             <div className="glass-morphism rounded-3xl p-6 space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                <Globe className="w-3 h-3" /> Sanctuary Stats
+                <Globe className="w-3 h-3" /> {t.stats.title}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'Scribes', value: '1.2k', icon: Globe },
-                  { label: 'Chronicles', value: '4.8k', icon: Zap },
+                  { label: t.stats.scribes, value: '1.2k', icon: Globe },
+                  { label: t.stats.chronicles, value: '4.8k', icon: Zap },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-white/5 rounded-2xl p-4 border border-white/5">
                     <p className="text-2xl font-bold">{stat.value}</p>
@@ -80,13 +67,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Featured Segment (Placeholder) */}
+        {/* Featured Segment */}
         <section className="space-y-8">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
              <h2 className="font-headline text-2xl font-bold flex items-center gap-3">
-               <Zap className="w-5 h-5 text-primary" /> Emerging Whispers
+               <Zap className="w-5 h-5 text-primary" /> {t.whispers.title}
              </h2>
-             <button className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">View Global Archive</button>
+             <button className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+               {t.whispers.viewAll}
+             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (

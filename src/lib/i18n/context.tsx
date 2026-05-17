@@ -1,92 +1,51 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { AppLanguage, UserProfile } from '@/lib/types';
 import { translations } from './translations';
-import { useUser, useDoc, useFirestore } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { useMemoFirebase } from '@/firebase/firestore/use-memo-firebase';
+
+type Language = 'en' | 'ar';
 
 interface LanguageContextProps {
-  language: AppLanguage;
-  setLanguage: (lang: AppLanguage) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
   t: any;
-  dir: 'rtl' | 'ltr';
 }
 
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<AppLanguage>('en');
-  const { user } = useUser();
-  const db = useFirestore();
-
-  // Sync with Firestore profile if logged in
-  const profileRef = useMemoFirebase(() => {
-    if (!user || !db) return null;
-    return doc(db, "users", user.uid);
-  }, [user, db]);
-
-  const { data: profile } = useDoc<UserProfile>(profileRef);
+  const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
-    // 1. Check localStorage first
-    const savedLang = localStorage.getItem('rosaline-language') as AppLanguage;
-    if (savedLang && ['en', 'ar', 'fr'].includes(savedLang)) {
-      setLanguage(savedLang);
-    } 
-    // 2. Fallback to browser lang on first visit
-    else if (typeof navigator !== 'undefined') {
-      const browserLang = navigator.language.split('-')[0] as AppLanguage;
-      if (['en', 'ar', 'fr'].includes(browserLang)) {
-        setLanguage(browserLang);
-      }
+    const saved = localStorage.getItem('rosaline-lang') as Language;
+    if (saved && (saved === 'en' || saved === 'ar')) {
+      setLanguage(saved);
     }
   }, []);
 
-  // 3. Sync with profile preference if it differs from current state
   useEffect(() => {
-    if (profile?.language && profile.language !== language) {
-      setLanguage(profile.language);
-      localStorage.setItem('rosaline-language', profile.language);
-    }
-  }, [profile?.language]);
-
-  // Update global HTML attributes for RTL/LTR
-  useEffect(() => {
-    const dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.dir = dir;
-    document.documentElement.lang = language;
+    const root = document.documentElement;
+    root.dir = language === 'ar' ? 'rtl' : 'ltr';
+    root.lang = language;
     
-    // Apply font-arabic to body if needed
     if (language === 'ar') {
-      document.body.classList.add('font-arabic');
+      root.classList.add('font-arabic');
     } else {
-      document.body.classList.remove('font-arabic');
+      root.classList.remove('font-arabic');
     }
+    
+    localStorage.setItem('rosaline-lang', language);
   }, [language]);
 
-  const handleSetLanguage = async (lang: AppLanguage) => {
+  const toggleLanguage = (lang: Language) => {
     setLanguage(lang);
-    localStorage.setItem('rosaline-language', lang);
-    
-    // Sync to Firestore if user is logged in
-    if (user && db) {
-      try {
-        await updateDoc(doc(db, "users", user.uid), {
-          language: lang
-        });
-      } catch (error) {
-        // Silent error, local state is still updated
-      }
-    }
   };
 
-  const t = useMemo(() => translations[language] || translations.en, [language]);
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
+  const t = useMemo(() => translations[language], [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t, dir }}>
+    <LanguageContext.Provider value={{ language, setLanguage: toggleLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
