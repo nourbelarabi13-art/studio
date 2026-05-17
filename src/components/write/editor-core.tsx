@@ -29,7 +29,7 @@ export const EditorCore = React.memo(function EditorCore({
 }: EditorCoreProps) {
   // We keep local content for the textarea to ensure zero typing lag
   const [localContent, setLocalContent] = useState(content);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync when active chapter changes
   useEffect(() => {
@@ -41,7 +41,10 @@ export const EditorCore = React.memo(function EditorCore({
     setLocalContent(val);
 
     // Debounce the heavy lifting to parent state
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
     debounceTimer.current = setTimeout(() => {
       onContentChange(val);
     }, 1500); 
