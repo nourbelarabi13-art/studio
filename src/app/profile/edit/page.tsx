@@ -8,12 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useUser, useFirestore, useDoc } from "@/firebase";
-import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { UserProfile } from "@/lib/types";
 import { Loader2, User, Camera, Save, ArrowLeft, Sparkles, Quote, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 export default function EditProfilePage() {
@@ -123,7 +122,6 @@ export default function EditProfilePage() {
     );
   }
 
-  // If auth finished and no user, the useEffect will redirect.
   if (!user) {
     return null;
   }
@@ -150,7 +148,7 @@ export default function EditProfilePage() {
             </CardHeader>
             <CardContent className="p-8 sm:p-12 flex flex-col items-center gap-10">
               <div className="relative group">
-                <div className="w-44 h-44 sm:w-56 sm:h-52 rounded-[2.5rem] sm:rounded-[3.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group">
+                <div className="w-44 h-44 sm:w-56 sm:h-52 rounded-[2.5rem] sm:rounded-[3.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden">
                   {avatar ? (
                     <Image src={avatar} alt="Preview" fill className="object-cover transition-transform group-hover:scale-110 duration-1000" />
                   ) : (
@@ -159,7 +157,7 @@ export default function EditProfilePage() {
                   
                   <div 
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 bg-primary/20 backdrop-blur-[3px] opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center cursor-pointer"
+                    className="absolute inset-0 bg-primary/20 backdrop-blur-[3px] opacity-0 hover:opacity-100 transition-all flex flex-col items-center justify-center cursor-pointer"
                   >
                     <Camera className="w-12 h-12 text-white drop-shadow-2xl" />
                     <span className="text-[11px] font-bold uppercase tracking-widest text-white mt-3">Change Image</span>

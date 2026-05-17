@@ -562,65 +562,6 @@ export default function ReadingPage() {
           </div>
         </article>
 
-        {/* Chapter Completion Milestone Bar */}
-        <div className="py-20 space-y-12 relative z-10">
-          <div className="space-y-4 max-w-xl mx-auto">
-             <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                <span>Progress manifested</span>
-                <span>{Math.round(scrollProgress)}%</span>
-             </div>
-             <div className="w-full h-2 bg-primary/10 rounded-full overflow-hidden shadow-inner">
-               <div 
-                 className="h-full bg-primary transition-all duration-700 ease-out relative" 
-                 style={{ width: `${scrollProgress}%` }}
-               >
-                 <div className="absolute inset-0 bg-white/20 animate-pulse" />
-               </div>
-             </div>
-          </div>
-
-          <div className={cn(
-            "transition-all duration-1000 flex flex-col items-center gap-10",
-            isChapterCompleted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
-          )}>
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
-              <Badge className="relative bg-primary text-white border-none px-10 py-4 rounded-full font-headline text-xl sm:text-2xl italic shadow-2xl flex items-center gap-4">
-                <CheckCircle2 className="w-7 h-7" />
-                Chapter Completed!
-              </Badge>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full">
-              <Button 
-                variant="outline" 
-                className="rounded-full px-8 h-16 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg group transition-all flex-1 sm:flex-none max-w-[280px]"
-                disabled={currentChapterIndex === 0}
-                onClick={() => handleNavigateChapter(currentChapterIndex - 1)}
-              >
-                <span className="mr-3 transition-transform group-hover:-translate-x-1 text-2xl">⏮️</span>
-                Previous
-              </Button>
-              
-              {novel.chapters && currentChapterIndex < (novel.chapters.length - 1) && (
-                <Button 
-                  className="rounded-full px-8 h-16 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 font-headline text-lg group transition-all flex-1 sm:flex-none max-w-[280px]"
-                  onClick={() => handleNavigateChapter(currentChapterIndex + 1)}
-                >
-                  Next Chapter
-                  <span className="ml-3 transition-transform group-hover:translate-x-1 text-2xl">⏭️</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {novel.poll && novel.poll.active && (
-          <section className="pt-16 max-w-xl mx-auto relative z-10 px-4">
-            <EndingPoll novel={novel} />
-          </section>
-        )}
-
         <footer className="pt-24 border-t border-primary/10 space-y-24 relative z-10">
           <div className={cn(
             "rounded-[3rem] p-8 sm:p-12 text-center space-y-8 shadow-sm border",
@@ -641,23 +582,6 @@ export default function ReadingPage() {
               </Button>
             </div>
           </div>
-
-          {similarNovels && similarNovels.length > 1 && (
-            <section className="space-y-8">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-primary" />
-                <h3 className="font-headline text-2xl font-bold italic">Similar Chronicles</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-                {similarNovels
-                  .filter(n => n.id !== id)
-                  .slice(0, 4)
-                  .map(similarNovel => (
-                    <NovelCard key={similarNovel.id} novel={similarNovel} />
-                  ))}
-              </div>
-            </section>
-          )}
 
           <StoryComments novel={novel} />
         </footer>

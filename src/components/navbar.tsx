@@ -96,15 +96,10 @@ export function Navbar() {
     if (!auth) return;
     try {
       await signOut(auth);
-      toast({
-        title: "Goodbye for now",
-      });
+      toast({ title: "Goodbye for now" });
       router.push("/");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-      });
+      toast({ variant: "destructive", title: "Error" });
     }
   };
 
@@ -119,7 +114,6 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10 transition-colors duration-700">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Mobile Menu Trigger */}
         <div className="lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -152,15 +146,6 @@ export function Navbar() {
                   </Link>
                 ))}
               </div>
-              <div className="mt-auto pt-8 border-t border-primary/5">
-                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-4 mb-4">Sanctuary Settings</p>
-                 <div className="flex flex-col gap-2">
-                    <Button variant="ghost" onClick={toggleTheme} className="justify-start gap-4 h-14 rounded-2xl text-muted-foreground">
-                       {theme === 'celestial' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                       {theme === 'celestial' ? 'Manifest Light' : 'Celestial Night'}
-                    </Button>
-                 </div>
-              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -174,7 +159,6 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
             <Link
@@ -195,37 +179,6 @@ export function Navbar() {
           <div className="hidden sm:block">
             <AmbientPlayer />
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full h-10 w-10 sm:h-12 sm:w-12"
-              >
-                <Globe className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-card border-primary/10 rounded-2xl p-2 shadow-2xl">
-              <DropdownMenuLabel className="font-headline text-[10px] uppercase tracking-widest text-muted-foreground px-3 py-2">
-                {t.settings.language_title}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-primary/5" />
-              {languages.map((lang) => (
-                <DropdownMenuItem 
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code as AppLanguage)}
-                  className={cn(
-                    "gap-3 cursor-pointer rounded-xl transition-colors py-2.5",
-                    language === lang.code ? "bg-primary/5 text-primary font-bold" : "hover:bg-primary/5"
-                  )}
-                >
-                  <span className="text-lg">{lang.flag}</span>
-                  <span className="text-sm">{lang.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           {user && (
             <Link href="/notifications" className="relative">
