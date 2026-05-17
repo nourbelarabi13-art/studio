@@ -37,7 +37,7 @@ export default function EditProfilePage() {
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
-  // Ritual: Handle redirection in useEffect to avoid render-cycle errors
+  // Redirection ritual: ensure we only redirect after checking auth status in useEffect
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -50,7 +50,6 @@ export default function EditProfilePage() {
       setBio(profile.bio || "");
       setStatus(profile.status || "");
       
-      // Prioritize localStorage for instant local persistence
       const localAvatar = localStorage.getItem(`rosaline_avatar_${profile.uid}`);
       setAvatar(localAvatar || profile.avatar || null);
     }
@@ -60,7 +59,7 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 512) { // 512KB limit for base64 in Firestore
+    if (file.size > 1024 * 512) {
       toast({
         variant: "destructive",
         title: "Fragment Too Heavy",
@@ -73,7 +72,6 @@ export default function EditProfilePage() {
     reader.onloadend = () => {
       const base64 = reader.result as string;
       setAvatar(base64);
-      // Persist to local storage immediately for local responsiveness
       if (user) {
         localStorage.setItem(`rosaline_avatar_${user.uid}`, base64);
       }
@@ -95,7 +93,6 @@ export default function EditProfilePage() {
 
     updateDoc(doc(db, "users", user.uid), updates)
       .then(() => {
-        // Update local storage matches on successful save
         if (avatar) localStorage.setItem(`rosaline_avatar_${user.uid}`, avatar);
         if (bio) localStorage.setItem(`rosaline_bio_${user.uid}`, bio);
         
@@ -135,7 +132,6 @@ export default function EditProfilePage() {
         </div>
 
         <div className="space-y-8">
-          {/* Avatar Section */}
           <Card className="glass-morphism border-primary/10 rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-primary/5 py-8">
               <CardTitle className="font-headline flex items-center gap-2">
@@ -153,7 +149,6 @@ export default function EditProfilePage() {
                     <User className="w-20 h-20 text-primary/10" />
                   )}
                   
-                  {/* Camera Overlay */}
                   <div 
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center cursor-pointer"
@@ -178,14 +173,9 @@ export default function EditProfilePage() {
                   onChange={handleImageUpload} 
                 />
               </div>
-              <div className="text-center space-y-1">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Recommended: Square image under 512KB</p>
-                <p className="text-[9px] text-primary/60 italic">Your image manifests instantly in your local memory.</p>
-              </div>
             </CardContent>
           </Card>
 
-          {/* Details Section */}
           <Card className="glass-morphism border-primary/10 rounded-[2.5rem] overflow-hidden">
             <CardHeader className="bg-primary/5 border-b border-primary/5 py-8">
               <CardTitle className="font-headline flex items-center gap-2">
@@ -217,7 +207,6 @@ export default function EditProfilePage() {
                   placeholder="e.g., Dreaming of velvet shadows..."
                   maxLength={60}
                 />
-                <p className="text-[9px] text-muted-foreground italic">Short status shown in the community halls (max 60 chars).</p>
               </div>
 
               <div className="space-y-3">

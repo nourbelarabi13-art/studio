@@ -138,30 +138,8 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Celestial Night Mode Toggle */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full relative"
-            onClick={toggleTheme}
-            title={theme === 'light' ? 'Summon Celestial Night' : 'Return to Day'}
-          >
-            <div className="transition-all duration-500">
-              {theme === 'light' ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5 text-yellow-200" />
-              )}
-            </div>
-            {theme === 'celestial' && (
-               <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
-            )}
-          </Button>
-
-          {/* Ambient Music Player */}
           <AmbientPlayer />
 
-          {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -192,15 +170,6 @@ export function Navbar() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full"
-            onClick={() => router.push("/")}
-          >
-            <Search className="w-5 h-5" />
-          </Button>
 
           {user && (
             <Link href="/notifications" className="relative">
@@ -250,17 +219,23 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-primary/5" />
-                <DropdownMenuItem onClick={() => router.push(`/profile/${user.uid}`)} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
-                  <User className="w-4 h-4" />
-                  {t.nav.profile}
+                <DropdownMenuItem asChild>
+                  <Link href={`/profile/${user.uid}`} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary w-full flex items-center">
+                    <User className="w-4 h-4" />
+                    {t.nav.profile}
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/profile/edit')} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary font-bold">
-                  <Sparkles className="w-4 h-4" />
-                  Refine Persona
+                <DropdownMenuItem asChild>
+                  <Link href="/profile/edit" className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary font-bold w-full flex items-center">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Refine Persona
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/settings')} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary">
-                  <Settings className="w-4 h-4" />
-                  {t.nav.settings}
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary w-full flex items-center">
+                    <Settings className="w-4 h-4" />
+                    {t.nav.settings}
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-primary/5" />
                 <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer text-destructive rounded-xl py-2.5 hover:bg-destructive/5">

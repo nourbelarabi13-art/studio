@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 
 /**
  * A root profile component that guides travelers to their personal UID-based scroll.
+ * This ensures that links to just "/profile" are correctly resolved.
  */
 export default function ProfileRootRedirect() {
   const { user, loading } = useUser();
