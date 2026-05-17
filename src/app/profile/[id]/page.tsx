@@ -23,7 +23,6 @@ import {
   Settings,
   Edit3,
   Save,
-  X,
   Camera,
   Moon,
   PenTool,
@@ -89,22 +88,29 @@ export default function ProfilePage() {
   const [localBio, setLocalBio] = useState("");
   const [isSavingBio, setIsSavingBio] = useState(false);
 
+  // Robust check for ID
+  const validId = useMemo(() => {
+    if (!id || id === 'undefined' || id === 'null') return null;
+    return id as string;
+  }, [id]);
+
   const profileRef = useMemoFirebase(() => {
-    if (!db || !id || id === 'undefined' || id === 'null') return null;
-    return doc(db, "users", id as string);
-  }, [db, id]);
+    if (!db || !validId) return null;
+    return doc(db, "users", validId);
+  }, [db, validId]);
+  
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
   useEffect(() => {
-    if (id) {
-      const storedAvatar = localStorage.getItem(`rosaline_avatar_${id}`);
+    if (validId) {
+      const storedAvatar = localStorage.getItem(`rosaline_avatar_${validId}`);
       if (storedAvatar) setLocalAvatar(storedAvatar);
-      const storedBio = localStorage.getItem(`rosaline_bio_${id}`);
+      const storedBio = localStorage.getItem(`rosaline_bio_${validId}`);
       if (storedBio) setLocalBio(storedBio);
-      const storedBanner = localStorage.getItem(`rosaline_banner_${id}`);
+      const storedBanner = localStorage.getItem(`rosaline_banner_${validId}`);
       if (storedBanner) setLocalBanner(storedBanner);
     }
-  }, [id]);
+  }, [validId]);
 
   useEffect(() => {
     if (profile) {
@@ -114,26 +120,26 @@ export default function ProfilePage() {
   }, [profile]);
 
   const followRef = useMemoFirebase(() => {
-    if (!db || !currentUser || !id || id === 'undefined' || id === 'null') return null;
-    return doc(db, "follows", `${currentUser.uid}_${id}`);
-  }, [db, currentUser, id]);
+    if (!db || !currentUser || !validId) return null;
+    return doc(db, "follows", `${currentUser.uid}_${validId}`);
+  }, [db, currentUser, validId]);
   const { data: followStatus } = useDoc(followRef);
 
   const novelsQuery = useMemoFirebase(() => {
-    if (!db || !id || id === 'undefined' || id === 'null') return null;
+    if (!db || !validId) return null;
     return query(
       collection(db, "novels"),
-      where("authorId", "==", id),
+      where("authorId", "==", validId),
       where("isDraft", "==", false),
       orderBy(sortOrder === 'latest' ? "publishedAt" : "views", "desc")
     );
-  }, [db, id, sortOrder]);
+  }, [db, validId, sortOrder]);
   const { data: novels, loading: novelsLoading } = useCollection<Novel>(novelsQuery);
 
   const readingProgressQuery = useMemoFirebase(() => {
-    if (!db || !id || id === 'undefined' || id === 'null') return null;
-    return query(collection(db, "users", id as string, "progress"));
-  }, [db, id]);
+    if (!db || !validId) return null;
+    return query(collection(db, "users", validId, "progress"));
+  }, [db, validId]);
   const { data: readingProgress } = useCollection(readingProgressQuery);
 
   const handleFollow = async () => {
@@ -141,10 +147,10 @@ export default function ProfilePage() {
       toast({ title: "Identification Required", description: "Please sign in to follow this traveler.", variant: "destructive" });
       return;
     }
-    if (!db || !id) return;
+    if (!db || !validId) return;
 
     setIsFollowingLoading(true);
-    const followed = await toggleFollow(db, currentUser.uid, id as string);
+    const followed = await toggleFollow(db, currentUser.uid, validId);
     setIsFollowingLoading(false);
 
     toast({
@@ -154,7 +160,7 @@ export default function ProfilePage() {
   };
 
   const handleSaveBio = async () => {
-    if (!db || !id || !profile) return;
+    if (!db || !validId || !profile) return;
     setIsSavingBio(true);
 
     try {
@@ -186,18 +192,19 @@ export default function ProfilePage() {
     reader.onloadend = () => {
       const base64 = reader.result as string;
       setLocalBanner(base64);
-      if (id) localStorage.setItem(`rosaline_banner_${id}`, base64);
+      if (validId) localStorage.setItem(`rosaline_banner_${validId}`, base64);
       toast({ title: "Sanctuary Gilded" });
     };
     reader.readAsDataURL(file);
   };
 
-  if (id === 'undefined' || id === 'null') {
+  if (!validId) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6">
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6 dreamy-fantasy-gradient">
         <AlertCircle className="w-16 h-16 text-destructive opacity-40" />
         <h1 className="text-3xl font-headline font-bold">Invalid Identification</h1>
-        <Button onClick={() => router.push("/")} className="rounded-full px-8 h-14 text-lg">Return Home</Button>
+        <p className="text-muted-foreground italic">The traveler's path is obscured in the mists.</p>
+        <Button onClick={() => router.push("/")} className="rounded-full px-8 h-14 text-lg">Return to Archive</Button>
       </div>
     );
   }
@@ -215,10 +222,11 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6">
-        <Ghost className="w-16 h-16 text-muted-foreground opacity-30" />
-        <h1 className="text-3xl font-headline font-bold">Traveler Not Found</h1>
-        <Button onClick={() => router.push("/")} className="rounded-full px-8 h-14">Return to Home</Button>
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-6 dreamy-fantasy-gradient">
+        <Library className="w-16 h-16 text-muted-foreground opacity-30" />
+        <h1 className="text-4xl font-headline font-bold">Traveler Not Found</h1>
+        <p className="text-muted-foreground italic max-w-md">This dreamer has not yet manifested their presence in the global Archive.</p>
+        <Button onClick={() => router.push("/")} className="rounded-full px-8 h-14 bg-primary text-white shadow-xl shadow-primary/20">Wander Home</Button>
       </div>
     );
   }
@@ -249,9 +257,9 @@ export default function ProfilePage() {
         </div>
 
         <header className="glass-morphism rounded-[2.5rem] sm:rounded-[3.5rem] p-6 sm:p-14 flex flex-col items-center md:items-start gap-10 sm:gap-14 border-primary/10 shadow-2xl relative overflow-hidden group/header">
-          {localBanner && (
+          {(localBanner || profile.avatar) && (
             <div className="absolute inset-0 z-0">
-               <Image src={localBanner} alt="Banner" fill className="object-cover opacity-40 blur-[3px]" />
+               <Image src={localBanner || profile.avatar || ""} alt="Banner" fill className="object-cover opacity-20 blur-[3px]" />
                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
             </div>
           )}
@@ -312,9 +320,9 @@ export default function ProfilePage() {
               {/* Statistics Widgets */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-4 w-full">
                 {[
-                  { label: "Chronicles Read", arabic: "القصص المقروءة", value: 12, icon: BookOpen },
-                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: 48, icon: MessageSquare },
-                  { label: "Sanctuary Likes", arabic: "الإعجابات", value: 120, icon: Heart }
+                  { label: "Chronicles Read", arabic: "القصص المقروءة", value: readingProgress?.length || 0, icon: BookOpen },
+                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: profile.publishedCount ? profile.publishedCount * 4 : 0, icon: MessageSquare },
+                  { label: "Sanctuary Likes", arabic: "الإعجابات", value: profile.totalLikes || 0, icon: Heart }
                 ].map((stat, i) => (
                   <div key={i} className="bg-white/60 backdrop-blur-md rounded-[1.5rem] p-5 border border-primary/10 flex items-center md:items-start justify-between md:flex-col gap-2 shadow-sm transition-all hover:scale-[1.02] hover:bg-white/80">
                     <div className="flex items-center gap-3">

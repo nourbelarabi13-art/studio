@@ -7,7 +7,6 @@ import {
   PenSquare, 
   Library, 
   User, 
-  Search, 
   BookOpen, 
   LogOut, 
   Settings, 
@@ -19,7 +18,6 @@ import {
   ChevronDown,
   Sparkles,
   Menu,
-  X,
   Sun,
   Moon
 } from "lucide-react";

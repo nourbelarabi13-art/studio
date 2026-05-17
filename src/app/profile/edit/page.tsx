@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useUser, useFirestore, useDoc } from "@/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { UserProfile } from "@/lib/types";
 import { Loader2, User, Camera, Save, ArrowLeft, Sparkles, Quote, Info } from "lucide-react";
@@ -89,7 +89,15 @@ export default function EditProfilePage() {
       updatedAt: new Date().toISOString()
     };
 
-    updateDoc(doc(db, "users", user.uid), updates)
+    // Use setDoc with merge: true to handle cases where the document doesn't exist yet
+    setDoc(doc(db, "users", user.uid), {
+      ...updates,
+      uid: user.uid,
+      email: user.email,
+      role: profile?.role || 'reader',
+      ageConfirmed: profile?.ageConfirmed || true,
+      createdAt: profile?.createdAt || new Date().toISOString()
+    }, { merge: true })
       .then(() => {
         if (avatar) localStorage.setItem(`rosaline_avatar_${user.uid}`, avatar);
         if (bio) localStorage.setItem(`rosaline_bio_${user.uid}`, bio);
@@ -97,7 +105,8 @@ export default function EditProfilePage() {
         toast({ title: "Persona Refined", description: "Your changes have been manifested in the Archive." });
         router.push(`/profile/${user.uid}`);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Save error:", err);
         toast({ variant: "destructive", title: "Ritual Interrupted", description: "Could not save your changes to the Archive." });
       })
       .finally(() => setIsSaving(false));
@@ -114,7 +123,8 @@ export default function EditProfilePage() {
     );
   }
 
-  if (!user || !profile) {
+  // If auth finished and no user, the useEffect will redirect.
+  if (!user) {
     return null;
   }
 
