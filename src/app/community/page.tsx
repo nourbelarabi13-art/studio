@@ -71,7 +71,7 @@ export default function CommunityPage() {
     if (!db || !user) return null;
     return doc(db, "users", user.uid);
   }, [db, user]);
-  const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
+  const { data: profile } = useDoc<UserProfile>(profileRef);
 
   const filteredRooms = useMemo(() => {
     if (!profile) return COMMUNITY_ROOMS.filter(r => r.category === 'Reader');
@@ -82,7 +82,7 @@ export default function CommunityPage() {
     return COMMUNITY_ROOMS.find(r => r.id === activeRoomId) || COMMUNITY_ROOMS[0];
   }, [activeRoomId]);
 
-  // Ensure active room is allowed for current role
+  // Ensure active room is allowed for current role if profile exists
   useEffect(() => {
     if (profile && !activeRoom.roles.includes(profile.role)) {
       setActiveRoomId('library-lounge');
@@ -95,31 +95,41 @@ export default function CommunityPage() {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [currentMessages]);
+  }, [currentMessages, activeRoomId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || (!messageText.trim() && !selectedImage) || !profile) return;
-
-    const text = messageText;
-    const imageUrl = selectedImage || undefined;
+    if (!user) return;
     
+    const trimmedText = messageText.trim();
+    if (!trimmedText && !selectedImage) return;
+
+    // Create a local copy of data to manifest instantly
+    const textToSend = trimmedText;
+    const imageToSend = selectedImage || undefined;
+    const nameToUse = profile?.username || user.displayName || "Traveler";
+    
+    // Clear inputs IMMEDIATELY to prevent freezing feeling
     setMessageText("");
     setSelectedImage(null);
 
     const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       senderId: user.uid,
-      senderName: profile.username,
-      text,
-      imageUrl,
+      senderName: nameToUse,
+      text: textToSend,
+      imageUrl: imageToSend,
       createdAt: new Date().toISOString(),
     };
 
-    setRoomMessages(prev => ({
-      ...prev,
-      [activeRoomId]: [...(prev[activeRoomId] || []), newMessage]
-    }));
+    // Push into local state instantly
+    setRoomMessages(prev => {
+      const currentRoomMessages = prev[activeRoomId] || [];
+      return {
+        ...prev,
+        [activeRoomId]: [...currentRoomMessages, newMessage]
+      };
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,9 +167,9 @@ export default function CommunityPage() {
     setMessageText(prev => prev + emoji);
   };
 
-  if (authLoading || profileLoading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fffcfc]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -210,7 +220,7 @@ export default function CommunityPage() {
               </div>
 
               {/* Writer Space */}
-              {profile?.role === 'writer' && (
+              {(profile?.role === 'writer' || !profile) && (
                 <div>
                   <div className="flex items-center gap-2 mb-4 px-2">
                     <PenTool className="w-4 h-4 text-primary/60" />
@@ -267,7 +277,7 @@ export default function CommunityPage() {
           </CardHeader>
 
           <ScrollArea className="flex-1 p-8 h-[60vh]">
-            <div className="space-y-8">
+            <div className="space-y-8 pb-4">
               {currentMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground italic py-20 opacity-50">
                   <MessageSquare className="w-12 h-12" />
@@ -355,6 +365,7 @@ export default function CommunityPage() {
                             {DREAMY_EMOJIS.map(emoji => (
                               <button 
                                 key={emoji} 
+                                type="button"
                                 onClick={() => addEmoji(emoji)}
                                 className="text-xl p-2 hover:bg-primary/5 rounded-xl transition-colors"
                               >
