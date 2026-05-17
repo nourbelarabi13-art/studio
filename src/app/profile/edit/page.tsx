@@ -37,6 +37,13 @@ export default function EditProfilePage() {
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
+  // --- Ritual: Handle redirection in useEffect to avoid render-cycle errors ---
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
   useEffect(() => {
     if (profile) {
       setUsername(profile.username || "");
@@ -101,16 +108,21 @@ export default function EditProfilePage() {
       .finally(() => setIsSaving(false));
   };
 
-  if (authLoading || profileLoading) {
+  // --- Ritual: Unified Loading State ---
+  if (authLoading || (user && profileLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-muted-foreground italic font-body animate-pulse">Consulting the Archive...</p>
+        </div>
       </div>
     );
   }
 
+  // If no user is present, the useEffect will trigger redirection. 
+  // We return null to avoid rendering content meant for authenticated souls.
   if (!user || !profile) {
-    router.push("/login");
     return null;
   }
 
