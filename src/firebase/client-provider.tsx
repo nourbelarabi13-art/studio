@@ -8,6 +8,9 @@ import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 /**
  * A client-side wrapper for the FirebaseProvider that handles 
  * initialization internally and ensures hydration safety.
+ * 
+ * This is the primary gatekeeper ensuring Firebase only manifests
+ * when a physical traveler (browser) is present.
  */
 export const FirebaseClientProvider: React.FC<{
   children: React.ReactNode;
@@ -21,7 +24,8 @@ export const FirebaseClientProvider: React.FC<{
   useEffect(() => {
     // Initialize Firebase only on the client after initial mount
     // to avoid mismatch between server-rendered and client-rendered HTML.
-    setFirebase(initializeFirebase());
+    const instances = initializeFirebase();
+    setFirebase(instances);
   }, []);
 
   return (
