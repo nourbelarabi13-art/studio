@@ -5,7 +5,7 @@ import { NovelCard } from "@/components/novel-card";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { Genre, Novel, ReadingProgress, AppLanguage, Bookmark } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart, MapPin } from "lucide-react";
+import { Sparkles, Loader2, BookOpen, TrendingUp, Zap, Search, Users, Globe, MessageSquare, Clock, Filter, SlidersHorizontal, ChevronDown, Heart, MapPin, Smile } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -41,6 +41,13 @@ const COUNTRIES = [
   "Morocco", "France", "United Kingdom", "Egypt", "Saudi Arabia", "United States", "Canada", "Other"
 ];
 
+const MOODS = [
+  { id: 'thoughtful', icon: '🧠', genres: ['Drama', 'Poetry & Prose'] },
+  { id: 'adventurous', icon: '⛰️', genres: ['Adventure', 'Sci-Fi'] },
+  { id: 'mysterious', icon: '🕵️', genres: ['Mystery', 'Psychological', 'Horror'] },
+  { id: 'romantic', icon: '💖', genres: ['Romance'] },
+];
+
 type SortOption = 'publishedAt' | 'views' | 'likes';
 type DiscoveryTab = 'archive' | 'for-you' | 'following' | 'en' | 'ar' | 'fr';
 
@@ -53,6 +60,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<DiscoveryTab>('archive');
   const [selectedGenre, setSelectedGenre] = useState<Genre | 'All'>('All');
   const [selectedCountry, setSelectedCountry] = useState<string | 'All'>('All');
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>('publishedAt');
   
@@ -88,16 +96,23 @@ export default function Home() {
       q = query(q, where("language", "==", activeTab));
     }
     
-    if (selectedGenre !== 'All') {
+    // Mood Filter takes precedence if active, otherwise use genre filter
+    if (selectedMood) {
+      const moodGenres = MOODS.find(m => m.id === selectedMood)?.genres || [];
+      if (moodGenres.length > 0) {
+        q = query(q, where("genres", "array-contains-any", moodGenres));
+      }
+    } else if (selectedGenre !== 'All') {
       q = query(q, where("genres", "array-contains", selectedGenre));
     }
+
     if (selectedCountry !== 'All') {
       q = query(q, where("country", "==", selectedCountry));
     }
     
     q = query(q, orderBy(sortBy, "desc"));
     return q;
-  }, [db, selectedGenre, selectedCountry, sortBy, activeTab]);
+  }, [db, selectedGenre, selectedCountry, selectedMood, sortBy, activeTab]);
 
   const { data: novels, loading } = useCollection<Novel>(novelsQuery);
 
@@ -210,6 +225,15 @@ export default function Home() {
     }
   }, [sortBy, t]);
 
+  const handleMoodSelect = (moodId: string) => {
+    if (selectedMood === moodId) {
+      setSelectedMood(null);
+    } else {
+      setSelectedMood(moodId);
+      setSelectedGenre('All'); // Clear explicit genre filter when mood is chosen
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -253,6 +277,56 @@ export default function Home() {
       </section>
 
       <main className="container mx-auto px-4 py-16 space-y-32">
+        {/* Mood Reader Mode Section */}
+        <section className="animate-fade-in space-y-10">
+          <div className="text-center space-y-2">
+            <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3">
+              <Smile className="text-primary w-8 h-8" />
+              {t.home.mood_reader_title}
+            </h2>
+            <p className="text-muted-foreground italic">{t.home.mood_reader_subtitle}</p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6">
+            {MOODS.map((mood) => {
+              const moodName = t.home[`mood_${mood.id}` as keyof typeof t.home];
+              const isActive = selectedMood === mood.id;
+              
+              return (
+                <button
+                  key={mood.id}
+                  onClick={() => handleMoodSelect(mood.id)}
+                  className={cn(
+                    "group flex flex-col items-center gap-4 p-8 rounded-[2.5rem] transition-all duration-500 border min-w-[160px]",
+                    isActive 
+                      ? "bg-primary text-white border-primary shadow-2xl shadow-primary/30 scale-105" 
+                      : "bg-white/40 border-primary/5 hover:border-primary/20 hover:bg-white/60"
+                  )}
+                >
+                  <span className={cn(
+                    "text-5xl transition-transform duration-500 group-hover:scale-110",
+                    isActive ? "drop-shadow-lg" : "grayscale-[0.5]"
+                  )}>
+                    {mood.icon}
+                  </span>
+                  <span className="font-bold text-sm uppercase tracking-widest">{moodName}</span>
+                </button>
+              );
+            })}
+            
+            {selectedMood && (
+              <Button 
+                variant="ghost" 
+                onClick={() => setSelectedMood(null)}
+                className="rounded-full gap-2 text-primary hover:bg-primary/5"
+              >
+                <Clock className="w-4 h-4" />
+                {t.home.mood_all}
+              </Button>
+            )}
+          </div>
+        </section>
+
         {/* Continue Reading Section */}
         {user && progressData && progressData.length > 0 && !searchQuery && (
           <div className="space-y-12 animate-fade-in">
@@ -336,8 +410,8 @@ export default function Home() {
                   <Button 
                     variant={selectedGenre === 'All' ? 'default' : 'ghost'} 
                     size="sm"
-                    onClick={() => setSelectedGenre('All')}
-                    className={cn("rounded-full transition-all h-9 px-5", selectedGenre === 'All' ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
+                    onClick={() => { setSelectedGenre('All'); setSelectedMood(null); }}
+                    className={cn("rounded-full transition-all h-9 px-5", (selectedGenre === 'All' && !selectedMood) ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
                   >
                     All Genres
                   </Button>
@@ -346,7 +420,7 @@ export default function Home() {
                       key={genre} 
                       variant={selectedGenre === genre ? 'default' : 'ghost'}
                       size="sm"
-                      onClick={() => setSelectedGenre(genre)}
+                      onClick={() => { setSelectedGenre(genre); setSelectedMood(null); }}
                       className={cn("rounded-full transition-all h-9 px-5", selectedGenre === genre ? 'bg-primary' : 'text-muted-foreground hover:text-primary hover:bg-primary/5')}
                     >
                       {genre}
