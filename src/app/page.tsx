@@ -1,4 +1,3 @@
-
 'use client';
 
 import { StarryBackground } from "@/components/starry-background";
@@ -8,6 +7,7 @@ import { BookOpen, Sparkles, Globe, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/navbar";
 import { useLanguage } from "@/lib/i18n/context";
+import Link from "next/link";
 
 export default function Home() {
   const { t } = useLanguage();
@@ -32,12 +32,16 @@ export default function Home() {
             {t.hero.subtitle}
           </p>
           <div className="flex flex-wrap justify-center gap-6 pt-4">
-            <Button size="lg" className="rounded-full px-10 h-14 bg-primary text-background font-headline text-lg hover:scale-105 transition-transform shadow-xl shadow-primary/20">
-              {t.hero.start}
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg hover:scale-105 transition-transform">
-              {t.hero.explore}
-            </Button>
+            <Link href="/write">
+              <Button size="lg" className="rounded-full px-10 h-14 bg-primary text-background font-headline text-lg hover:scale-105 transition-transform shadow-xl shadow-primary/20">
+                {t.hero.start}
+              </Button>
+            </Link>
+            <Link href="/vault">
+              <Button size="lg" variant="outline" className="rounded-full px-10 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg hover:scale-105 transition-transform">
+                {t.hero.explore}
+              </Button>
+            </Link>
           </div>
         </section>
 
@@ -73,9 +77,9 @@ export default function Home() {
              <h2 className="font-headline text-2xl font-bold flex items-center gap-3">
                <Zap className="w-5 h-5 text-primary" /> {t.whispers.title}
              </h2>
-             <button className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+             <Link href="/vault" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
                {t.whispers.viewAll}
-             </button>
+             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (

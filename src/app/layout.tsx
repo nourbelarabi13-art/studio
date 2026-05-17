@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -9,7 +8,19 @@ import { StarryNightEffect } from "@/components/starry-night-effect";
 
 export const metadata: Metadata = {
   title: 'Rosaline Bela | A Dreamy Sanctuary for Readers & Writers',
-  description: 'An elegant and comfortable space for crafting and discovering soft fantasy chronicles.',
+  description: 'An elegant and comfortable space for crafting and discovering soft fantasy chronicles. Join the global archive of soft fantasy scribes.',
+  openGraph: {
+    title: 'Rosaline Bela Sanctuary',
+    description: 'A midnight sanctuary where shadows turn to ink and every whisper becomes a myth.',
+    type: 'website',
+    url: 'https://rosaline-bela.netlify.app',
+    siteName: 'Rosaline Bela',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Rosaline Bela Sanctuary',
+    description: 'An elegant and comfortable space for crafting and discovering soft fantasy chronicles.',
+  },
 };
 
 export default function RootLayout({

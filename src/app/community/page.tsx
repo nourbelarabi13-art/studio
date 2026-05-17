@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -42,18 +41,24 @@ const COMMUNITY_ROOMS = [
   { id: 'scribes-circle', name: 'The Scribes\' Circle', description: 'Exclusive retreat for writers to share progress and craft.', category: 'Writer' },
 ];
 
-const INITIAL_MOCK_MESSAGES: Record<string, ChatMessage[]> = {
-  'library-lounge': [
-    { id: 'm1', senderId: 'system', senderName: 'Archivist', text: 'Welcome to the Lounge. What chronicles are you exploring today?', createdAt: new Date(Date.now() - 3600000).toISOString() },
-  ]
-};
-
 const DREAMY_EMOJIS = ['✨', '🌸', '📚', '🕯️', '🌙', '🕊️', '📜', '🖋️'];
 
 export default function CommunityPage() {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
+  const INITIAL_MOCK_MESSAGES: Record<string, ChatMessage[]> = useMemo(() => ({
+    'library-lounge': [
+      { 
+        id: 'm1', 
+        senderId: 'system', 
+        senderName: language === 'ar' ? 'أرشيف' : 'Archivist', 
+        text: language === 'ar' ? 'مرحبًا بكم في القاعة. ما هي القصص التي تستكشفونها اليوم؟' : 'Welcome to the Lounge. What chronicles are you exploring today?', 
+        createdAt: new Date(Date.now() - 3600000).toISOString() 
+      },
+    ]
+  }), [language]);
+
   const [activeRoomId, setActiveRoomId] = useState('library-lounge');
   const [messageText, setMessageText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
