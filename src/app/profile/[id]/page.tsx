@@ -3,6 +3,7 @@ import ProfileView from "@/components/profile-view";
 /**
  * Static Export Configuration for Rosaline Bela.
  * Ensures the build process generates necessary HTML artifacts.
+ * Setting dynamicParams to false ensures 100% compliance with static export.
  */
 export const dynamicParams = false;
 
