@@ -1,94 +1,95 @@
+
 {
   "placeholderImages": [
     {
       "id": "hero-bg",
-      "description": "A deep midnight sky with purple nebulae and distant stars",
-      "imageUrl": "https://picsum.photos/seed/midnight/1920/1080",
-      "imageHint": "midnight nebula"
+      "description": "A soft pastel library with floating books and warm light",
+      "imageUrl": "https://picsum.photos/seed/p1/1920/1080",
+      "imageHint": "pastel library"
     },
     {
       "id": "hero-dreamy",
-      "description": "A soft lavender dreamscape with floating books",
-      "imageUrl": "https://picsum.photos/seed/dream/1920/1080",
-      "imageHint": "dreamy landscape"
+      "description": "An aesthetic writing desk with lavender journals and a gold pen",
+      "imageUrl": "https://picsum.photos/seed/p2/1920/1080",
+      "imageHint": "aesthetic writing"
     },
     {
       "id": "scribe-avatar",
-      "description": "An ethereal scribe silhouette against a glowing moon",
-      "imageUrl": "https://picsum.photos/seed/scribe/400/400",
-      "imageHint": "scribe silhouette"
+      "description": "An ethereal scribe silhouette against a soft pink moon",
+      "imageUrl": "https://picsum.photos/seed/p3/400/400",
+      "imageHint": "ethereal author"
     },
     {
       "id": "signup-bg",
-      "description": "A pile of ancient leather-bound books",
-      "imageUrl": "https://picsum.photos/seed/books/1000/1200",
-      "imageHint": "ancient books"
+      "description": "A stack of beautiful pink and purple hardcover books",
+      "imageUrl": "https://picsum.photos/seed/p4/1000/1200",
+      "imageHint": "pink books"
     },
     {
       "id": "writing-default",
-      "description": "A desk with a candle and a quill",
-      "imageUrl": "https://picsum.photos/seed/quill/800/1200",
-      "imageHint": "writing desk"
+      "description": "A cozy corner with a journal, a candle, and a cup of tea",
+      "imageUrl": "https://picsum.photos/seed/p5/800/1200",
+      "imageHint": "journal aesthetic"
     },
     {
       "id": "bg-1",
-      "description": "Stardust background",
-      "imageUrl": "https://picsum.photos/seed/star1/1920/1080",
-      "imageHint": "stardust"
+      "description": "Soft lavender stardust background",
+      "imageUrl": "https://picsum.photos/seed/p6/1920/1080",
+      "imageHint": "lavender stardust"
     },
     {
       "id": "bg-2",
-      "description": "Galaxy background",
-      "imageUrl": "https://picsum.photos/seed/star2/1920/1080",
-      "imageHint": "galaxy"
+      "description": "Dreamy pink galaxy nebula",
+      "imageUrl": "https://picsum.photos/seed/p7/1920/1080",
+      "imageHint": "pink galaxy"
     },
     {
       "id": "gallery-rotating-1",
-      "description": "A lone traveler in a crystal forest",
-      "imageUrl": "https://picsum.photos/seed/forest/1200/800",
-      "imageHint": "crystal forest"
+      "description": "A cozy reading nook with velvet cushions and fairy lights",
+      "imageUrl": "https://picsum.photos/seed/p8/1200/800",
+      "imageHint": "cozy reading"
     },
     {
       "id": "gallery-rotating-2",
-      "description": "A library built into a giant tree",
-      "imageUrl": "https://picsum.photos/seed/tree/1200/800",
-      "imageHint": "fantasy library"
+      "description": "Floor-to-ceiling aesthetic bookshelves in a purple-hued library",
+      "imageUrl": "https://picsum.photos/seed/p9/1200/800",
+      "imageHint": "aesthetic bookshelves"
     },
     {
       "id": "novel-1",
-      "description": "Velvet Shadow Cover",
-      "imageUrl": "https://picsum.photos/seed/novel1/600/800",
-      "imageHint": "gothic book"
+      "description": "Pastel pink book cover with floral ornaments",
+      "imageUrl": "https://picsum.photos/seed/n1/600/800",
+      "imageHint": "pink book"
     },
     {
       "id": "novel-2",
-      "description": "Amethyst Whispers Cover",
-      "imageUrl": "https://picsum.photos/seed/novel2/600/800",
-      "imageHint": "magic book"
+      "description": "Deep purple book cover with silver runes",
+      "imageUrl": "https://picsum.photos/seed/n2/600/800",
+      "imageHint": "purple book"
     },
     {
       "id": "novel-3",
-      "description": "Obsidian Dreams Cover",
-      "imageUrl": "https://picsum.photos/seed/novel3/600/800",
-      "imageHint": "midnight book"
+      "description": "Minimalist aesthetic journal with gold foil lettering",
+      "imageUrl": "https://picsum.photos/seed/n3/600/800",
+      "imageHint": "aesthetic journal"
     },
     {
       "id": "novel-4",
-      "description": "Silent Manor Cover",
-      "imageUrl": "https://picsum.photos/seed/novel4/600/800",
-      "imageHint": "haunted book"
+      "description": "Soft lavender book with a simple white quill illustration",
+      "imageUrl": "https://picsum.photos/seed/n4/600/800",
+      "imageHint": "minimalist book"
     },
     {
       "id": "novel-5",
-      "description": "Midnight Masquerade Cover",
-      "imageUrl": "https://picsum.photos/seed/novel5/600/800",
-      "imageHint": "mask book"
+      "description": "Dreamy fairytale book cover with sparkling dust",
+      "imageUrl": "https://picsum.photos/seed/n5/600/800",
+      "imageHint": "fairytale book"
     },
     {
       "id": "novel-6",
-      "description": "Cursed Chronicles Cover",
-      "imageUrl": "https://picsum.photos/seed/novel6/600/800",
-      "imageHint": "curse book"
+      "description": "Magical spellbook with glowing amethyst accents",
+      "imageUrl": "https://picsum.photos/seed/n6/600/800",
+      "imageHint": "magical book"
     }
   ]
 }
