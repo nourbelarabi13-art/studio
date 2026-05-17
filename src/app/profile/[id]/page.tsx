@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { NovelCard } from "@/components/novel-card";
@@ -82,6 +82,8 @@ export default function ProfilePage() {
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState<'latest' | 'popular'>('latest');
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [localBanner, setLocalBanner] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   
   // Inline Bio State
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -103,6 +105,10 @@ export default function ProfilePage() {
       // Load Bio from localStorage
       const storedBio = localStorage.getItem(`rosaline_bio_${id}`);
       if (storedBio) setLocalBio(storedBio);
+
+      // Load Banner from localStorage
+      const storedBanner = localStorage.getItem(`rosaline_banner_${id}`);
+      if (storedBanner) setLocalBanner(storedBanner);
     }
   }, [id]);
 
@@ -184,6 +190,34 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) { // 1MB limit for banner
+      toast({
+        variant: "destructive",
+        title: "Fragment Too Heavy",
+        description: "Please choose a smaller image (under 1MB) for your background banner."
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setLocalBanner(base64);
+      if (id) {
+        localStorage.setItem(`rosaline_banner_${id}`, base64);
+      }
+      toast({
+        title: "Sanctuary Gilded",
+        description: "Your custom background banner has been manifested.",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (id === 'undefined' || id === 'null') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
@@ -231,10 +265,40 @@ export default function ProfilePage() {
     <div className="min-h-screen dreamy-fantasy-gradient">
       <Navbar />
       <main className="container mx-auto px-4 py-16 max-w-6xl space-y-16">
-        <header className="glass-morphism rounded-[3rem] p-12 flex flex-col md:flex-row items-center md:items-start gap-12 border-primary/10 shadow-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+        <header className="glass-morphism rounded-[3rem] p-12 flex flex-col md:flex-row items-center md:items-start gap-12 border-primary/10 shadow-xl relative overflow-hidden group/header">
+          {/* Custom Background Banner */}
+          {localBanner && (
+            <div className="absolute inset-0 z-0">
+               <Image src={localBanner} alt="Banner" fill className="object-cover opacity-30 blur-[2px]" />
+               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background/80" />
+            </div>
+          )}
           
-          <div className="relative shrink-0">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl z-10" />
+          
+          {/* Change Banner Action Overlay */}
+          {isOwnProfile && (
+            <div className="absolute top-6 right-6 z-30">
+               <Button 
+                 variant="ghost" 
+                 size="sm" 
+                 onClick={() => bannerInputRef.current?.click()}
+                 className="bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full px-4 gap-2 hover:bg-white/40 transition-all opacity-0 group-header/header:opacity-100"
+               >
+                 <Camera className="w-4 h-4" />
+                 <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Change Cover / تغيير الغلاف</span>
+               </Button>
+               <input 
+                 type="file" 
+                 ref={bannerInputRef} 
+                 className="hidden" 
+                 accept="image/*" 
+                 onChange={handleBannerUpload} 
+               />
+            </div>
+          )}
+
+          <div className="relative shrink-0 z-20">
             <div className="w-44 h-44 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group/avatar">
                {displayAvatar ? (
                  <Image src={displayAvatar} alt={profile.username} fill className="object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
@@ -258,7 +322,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex-1 space-y-6 text-center md:text-left w-full">
+          <div className="flex-1 space-y-6 text-center md:text-left w-full relative z-20">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <h1 className="font-headline text-5xl font-bold">{profile.username}</h1>
@@ -548,3 +612,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
