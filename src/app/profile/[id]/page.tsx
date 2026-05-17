@@ -25,7 +25,10 @@ import {
   Edit3,
   Save,
   X,
-  Camera
+  Camera,
+  Moon,
+  PenTool,
+  Library
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, orderBy, updateDoc } from "firebase/firestore";
@@ -37,6 +40,36 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import Link from "next/link";
+
+const SANCTUARY_BADGES = [
+  {
+    id: 'dream-reader',
+    name: 'Dream Reader',
+    arabicName: 'قارئ حالم',
+    icon: Moon,
+    color: 'from-purple-500/20 to-indigo-500/20',
+    iconColor: 'text-indigo-400',
+    glow: 'shadow-indigo-500/20'
+  },
+  {
+    id: 'mystic-writer',
+    name: 'Mystic Writer',
+    arabicName: 'كاتب غامض',
+    icon: PenTool,
+    color: 'from-primary/20 to-rose-500/20',
+    iconColor: 'text-primary',
+    glow: 'shadow-primary/20'
+  },
+  {
+    id: 'archive-explorer',
+    name: 'Archive Explorer',
+    arabicName: 'مستكشف الأرشيف',
+    icon: Library,
+    color: 'from-amber-500/20 to-orange-500/20',
+    iconColor: 'text-amber-500',
+    glow: 'shadow-amber-500/20'
+  }
+];
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -413,6 +446,46 @@ export default function ProfilePage() {
               );
             })}
           </div>
+        </section>
+
+        {/* Sanctuary Badges Section */}
+        <section className="space-y-10 py-8">
+           <div className="flex flex-col items-center text-center gap-3">
+             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+               <Sparkles className="w-5 h-5" />
+             </div>
+             <div className="space-y-1">
+               <h2 className="font-headline text-4xl font-bold text-foreground">My Manifested Badges</h2>
+               <p className="font-arabic text-2xl font-bold text-primary/60">شاراتي المحققة</p>
+             </div>
+             <div className="w-24 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+           </div>
+
+           <div className="flex flex-wrap justify-center gap-12 md:gap-20">
+             {SANCTUARY_BADGES.map((badge) => (
+               <div key={badge.id} className="group flex flex-col items-center gap-6 cursor-default">
+                 <div className={cn(
+                   "relative w-32 h-32 rounded-full bg-gradient-to-br flex items-center justify-center shadow-xl transition-all duration-700",
+                   "group-hover:scale-110 group-hover:rotate-[360deg] group-hover:shadow-[0_0_30px_rgba(0,0,0,0.1)]",
+                   badge.color,
+                   badge.glow
+                 )}>
+                    {/* Inner glowing ring */}
+                    <div className="absolute inset-2 rounded-full border border-white/20 shadow-inner" />
+                    
+                    {/* Pulsing light effect */}
+                    <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-pulse transition-opacity" />
+
+                    <badge.icon className={cn("w-12 h-12 relative z-10 drop-shadow-lg", badge.iconColor)} />
+                 </div>
+                 
+                 <div className="text-center space-y-1 transition-all duration-500 group-hover:translate-y-1">
+                    <p className="font-bold text-sm uppercase tracking-[0.2em] text-foreground/80">{badge.name}</p>
+                    <p className="font-arabic text-lg font-bold text-primary/70">{badge.arabicName}</p>
+                 </div>
+               </div>
+             ))}
+           </div>
         </section>
 
         <section className="space-y-12">
