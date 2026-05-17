@@ -7,10 +7,88 @@
       "imageHint": "midnight nebula"
     },
     {
+      "id": "hero-dreamy",
+      "description": "A soft lavender dreamscape with floating books",
+      "imageUrl": "https://picsum.photos/seed/dream/1920/1080",
+      "imageHint": "dreamy landscape"
+    },
+    {
       "id": "scribe-avatar",
       "description": "An ethereal scribe silhouette against a glowing moon",
       "imageUrl": "https://picsum.photos/seed/scribe/400/400",
       "imageHint": "scribe silhouette"
+    },
+    {
+      "id": "signup-bg",
+      "description": "A pile of ancient leather-bound books",
+      "imageUrl": "https://picsum.photos/seed/books/1000/1200",
+      "imageHint": "ancient books"
+    },
+    {
+      "id": "writing-default",
+      "description": "A desk with a candle and a quill",
+      "imageUrl": "https://picsum.photos/seed/quill/800/1200",
+      "imageHint": "writing desk"
+    },
+    {
+      "id": "bg-1",
+      "description": "Stardust background",
+      "imageUrl": "https://picsum.photos/seed/star1/1920/1080",
+      "imageHint": "stardust"
+    },
+    {
+      "id": "bg-2",
+      "description": "Galaxy background",
+      "imageUrl": "https://picsum.photos/seed/star2/1920/1080",
+      "imageHint": "galaxy"
+    },
+    {
+      "id": "gallery-rotating-1",
+      "description": "A lone traveler in a crystal forest",
+      "imageUrl": "https://picsum.photos/seed/forest/1200/800",
+      "imageHint": "crystal forest"
+    },
+    {
+      "id": "gallery-rotating-2",
+      "description": "A library built into a giant tree",
+      "imageUrl": "https://picsum.photos/seed/tree/1200/800",
+      "imageHint": "fantasy library"
+    },
+    {
+      "id": "novel-1",
+      "description": "Velvet Shadow Cover",
+      "imageUrl": "https://picsum.photos/seed/novel1/600/800",
+      "imageHint": "gothic book"
+    },
+    {
+      "id": "novel-2",
+      "description": "Amethyst Whispers Cover",
+      "imageUrl": "https://picsum.photos/seed/novel2/600/800",
+      "imageHint": "magic book"
+    },
+    {
+      "id": "novel-3",
+      "description": "Obsidian Dreams Cover",
+      "imageUrl": "https://picsum.photos/seed/novel3/600/800",
+      "imageHint": "midnight book"
+    },
+    {
+      "id": "novel-4",
+      "description": "Silent Manor Cover",
+      "imageUrl": "https://picsum.photos/seed/novel4/600/800",
+      "imageHint": "haunted book"
+    },
+    {
+      "id": "novel-5",
+      "description": "Midnight Masquerade Cover",
+      "imageUrl": "https://picsum.photos/seed/novel5/600/800",
+      "imageHint": "mask book"
+    },
+    {
+      "id": "novel-6",
+      "description": "Cursed Chronicles Cover",
+      "imageUrl": "https://picsum.photos/seed/novel6/600/800",
+      "imageHint": "curse book"
     }
   ]
 }

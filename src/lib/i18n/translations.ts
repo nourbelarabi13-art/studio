@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     nav: {
@@ -42,6 +43,9 @@ export const translations = {
       empty: "Be the first to break the silence.",
       instantTitle: "Instant Whispers",
       instantDesc: "Your words manifest instantly through local magic in this demonstration hall.",
+    },
+    read: {
+      reading_time: "min read"
     },
     settings: {
       title: "Sanctuary Rituals",
@@ -103,6 +107,9 @@ export const translations = {
       empty: "كن أول من يكسر الصمت.",
       instantTitle: "همسات فورية",
       instantDesc: "تتجلى كلماتك فوراً من خلال السحر المحلي في قاعة العرض هذه.",
+    },
+    read: {
+      reading_time: "دقيقة قراءة"
     },
     settings: {
       title: "طقوس الملاذ",

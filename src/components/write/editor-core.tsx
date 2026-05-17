@@ -41,7 +41,7 @@ export const EditorCore = React.memo(function EditorCore({
     setLocalContent(val);
 
     // Debounce the heavy lifting to parent state
-    if (debounceTimer.current) clearTimeout(debounceTimer.timer);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       onContentChange(val);
     }, 1500); 
