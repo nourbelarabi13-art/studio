@@ -25,6 +25,15 @@ export const translations = {
       title: "Emerging Whispers",
       viewAll: "View Global Archive",
     },
+    oracle: {
+      title: "The Bilingual Oracle",
+      desc: "Wisdom gathered from the mists of time.",
+      button: "Consult the Oracle"
+    },
+    gallery: {
+      title: "Visual Chronicles",
+      desc: "Artistic fragments from our dreamers."
+    },
     community: {
       title: "Community Spaces",
       readerSpace: "Reader Space",
@@ -60,6 +69,15 @@ export const translations = {
     whispers: {
       title: "همسات ناشئة",
       viewAll: "عرض الأرشيف العالمي",
+    },
+    oracle: {
+      title: "أوراكل اللغتين",
+      desc: "حكمة جُمعت من ضباب الزمن.",
+      button: "استشر الأوراكل"
+    },
+    gallery: {
+      title: "السجلات البصرية",
+      desc: "شظايا فنية من أحلام مبدعينا."
     },
     community: {
       title: "مساحات المجتمع",
