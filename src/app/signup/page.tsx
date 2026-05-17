@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Sparkles, User, Mail, Lock, Loader2, Heart, PenTool, BookOpen } from "lucide-react";
+import { Sparkles, User, Mail, Lock, Loader2, Heart, PenTool, BookOpen, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useFirestore } from "@/firebase";
@@ -36,6 +36,7 @@ const signupSchema = z.object({
   password: z.string().min(8, "Phrase must be at least 8 characters"),
   role: z.enum(["writer", "reader"]),
   ageConfirmed: z.boolean().refine(v => v === true, "You must be 13 or older to join"),
+  copyrightConfirmed: z.boolean().refine(v => v === true, "يجب الموافقة على حقوق الطبع والنشر للمتابعة"),
 });
 
 export default function SignUpPage() {
@@ -54,6 +55,7 @@ export default function SignUpPage() {
       password: "",
       role: "reader",
       ageConfirmed: false,
+      copyrightConfirmed: false,
     },
   });
 
@@ -85,6 +87,8 @@ export default function SignUpPage() {
           email: values.email,
           role: values.role,
           ageConfirmed: values.ageConfirmed,
+          acceptedCopyrightTerms: values.copyrightConfirmed,
+          copyrightAcceptedAt: new Date().toISOString(),
           createdAt: new Date().toISOString(),
           language: 'en',
           followerCount: 0,
@@ -275,28 +279,53 @@ export default function SignUpPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="ageConfirmed"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl border p-4 bg-primary/5 border-primary/10">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-semibold">
-                        I am 13 or older
-                      </FormLabel>
-                      <FormDescription className="text-xs">
-                        By checking this, you confirm you're of age to join our space.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="ageConfirmed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl border p-4 bg-primary/5 border-primary/10">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-semibold">
+                          I am 13 or older
+                        </FormLabel>
+                        <FormDescription className="text-xs">
+                          By checking this, you confirm you're of age to join our space.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="copyrightConfirmed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl border p-4 bg-primary/5 border-primary/10 transition-colors hover:bg-primary/10">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-semibold leading-relaxed text-right md:text-left flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                          أقر بأن جميع المقالات والمحتويات التي أنشرها هي ملكي الشخصي وأتحمل كامل المسؤولية القانونية عن حقوق الطبع والنشر الخاصة بها
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 h-12 rounded-full font-headline text-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Begin Your Story
