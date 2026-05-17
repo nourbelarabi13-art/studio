@@ -41,12 +41,20 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState<'latest' | 'popular'>('latest');
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
 
   const profileRef = useMemoFirebase(() => {
     if (!db || !id || id === 'undefined' || id === 'null') return null;
     return doc(db, "users", id as string);
   }, [db, id]);
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
+
+  useEffect(() => {
+    if (id) {
+      const stored = localStorage.getItem(`rosaline_avatar_${id}`);
+      if (stored) setLocalAvatar(stored);
+    }
+  }, [id]);
 
   const followRef = useMemoFirebase(() => {
     if (!db || !currentUser || !id || id === 'undefined' || id === 'null') return null;
@@ -70,11 +78,6 @@ export default function ProfilePage() {
     return query(collection(db, "users", id as string, "progress"));
   }, [db, id]);
   const { data: readingProgress } = useCollection(readingProgressQuery);
-
-  const popularStory = useMemo(() => {
-    if (!novels || novels.length === 0) return null;
-    return [...novels].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
-  }, [novels]);
 
   const handleFollow = async () => {
     if (!currentUser) {
@@ -134,6 +137,9 @@ export default function ProfilePage() {
     maxViews: novels?.reduce((max, n) => Math.max(max, n.views || 0), 0) || 0
   };
 
+  // Prioritize local storage if viewing own profile or if cached
+  const displayAvatar = (isOwnProfile && localAvatar) ? localAvatar : (profile.avatar || localAvatar);
+
   return (
     <div className="min-h-screen dreamy-fantasy-gradient">
       <Navbar />
@@ -142,11 +148,20 @@ export default function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           
           <div className="relative shrink-0">
-            <div className="w-40 h-40 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden">
-               {profile.avatar ? (
-                 <Image src={profile.avatar} alt={profile.username} fill className="object-cover" />
+            <div className="w-44 h-44 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group/avatar">
+               {displayAvatar ? (
+                 <Image src={displayAvatar} alt={profile.username} fill className="object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
                ) : (
                  <User className="w-20 h-20 text-primary/20" />
+               )}
+               {isOwnProfile && (
+                 <Link 
+                   href="/profile/edit"
+                   className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 transition-all flex flex-col items-center justify-center text-white"
+                 >
+                   <Camera className="w-10 h-10 drop-shadow-md" />
+                   <span className="text-[10px] font-bold uppercase tracking-widest mt-2">Refine Avatar</span>
+                 </Link>
                )}
             </div>
             {isGrandArchivist && (

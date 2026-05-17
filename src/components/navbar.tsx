@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -40,6 +41,7 @@ import { UserProfile, Notification, AppLanguage } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/context";
 import { AmbientPlayer } from "@/components/ambient-player";
 import { useCelestialTheme } from "@/lib/theme-context";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -51,12 +53,23 @@ export function Navbar() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useCelestialTheme();
   
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
     return doc(db, "users", user.uid);
   }, [user, db]);
   
   const { data: profile } = useDoc<UserProfile>(userProfileRef);
+
+  useEffect(() => {
+    if (user) {
+      const stored = localStorage.getItem(`rosaline_avatar_${user.uid}`);
+      if (stored) setLocalAvatar(stored);
+    } else {
+      setLocalAvatar(null);
+    }
+  }, [user, profile?.avatar]);
 
   const notificationsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -93,6 +106,8 @@ export function Navbar() {
     { code: 'ar', label: 'العربية', flag: '🇸🇦' },
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
   ];
+
+  const displayAvatar = localAvatar || profile?.avatar;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10 transition-colors duration-700">
@@ -212,8 +227,8 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5 rounded-full px-2 pr-4 h-10">
                   <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary relative overflow-hidden">
-                    {profile?.avatar ? (
-                      <Image src={profile.avatar} alt={profile.username} fill className="object-cover" />
+                    {displayAvatar ? (
+                      <Image src={displayAvatar} alt={profile?.username || "Avatar"} fill className="object-cover" />
                     ) : (
                       <User className="w-4 h-4" />
                     )}

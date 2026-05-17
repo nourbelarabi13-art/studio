@@ -42,7 +42,10 @@ export default function EditProfilePage() {
       setUsername(profile.username || "");
       setBio(profile.bio || "");
       setStatus(profile.status || "");
-      setAvatar(profile.avatar || null);
+      
+      // Prioritize localStorage for instant local persistence
+      const localAvatar = localStorage.getItem(`rosaline_avatar_${profile.uid}`);
+      setAvatar(localAvatar || profile.avatar || null);
     }
   }, [profile]);
 
@@ -53,7 +56,7 @@ export default function EditProfilePage() {
     if (file.size > 1024 * 512) { // 512KB limit for base64 in Firestore
       toast({
         variant: "destructive",
-        title: "Image too large",
+        title: "Fragment Too Heavy",
         description: "Please choose a smaller image (under 512KB) to preserve the Archive's space."
       });
       return;
@@ -61,7 +64,12 @@ export default function EditProfilePage() {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatar(reader.result as string);
+      const base64 = reader.result as string;
+      setAvatar(base64);
+      // Persist to local storage immediately for local responsiveness
+      if (user) {
+        localStorage.setItem(`rosaline_avatar_${user.uid}`, base64);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -80,11 +88,15 @@ export default function EditProfilePage() {
 
     updateDoc(doc(db, "users", user.uid), updates)
       .then(() => {
+        // Double check local storage matches on successful save
+        if (avatar) {
+          localStorage.setItem(`rosaline_avatar_${user.uid}`, avatar);
+        }
         toast({ title: "Persona Refined", description: "Your changes have been manifested in the Archive." });
         router.push(`/profile/${user.uid}`);
       })
       .catch(() => {
-        toast({ variant: "destructive", title: "Ritual Interrupted", description: "Could not save your changes." });
+        toast({ variant: "destructive", title: "Ritual Interrupted", description: "Could not save your changes to the Archive." });
       })
       .finally(() => setIsSaving(false));
   };
@@ -125,19 +137,30 @@ export default function EditProfilePage() {
             </CardHeader>
             <CardContent className="p-10 flex flex-col items-center gap-8">
               <div className="relative group">
-                <div className="w-40 h-40 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden">
+                <div className="w-44 h-44 rounded-[2.5rem] bg-white flex items-center justify-center text-primary border-4 border-primary/10 shadow-2xl relative overflow-hidden group">
                   {avatar ? (
-                    <Image src={avatar} alt="Preview" fill className="object-cover" />
+                    <Image src={avatar} alt="Preview" fill className="object-cover transition-transform group-hover:scale-110 duration-700" />
                   ) : (
                     <User className="w-20 h-20 text-primary/10" />
                   )}
+                  
+                  {/* Camera Overlay */}
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center cursor-pointer"
+                  >
+                    <Camera className="w-10 h-10 text-white drop-shadow-lg" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white mt-2">Change Image</span>
+                  </div>
                 </div>
+                
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-2 right-2 bg-primary text-white p-3 rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                  className="absolute -bottom-2 -right-2 bg-primary text-white p-3.5 rounded-2xl shadow-xl hover:scale-110 transition-transform active:scale-95 border-4 border-background"
                 >
                   <Camera className="w-5 h-5" />
                 </button>
+                
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -146,7 +169,10 @@ export default function EditProfilePage() {
                   onChange={handleImageUpload} 
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Recommended: Square image under 512KB</p>
+              <div className="text-center space-y-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Recommended: Square image under 512KB</p>
+                <p className="text-[9px] text-primary/60 italic">Your image manifests instantly in your local memory.</p>
+              </div>
             </CardContent>
           </Card>
 
