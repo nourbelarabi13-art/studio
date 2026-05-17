@@ -135,7 +135,7 @@ export default function CommunityPage() {
               key={room.id}
               onClick={() => { setActiveRoomId(room.id); setIsSidebarOpen(false); }}
               className={cn(
-                "w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center gap-4",
+                "w-full text-start px-5 py-4 rounded-2xl transition-all flex items-center gap-4",
                 activeRoomId === room.id 
                   ? "bg-primary text-white shadow-lg" 
                   : "text-muted-foreground hover:bg-primary/5"
@@ -158,7 +158,10 @@ export default function CommunityPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background transition-colors duration-700">
+    <div 
+      className="min-h-screen flex flex-col bg-background transition-colors duration-700"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
+    >
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-6 md:py-10 max-w-6xl flex flex-col md:flex-row gap-6 md:gap-10 overflow-hidden h-[calc(100vh-80px)]">
         
@@ -198,7 +201,9 @@ export default function CommunityPage() {
                     key={msg.id} 
                     className={cn(
                       "flex flex-col max-w-[90%] sm:max-w-[80%] animate-fade-in",
-                      msg.senderId === 'local-user' ? "ml-auto items-end" : "items-start"
+                      msg.senderId === 'local-user' 
+                        ? (language === 'ar' ? "mr-auto ml-0 items-start" : "ml-auto mr-0 items-end") 
+                        : (language === 'ar' ? "ml-auto mr-0 items-end" : "mr-auto ml-0 items-start")
                     )}
                   >
                     <div className="flex items-center gap-3 mb-2 px-2">
@@ -210,21 +215,24 @@ export default function CommunityPage() {
                       <div className={cn(
                         "px-5 py-4 rounded-[2rem] shadow-sm overflow-hidden",
                         msg.senderId === 'local-user' 
-                          ? "bg-primary text-white rounded-tr-none"
-                          : "bg-white border border-primary/5 rounded-tl-none"
+                          ? cn("bg-primary text-white", language === 'ar' ? "rounded-tl-none" : "rounded-tr-none")
+                          : cn("bg-white border border-primary/5", language === 'ar' ? "rounded-tr-none" : "rounded-tl-none")
                       )}>
                         {msg.imageUrl && (
                           <div className="mb-4 relative w-full aspect-video rounded-2xl overflow-hidden shadow-md">
                              <Image src={msg.imageUrl} alt="Shared" fill className="object-cover" />
                           </div>
                         )}
-                        {msg.text && <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
+                        {msg.text && <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap text-start">{msg.text}</p>}
                       </div>
                       
                       {msg.senderId === 'local-user' && (
                         <button 
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="absolute top-1/2 -translate-y-1/2 -left-10 opacity-0 group-hover:opacity-100 transition-all p-3 bg-white/80 rounded-full text-muted-foreground hover:text-destructive shadow-sm"
+                          className={cn(
+                            "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all p-3 bg-white/80 rounded-full text-muted-foreground hover:text-destructive shadow-sm",
+                            language === 'ar' ? "-right-10" : "-left-10"
+                          )}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -258,7 +266,10 @@ export default function CommunityPage() {
                   onChange={(e) => setMessageText(e.target.value)}
                   className="bg-white/90 border-primary/10 h-14 sm:h-16 rounded-[2rem] pl-6 pr-24 sm:pr-32 focus:ring-primary/20 focus:border-primary/30 transition-all shadow-inner text-base"
                 />
-                <div className="absolute right-3 flex items-center gap-1 sm:gap-2">
+                <div className={cn(
+                  "absolute flex items-center gap-1 sm:gap-2",
+                  language === 'ar' ? "left-3" : "right-3"
+                )}>
                    <Popover>
                       <PopoverTrigger asChild>
                          <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full text-primary hover:bg-primary/5">
@@ -298,7 +309,7 @@ export default function CommunityPage() {
                 disabled={!messageText.trim() && !selectedImage}
                 className="rounded-full h-14 sm:h-16 w-14 sm:w-24 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-95"
               >
-                <Send className="w-6 h-6" />
+                <Send className={cn("w-6 h-6", language === 'ar' && "rotate-180")} />
               </Button>
             </form>
           </div>
