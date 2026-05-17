@@ -1,64 +1,16 @@
 {
   "placeholderImages": [
     {
-      "id": "hero-dreamy",
-      "description": "A soft, sun-drenched library with light pink flowers and comfortable cushions",
-      "imageUrl": "https://picsum.photos/seed/dreamy-library/1920/1080",
-      "imageHint": "dreamy library"
+      "id": "hero-bg",
+      "description": "A deep midnight sky with purple nebulae and distant stars",
+      "imageUrl": "https://picsum.photos/seed/midnight/1920/1080",
+      "imageHint": "midnight nebula"
     },
     {
-      "id": "signup-bg",
-      "description": "Soft pastel clouds over a peaceful landscape at dawn",
-      "imageUrl": "https://picsum.photos/seed/pastel-dawn/1000/1500",
-      "imageHint": "pastel sky"
-    },
-    {
-      "id": "bg-writing-desk",
-      "description": "A cozy writing desk with an antique inkwell and soft morning sunlight",
-      "imageUrl": "https://picsum.photos/seed/writing-desk-cozy/1920/1080",
-      "imageHint": "writing desk"
-    },
-    {
-      "id": "bg-open-book",
-      "description": "A close up of an open vintage book with soft glowing dust motes",
-      "imageUrl": "https://picsum.photos/seed/open-book-magic/1920/1080",
-      "imageHint": "aesthetic book"
-    },
-    {
-      "id": "bg-dreamy-study",
-      "description": "A soft-focused study with lavender light and floor-to-ceiling bookshelves",
-      "imageUrl": "https://picsum.photos/seed/lavender-study/1920/1080",
-      "imageHint": "dreamy library"
-    },
-    {
-      "id": "bg-manuscript",
-      "description": "A glowing magical parchment resting on a velvet cloth",
-      "imageUrl": "https://picsum.photos/seed/magical-manuscript/1920/1080",
-      "imageHint": "fantasy manuscript"
-    },
-    {
-      "id": "gallery-rotating-1",
-      "description": "An open vintage book with a feather pen resting on its aged pages",
-      "imageUrl": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
-      "imageHint": "vintage writing"
-    },
-    {
-      "id": "gallery-rotating-2",
-      "description": "A close-up of classical leather-bound books in a dark, atmospheric library",
-      "imageUrl": "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80",
-      "imageHint": "old books"
-    },
-    {
-      "id": "novel-default",
-      "description": "An elegant book with a soft pink flower on top",
-      "imageUrl": "https://picsum.photos/seed/pink-flower-book/600/800",
-      "imageHint": "aesthetic book"
-    },
-    {
-      "id": "writing-default",
-      "description": "A clean sheet of paper with a classic pen",
-      "imageUrl": "https://picsum.photos/seed/writing-clean/600/800",
-      "imageHint": "writing paper"
+      "id": "scribe-avatar",
+      "description": "An ethereal scribe silhouette against a glowing moon",
+      "imageUrl": "https://picsum.photos/seed/scribe/400/400",
+      "imageHint": "scribe silhouette"
     }
   ]
 }
