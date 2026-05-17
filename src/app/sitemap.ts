@@ -1,8 +1,4 @@
 /**
- * Dynamic sitemap.ts has been deactivated for static export stability.
- * The production sitemap.xml is served statically from /public/sitemap.xml.
- * Returning an empty array to satisfy the Next.js compiler during build.
+ * This dynamic handler has been deactivated to support Next.js static export.
+ * The production sitemap.xml is now served statically from /public/sitemap.xml.
  */
-export default function sitemap() {
-  return [];
-}

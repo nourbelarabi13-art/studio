@@ -1,8 +1,4 @@
 /**
- * Dynamic robots.ts has been deactivated for static export stability.
- * The production robots.txt is served statically from /public/robots.txt.
- * Returning an empty object to satisfy the Next.js compiler during build.
+ * This dynamic handler has been deactivated to support Next.js static export.
+ * The production robots.txt is now served statically from /public/robots.txt.
  */
-export default function robots() {
-  return {};
-}
