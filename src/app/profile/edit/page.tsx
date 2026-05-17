@@ -37,7 +37,7 @@ export default function EditProfilePage() {
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef);
 
-  // --- Ritual: Handle redirection in useEffect to avoid render-cycle errors ---
+  // Ritual: Handle redirection in useEffect to avoid render-cycle errors
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -95,10 +95,10 @@ export default function EditProfilePage() {
 
     updateDoc(doc(db, "users", user.uid), updates)
       .then(() => {
-        // Double check local storage matches on successful save
-        if (avatar) {
-          localStorage.setItem(`rosaline_avatar_${user.uid}`, avatar);
-        }
+        // Update local storage matches on successful save
+        if (avatar) localStorage.setItem(`rosaline_avatar_${user.uid}`, avatar);
+        if (bio) localStorage.setItem(`rosaline_bio_${user.uid}`, bio);
+        
         toast({ title: "Persona Refined", description: "Your changes have been manifested in the Archive." });
         router.push(`/profile/${user.uid}`);
       })
@@ -108,7 +108,6 @@ export default function EditProfilePage() {
       .finally(() => setIsSaving(false));
   };
 
-  // --- Ritual: Unified Loading State ---
   if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -120,8 +119,6 @@ export default function EditProfilePage() {
     );
   }
 
-  // If no user is present, the useEffect will trigger redirection. 
-  // We return null to avoid rendering content meant for authenticated souls.
   if (!user || !profile) {
     return null;
   }
