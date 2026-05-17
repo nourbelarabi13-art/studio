@@ -110,7 +110,7 @@ export default function Home() {
                 {[
                   { label: t.stats.scribes, value: formatStat(liveStats?.totalScribes, '2.4k'), icon: Globe, color: 'text-primary' },
                   { label: t.stats.chronicles, value: formatStat(liveStats?.totalChronicles, '8.9k'), icon: Zap, color: 'text-accent' },
-                  { label: language === 'ar' ? 'المشاهدات' : 'Global Views', value: formatStat(liveStats?.totalViews, '...'), icon: Eye, color: 'text-primary', fullWidth: true },
+                  { label: language === 'ar' ? 'إجمالي المشاهدات' : 'Global Views', value: formatStat(liveStats?.totalViews, '...'), icon: Eye, color: 'text-primary', fullWidth: true },
                 ].map((stat) => (
                   <div key={stat.label} className={cn(
                     "bg-white/5 rounded-3xl p-6 border border-white/5 hover:border-primary/20 transition-all hover:-translate-y-1",
