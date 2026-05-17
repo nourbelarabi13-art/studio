@@ -136,3 +136,14 @@ export interface EndingVote {
   choiceIndex: number;
   createdAt: string;
 }
+
+export interface Report {
+  id?: string;
+  reporterId: string;
+  targetId: string;
+  targetType: 'story' | 'comment' | 'chat';
+  type: 'Inappropriate Content' | 'Spam' | 'Harassment / Bullying' | 'Copyright Violation' | 'Other';
+  details: string;
+  status: 'pending' | 'reviewed';
+  createdAt: string;
+}

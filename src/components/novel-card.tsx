@@ -1,13 +1,16 @@
 
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Novel } from "@/lib/types";
-import { User, Eye, Heart, TrendingUp, Zap, Globe, MapPin } from "lucide-react";
+import { User, Eye, Heart, TrendingUp, Zap, Globe, MapPin, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/firebase";
+import { ReportModal } from "@/components/report-modal";
 
 interface NovelCardProps {
   novel: Novel;
@@ -21,8 +24,11 @@ const LANG_FLAGS: Record<string, string> = {
 };
 
 export function NovelCard({ novel, badge }: NovelCardProps) {
+  const { user } = useUser();
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
   return (
-    <div className="group block">
+    <div className="group block relative">
       <Card className="overflow-hidden bg-card border-primary/5 group-hover:border-primary/30 transition-all duration-500 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col relative">
         {badge && (
           <div className="absolute top-3 right-3 z-10">
@@ -38,6 +44,20 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
               </Badge>
             )}
           </div>
+        )}
+
+        {user && (
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsReportOpen(true);
+            }}
+            className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:text-destructive hover:bg-white/40 shadow-sm"
+            title="Summon Guardian"
+          >
+            <Flag className="w-3 h-3" />
+          </button>
         )}
 
         <Link href={`/read/${novel.id}`} className="relative aspect-[3/4] overflow-hidden">
@@ -102,6 +122,13 @@ export function NovelCard({ novel, badge }: NovelCardProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ReportModal 
+        targetId={novel.id} 
+        targetType="story" 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+      />
     </div>
   );
 }

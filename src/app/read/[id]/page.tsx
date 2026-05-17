@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -9,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { NovelCard } from "@/components/novel-card";
 import { StoryComments } from "@/components/story-comments";
 import { EndingPoll } from "@/components/ending-poll";
+import { ReportModal } from "@/components/report-modal";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -32,7 +34,8 @@ import {
   Coffee,
   X,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Flag
 } from "lucide-react";
 import {
   Popover,
@@ -71,6 +74,7 @@ export default function ReadingPage() {
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [useTranslation, setUseTranslation] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   
   const [fontSize, setFontSize] = useState(18);
   const [lineHeight, setLineHeight] = useState(1.8);
@@ -530,6 +534,21 @@ export default function ReadingPage() {
             <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-10 w-10 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
               <Heart className={cn("w-5 h-5", (novel.likes > 0) && "fill-primary text-primary")} />
             </Button>
+
+            {user && (
+              <>
+                <div className="w-px h-6 bg-primary/10 mx-1 hidden sm:block" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-10 w-10 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                  onClick={() => setIsReportOpen(true)}
+                  title={t.read.report}
+                >
+                  <Flag className="w-5 h-5" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -643,6 +662,13 @@ export default function ReadingPage() {
           <StoryComments novel={novel} />
         </footer>
       </main>
+
+      <ReportModal 
+        targetId={id as string} 
+        targetType="story" 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -23,7 +24,8 @@ import {
   Ghost,
   Camera,
   Smile,
-  X
+  X,
+  Flag
 } from "lucide-react";
 import { ChatMessage, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ReportModal } from "@/components/report-modal";
 
 const COMMUNITY_ROOMS = [
   { id: 'library-lounge', name: 'The Library Lounge', description: 'Public book discussions and recommendations.', category: 'Reader', roles: ['writer', 'reader'] },
@@ -63,6 +66,7 @@ export default function CommunityPage() {
   const [messageText, setMessageText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MOCK_MESSAGES);
+  const [reportingMsgId, setReportingMsgId] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -315,16 +319,27 @@ export default function CommunityPage() {
                         {msg.text && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
                       </div>
                       
-                      <button 
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className={cn(
-                          "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-2 text-muted-foreground hover:text-destructive",
-                          msg.senderId === user.uid ? "-left-10" : "-right-10"
+                      <div className={cn(
+                        "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1",
+                        msg.senderId === user.uid ? "-left-16" : "-right-16"
+                      )}>
+                        <button 
+                          onClick={() => setReportingMsgId(msg.id)}
+                          className="p-2 text-muted-foreground hover:text-destructive"
+                          title="Report whisper"
+                        >
+                          <Flag className="w-4 h-4" />
+                        </button>
+                        {msg.senderId === user.uid && (
+                          <button 
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="p-2 text-muted-foreground hover:text-destructive"
+                            title="Vanish fragment"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         )}
-                        title="Vanish fragment"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -410,6 +425,13 @@ export default function CommunityPage() {
           </CardContent>
         </div>
       </main>
+
+      <ReportModal 
+        targetId={reportingMsgId || ''} 
+        targetType="chat" 
+        isOpen={!!reportingMsgId} 
+        onClose={() => setReportingMsgId(null)} 
+      />
     </div>
   );
 }

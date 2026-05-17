@@ -11,10 +11,11 @@ import { addComment, deleteComment } from '@/firebase/firestore/comment-actions'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, Send, Trash2, Reply, Loader2, User } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Reply, Loader2, User, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { ReportModal } from '@/components/report-modal';
 
 interface StoryCommentsProps {
   novel: Novel;
@@ -27,6 +28,7 @@ export function StoryComments({ novel }: StoryCommentsProps) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
 
   const profileRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -119,11 +121,22 @@ export function StoryComments({ novel }: StoryCommentsProps) {
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    {user?.uid === comment.userId && (
-                      <button onClick={() => deleteComment(db!, novel.id, comment.id!)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {user && (
+                         <button 
+                           onClick={() => setReportingCommentId(comment.id!)}
+                           className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                           title="Report Whisper"
+                         >
+                           <Flag className="w-3.5 h-3.5" />
+                         </button>
+                      )}
+                      {user?.uid === comment.userId && (
+                        <button onClick={() => deleteComment(db!, novel.id, comment.id!)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">{comment.text}</p>
                   
@@ -167,11 +180,22 @@ export function StoryComments({ novel }: StoryCommentsProps) {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs">{reply.userName}</span>
-                        {user?.uid === reply.userId && (
-                          <button onClick={() => deleteComment(db!, novel.id, reply.id!)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                           {user && (
+                              <button 
+                                onClick={() => setReportingCommentId(reply.id!)}
+                                className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                                title="Report Reply"
+                              >
+                                <Flag className="w-3 h-3" />
+                              </button>
+                           )}
+                           {user?.uid === reply.userId && (
+                             <button onClick={() => deleteComment(db!, novel.id, reply.id!)} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                               <Trash2 className="w-3 h-3" />
+                             </button>
+                           )}
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground">{reply.text}</p>
                     </div>
@@ -182,6 +206,13 @@ export function StoryComments({ novel }: StoryCommentsProps) {
           ))}
         </div>
       )}
+
+      <ReportModal 
+        targetId={reportingCommentId || ''} 
+        targetType="comment" 
+        isOpen={!!reportingCommentId} 
+        onClose={() => setReportingCommentId(null)} 
+      />
     </section>
   );
 }
