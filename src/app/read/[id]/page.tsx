@@ -360,7 +360,7 @@ export default function ReadingPage() {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary/40" />
               <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
-                {estimatedReadingTime} {t.read.reading_time}
+                {estimatedReadingTime} {t.read?.reading_time || 'min read'}
               </span>
             </div>
           </div>
@@ -550,7 +550,7 @@ export default function ReadingPage() {
                   size="icon" 
                   className="h-11 w-11 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                   onClick={() => setIsReportOpen(true)}
-                  title={t.read.report}
+                  title={t.read?.report || 'Report'}
                 >
                   <Flag className="w-6 h-6" />
                 </Button>
