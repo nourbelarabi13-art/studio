@@ -5,6 +5,7 @@
 
 @layer base {
   :root {
+    /* Night Mode (Celestial) - Default */
     --background: 260 25% 4%;
     --foreground: 330 40% 98%;
     --card: 260 25% 6%;
@@ -26,11 +27,37 @@
     --ring: 330 70% 75%;
     --radius: 1.5rem;
   }
+
+  /* Day Mode (Manifest Light) */
+  .light {
+    --background: 330 100% 98%;
+    --foreground: 260 40% 20%;
+    --card: 330 100% 100%;
+    --card-foreground: 260 40% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 40% 20%;
+    --primary: 260 60% 45%;
+    --primary-foreground: 330 100% 98%;
+    --secondary: 330 50% 92%;
+    --secondary-foreground: 260 60% 40%;
+    --muted: 330 30% 94%;
+    --muted-foreground: 260 10% 45%;
+    --accent: 330 70% 85%;
+    --accent-foreground: 260 60% 25%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 330 30% 90%;
+    --input: 330 30% 90%;
+    --ring: 260 60% 45%;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border transition-colors duration-500;
+    @apply border-border;
+  }
+  html, body {
+    @apply transition-colors duration-1000 ease-in-out;
   }
   body {
     @apply bg-background text-foreground font-body antialiased selection:bg-primary/30;
@@ -43,6 +70,10 @@
 
 .glass-morphism {
   @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl;
+}
+
+.light .glass-morphism {
+  @apply bg-white/40 backdrop-blur-md border-primary/10 shadow-xl;
 }
 
 .star-pulse {
@@ -64,4 +95,8 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-all;
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle 8s ease-in-out infinite;
 }

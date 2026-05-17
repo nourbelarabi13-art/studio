@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -103,12 +104,6 @@ export function Navbar() {
     }
   };
 
-  const languages = [
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  ];
-
   const displayAvatar = localAvatar || profile?.avatar;
 
   return (
@@ -176,6 +171,16 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full text-primary hover:bg-primary/5 transition-all duration-500"
+            title={theme === 'light' ? 'الوضع الليلي (Night Mode)' : 'الوضع النهاري (Day Mode)'}
+          >
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />}
+          </Button>
+
           <div className="hidden sm:block">
             <AmbientPlayer />
           </div>

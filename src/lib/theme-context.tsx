@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -12,9 +13,10 @@ interface ThemeContextProps {
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export function CelestialThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('celestial');
 
   useEffect(() => {
+    // Check localStorage first
     const savedTheme = localStorage.getItem('rosaline-theme') as Theme;
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'celestial')) {
       setTheme(savedTheme);
@@ -23,10 +25,12 @@ export function CelestialThemeProvider({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'celestial') {
-      root.classList.add('celestial-night');
-    } else {
+    if (theme === 'light') {
+      root.classList.add('light');
       root.classList.remove('celestial-night');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('celestial-night');
     }
     localStorage.setItem('rosaline-theme', theme);
   }, [theme]);
