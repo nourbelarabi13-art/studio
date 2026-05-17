@@ -248,7 +248,6 @@ export default function ProfilePage() {
       <Navbar />
       <main className="container mx-auto px-4 py-8 sm:py-16 max-w-6xl space-y-12 sm:space-y-20">
         
-        {/* Mobile Header Actions */}
         <div className="md:hidden flex items-center gap-4 mb-4">
            <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-full bg-white/50 border border-primary/10">
               <ArrowLeft className="w-6 h-6" />
@@ -317,29 +316,27 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Statistics Widgets */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 pt-4 w-full">
                 {[
                   { label: "Chronicles Read", arabic: "القصص المقروءة", value: readingProgress?.length || 0, icon: BookOpen },
-                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: profile.publishedCount ? profile.publishedCount * 4 : 0, icon: MessageSquare },
+                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: profile.publishedCount ? profile.publishedCount * 3 : 0, icon: MessageSquare },
                   { label: "Sanctuary Likes", arabic: "الإعجابات", value: profile.totalLikes || 0, icon: Heart }
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white/60 backdrop-blur-md rounded-[1.5rem] p-5 border border-primary/10 flex items-center md:items-start justify-between md:flex-col gap-2 shadow-sm transition-all hover:scale-[1.02] hover:bg-white/80">
+                  <div key={i} className="bg-primary/10 backdrop-blur-md rounded-[1.5rem] p-5 border border-primary/20 flex items-center md:items-start justify-between md:flex-col gap-2 shadow-sm transition-all hover:scale-[1.02] hover:bg-primary/20">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
                          <stat.icon className="w-5 h-5" />
                       </div>
                       <div className="flex flex-col">
-                        <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground leading-tight">{stat.label}</p>
-                        <p className="font-arabic text-[10px] text-primary/70 font-bold">{stat.arabic}</p>
+                        <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-white/70 leading-tight">{stat.label}</p>
+                        <p className="font-arabic text-[10px] text-white font-bold">{stat.arabic}</p>
                       </div>
                     </div>
-                    <span className="text-3xl sm:text-4xl font-headline font-bold text-primary">{stat.value}</span>
+                    <span className="text-3xl sm:text-4xl font-headline font-bold text-white drop-shadow-md">{stat.value}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Editable Bio Section */}
               <div className="relative group/bio min-h-[60px] space-y-4 py-4">
                 {isEditingBio ? (
                   <div className="space-y-4 animate-fade-in w-full max-w-2xl">
@@ -435,7 +432,6 @@ export default function ProfilePage() {
           </div>
         </header>
 
-        {/* Achievements Section */}
         <section className="space-y-10 px-2">
           <div className="flex items-center gap-4 border-b border-primary/5 pb-8">
             <Trophy className="w-8 h-8 text-primary" />
@@ -478,41 +474,6 @@ export default function ProfilePage() {
               );
             })}
           </div>
-        </section>
-
-        {/* Sanctuary Badges Section */}
-        <section className="space-y-12 py-10 bg-primary/5 rounded-[4rem] px-6 sm:px-14">
-           <div className="flex flex-col items-center text-center gap-4">
-             <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-               <Sparkles className="w-7 h-7" />
-             </div>
-             <div className="space-y-2">
-               <h2 className="font-headline text-3xl sm:text-5xl font-bold text-foreground">Gilded Seals</h2>
-               <p className="font-arabic text-2xl sm:text-3xl font-bold text-primary/60">شاراتي المحققة</p>
-             </div>
-             <div className="w-32 h-1 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-           </div>
-
-           <div className="flex flex-wrap justify-center gap-12 sm:gap-24">
-             {SANCTUARY_BADGES.map((badge) => (
-               <div key={badge.id} className="group flex flex-col items-center gap-8 cursor-default max-w-[140px] text-center">
-                 <div className={cn(
-                   "relative w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br flex items-center justify-center shadow-2xl transition-all duration-700",
-                   "hover:scale-110 hover:rotate-6",
-                   badge.color,
-                   badge.glow
-                 )}>
-                    <div className="absolute inset-2 rounded-full border border-white/30 shadow-inner" />
-                    <badge.icon className={cn("w-12 h-12 sm:w-16 sm:h-16 relative z-10 drop-shadow-2xl", badge.iconColor)} />
-                 </div>
-                 
-                 <div className="space-y-2">
-                    <p className="font-bold text-sm sm:text-base uppercase tracking-[0.2em] text-foreground/80 leading-tight">{badge.name}</p>
-                    <p className="font-arabic text-xl font-bold text-primary/70">{badge.arabicName}</p>
-                 </div>
-               </div>
-             ))}
-           </div>
         </section>
 
         <section className="space-y-12">
