@@ -1,11 +1,11 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  // تفعيل التصدير الثابت لضمان العمل على Netlify بدون خادم Node.js
+  // Enable static export for Netlify manifestation
   output: 'export',
-  // ضمان أن الروابط تنتهي بـ / لسهولة الأرشفة والتنقل في المواقع الثابتة
+  // Ensure paths end with / for consistent static routing
   trailingSlash: true,
+  // Optimization: Skip heavy checks for faster static builds
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    // تعطيل تحسين الصور التلقائي لأن التصدير الثابت لا يدعمه بدون خادم
+    // Disable automatic optimization as static export requires local processing
     unoptimized: true,
     remotePatterns: [
       {

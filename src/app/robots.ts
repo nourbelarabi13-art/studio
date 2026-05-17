@@ -1,16 +1,8 @@
 
-import { MetadataRoute } from 'next';
-
 /**
- * ملف robots.txt البرمجي لإرشاد محركات البحث.
+ * Dynamic robots generator retired in favor of static public/robots.txt 
+ * to ensure 100% compatibility with static export ritual.
  */
-export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/settings/', '/profile/edit/'],
-    },
-    sitemap: 'https://rosaline-bela.netlify.app/sitemap.xml',
-  };
+export default function robots() {
+  return null;
 }
