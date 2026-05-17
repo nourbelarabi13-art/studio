@@ -1,7 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /profile/edit/
-Disallow: /settings/
-Disallow: /vault/
-
 Sitemap: https://rosaline-bela.netlify.app/sitemap.xml

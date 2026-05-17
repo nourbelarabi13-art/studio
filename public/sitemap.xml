@@ -3,7 +3,13 @@
   <url>
     <loc>https://rosaline-bela.netlify.app/</loc>
     <lastmod>2024-03-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://rosaline-bela.netlify.app/vault/</loc>
+    <lastmod>2024-03-27</lastmod>
+  </url>
+  <url>
+    <loc>https://rosaline-bela.netlify.app/community/</loc>
+    <lastmod>2024-03-27</lastmod>
   </url>
 </urlset>
