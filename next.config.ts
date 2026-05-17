@@ -2,6 +2,9 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  // Enable static export for Netlify Drop compatibility
+  output: 'export',
+  trailingSlash: true,
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -9,6 +12,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    // Static exports do not support the default Image Optimization API
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,9 +34,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  experimental: {
-    // Flag removed to resolve unrecognized key error in Next 15.5.9 CLI
   },
 };
 
