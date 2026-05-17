@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     nav: {
@@ -63,6 +64,8 @@ export const translations = {
       language: "Story Language",
       country: "Chronicle Origin (Region)",
       select_language: "Select Writing Language",
+      notes: "Side Notes",
+      add_note: "Add Whisper",
     },
     read: {
       views: "Views",
@@ -146,7 +149,7 @@ export const translations = {
       sort_liked: "الأكثر تقديراً",
       language_filter: "اللغة",
       country_filter: "المنطقة",
-      results_found: "تجلٍ تم العثور عليه",
+      results_found: "تجلٍ تم العور عليه",
       all_countries: "كل المناطق",
       top_in_country: "الأفضل في",
     },
@@ -161,6 +164,8 @@ export const translations = {
       language: "لغة القصة",
       country: "أصل القصة (المنطقة)",
       select_language: "اختر لغة الكتابة",
+      notes: "الملاحظات الجانبية",
+      add_note: "إضافة خاطرة",
     },
     read: {
       views: "مشاهدات",
@@ -259,6 +264,8 @@ export const translations = {
       language: "Langue de l'histoire",
       country: "Origine de la chronique (Région)",
       select_language: "Choisir la langue d'écriture",
+      notes: "Notes Latérales",
+      add_note: "Ajouter un Fragment",
     },
     read: {
       views: "Vues",

@@ -3,7 +3,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Clock, FileText, Loader2, Save, Send } from "lucide-react";
+import { Clock, FileText, Loader2, Save, Send, StickyNote } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface WriteToolbarProps {
   lastSaved: Date | null;
@@ -12,6 +13,8 @@ interface WriteToolbarProps {
   wordCount: number;
   onSave: () => void;
   onPublish: () => void;
+  isNotesOpen: boolean;
+  onToggleNotes: () => void;
 }
 
 export const WriteToolbar = React.memo(function WriteToolbar({
@@ -20,7 +23,9 @@ export const WriteToolbar = React.memo(function WriteToolbar({
   isPublishing,
   wordCount,
   onSave,
-  onPublish
+  onPublish,
+  isNotesOpen,
+  onToggleNotes
 }: WriteToolbarProps) {
   return (
     <div className="sticky top-16 z-30 w-full glass-morphism border-b border-primary/10 px-6 h-16 flex items-center justify-between">
@@ -50,6 +55,21 @@ export const WriteToolbar = React.memo(function WriteToolbar({
           )}
         </div>
         
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onToggleNotes}
+          className={cn(
+            "rounded-full gap-2 h-9 px-4 transition-all",
+            isNotesOpen ? "bg-primary text-white shadow-lg" : "text-primary hover:bg-primary/5"
+          )}
+        >
+          <StickyNote className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline font-bold">Notes</span>
+        </Button>
+
+        <div className="w-px h-4 bg-primary/10 mx-1 hidden sm:block" />
+
         <Button 
           variant="ghost" 
           size="sm" 

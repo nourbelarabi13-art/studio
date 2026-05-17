@@ -1,3 +1,4 @@
+
 export type Genre = 'Fantasy' | 'Horror' | 'Romance' | 'Mystery' | 'Drama' | 'Sci-Fi' | 'Historical' | 'Psychological' | 'Adventure' | 'Poetry & Prose' | 'Thriller';
 export type UserRole = 'writer' | 'reader';
 export type AppLanguage = 'en' | 'ar' | 'fr';
@@ -110,5 +111,14 @@ export interface Comment {
   userAvatar?: string;
   text: string;
   parentId?: string;
+  createdAt: string;
+}
+
+export interface SideNote {
+  id?: string;
+  novelId: string;
+  chapterId?: string;
+  title?: string;
+  content: string;
   createdAt: string;
 }

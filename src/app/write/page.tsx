@@ -14,12 +14,14 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 import { checkAchievements } from "@/firebase/firestore/achievement-actions";
 import { createNotification } from "@/firebase/firestore/notification-actions";
+import { cn } from "@/lib/utils";
 
 // Sub-components
 import { EditorCore } from "@/components/write/editor-core";
 import { ChaptersPanel } from "@/components/write/chapters-panel";
 import { StatsSidebar } from "@/components/write/stats-sidebar";
 import { WriteToolbar } from "@/components/write/write-toolbar";
+import { SideNotesPanel } from "@/components/write/side-notes-panel";
 
 export default function WritePage() {
   const router = useRouter();
@@ -52,6 +54,7 @@ export default function WritePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   // Use deferred value for heavy stats to prevent typing lag
   const deferredChapters = useDeferredValue(chapters);
@@ -229,12 +232,19 @@ export default function WritePage() {
         wordCount={totalWordCount}
         onSave={() => saveProgress()}
         onPublish={handlePublish}
+        isNotesOpen={isNotesOpen}
+        onToggleNotes={() => setIsNotesOpen(!isNotesOpen)}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-12 max-w-7xl">
-        <div className="grid lg:grid-cols-[280px_1fr_300px] gap-12">
+      <main className="flex-1 container mx-auto px-4 py-12 max-w-[1600px]">
+        <div className={cn(
+          "grid gap-12 transition-all duration-500",
+          isNotesOpen 
+            ? "lg:grid-cols-[250px_1fr_350px]" 
+            : "lg:grid-cols-[280px_1fr_300px]"
+        )}>
           {/* Left: Fragments */}
-          <aside>
+          <aside className={cn(isNotesOpen && "hidden xl:block")}>
             <ChaptersPanel 
               chapters={chapters}
               activeId={activeChapterId}
@@ -246,7 +256,7 @@ export default function WritePage() {
           </aside>
 
           {/* Center: Writing Desk */}
-          <div className="space-y-12 min-h-[80vh]">
+          <div className="space-y-12 min-h-[80vh] max-w-4xl mx-auto w-full">
             <EditorCore 
               title={title}
               onTitleChange={handleTitleChange}
@@ -257,16 +267,24 @@ export default function WritePage() {
             />
           </div>
 
-          {/* Right: Context & Settings */}
+          {/* Right: Side Notes or Context */}
           <aside>
-            <StatsSidebar 
-              language={writingLanguage}
-              setLanguage={setWritingLanguage}
-              genres={selectedGenres}
-              onGenreToggle={toggleGenre}
-              country={writingCountry}
-              setCountry={setWritingCountry}
-            />
+            {isNotesOpen ? (
+              <SideNotesPanel 
+                novelId={novelId}
+                chapterId={activeChapterId}
+                onClose={() => setIsNotesOpen(false)}
+              />
+            ) : (
+              <StatsSidebar 
+                language={writingLanguage}
+                setLanguage={setWritingLanguage}
+                genres={selectedGenres}
+                onGenreToggle={toggleGenre}
+                country={writingCountry}
+                setCountry={setWritingCountry}
+              />
+            )}
           </aside>
         </div>
       </main>
