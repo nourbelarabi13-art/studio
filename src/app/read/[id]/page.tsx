@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -47,7 +46,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, updateDoc, query, collection, where, limit } from "firebase/firestore";
@@ -265,7 +264,7 @@ export default function ReadingPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <Loader2 className="w-12 h-12 animate-spin text-primary" />
     </div>
   );
 
@@ -274,7 +273,7 @@ export default function ReadingPage() {
       <AlertCircle className="w-12 h-12 text-destructive opacity-50" />
       <h1 className="text-2xl font-bold">Chronicle Not Found</h1>
       <p className="text-muted-foreground">The story you are looking for does not exist in our archive.</p>
-      <Button onClick={() => router.push("/")} className="rounded-full bg-primary">Return to Home</Button>
+      <Button onClick={() => router.push("/")} className="rounded-full bg-primary h-12 px-8">Return to Home</Button>
     </div>
   );
 
@@ -294,20 +293,20 @@ export default function ReadingPage() {
     <div className={cn("min-h-screen transition-colors duration-500 relative", modeStyles[readingMode])}>
       {!isFocusMode && <Navbar />}
       
-      <div className={cn("fixed top-0 left-0 w-full h-1 z-[60] bg-primary/10", isFocusMode ? "top-0" : "top-16")}>
+      <div className={cn("fixed top-0 left-0 w-full h-1.5 z-[60] bg-primary/10", isFocusMode ? "top-0" : "top-16")}>
         <div className="h-full bg-primary transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
       </div>
 
       {showRestorePosition && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
-          <div className="glass-morphism rounded-2xl p-4 px-6 flex items-center gap-4 shadow-2xl border-primary/20 backdrop-blur-xl">
+        <div className="fixed bottom-20 sm:bottom-10 left-1/2 -translate-x-1/2 z-50 animate-fade-in w-[90%] max-w-sm">
+          <div className="glass-morphism rounded-2xl p-5 flex items-center justify-between gap-4 shadow-2xl border-primary/20 backdrop-blur-xl">
             <div className="space-y-0.5">
-              <p className="text-sm font-bold text-foreground">Continue Reading?</p>
-              <p className="text-xs text-muted-foreground italic">Return to where you left off.</p>
+              <p className="text-sm font-bold text-foreground">Continue Journey?</p>
+              <p className="text-xs text-muted-foreground italic">Back to last scroll.</p>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" className="text-xs rounded-full" onClick={() => setShowRestorePosition(false)}>Dismiss</Button>
-              <Button size="sm" className="text-xs rounded-full bg-primary" onClick={restoreScrollPosition}>Restore Position</Button>
+              <Button size="sm" variant="ghost" className="h-9 px-3 rounded-full text-xs" onClick={() => setShowRestorePosition(false)}>X</Button>
+              <Button size="sm" className="h-9 px-4 rounded-full bg-primary text-xs" onClick={restoreScrollPosition}>Restore</Button>
             </div>
           </div>
         </div>
@@ -317,7 +316,7 @@ export default function ReadingPage() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="fixed bottom-8 right-8 z-[70] h-12 w-12 rounded-full bg-primary text-white shadow-2xl hover:bg-primary/90 opacity-40 hover:opacity-100 transition-all"
+          className="fixed bottom-6 right-6 z-[70] h-14 w-14 rounded-full bg-primary text-white shadow-2xl hover:bg-primary/90 opacity-60 hover:opacity-100 transition-all"
           onClick={() => setIsFocusMode(false)}
         >
           <X className="w-6 h-6" />
@@ -325,14 +324,14 @@ export default function ReadingPage() {
       )}
 
       <main className={cn(
-        "container mx-auto px-4 max-w-3xl space-y-16 animate-fade-in transition-all duration-700 relative z-10",
-        isFocusMode ? "py-32" : "py-24"
+        "container mx-auto px-6 sm:px-8 max-w-3xl space-y-16 animate-fade-in transition-all duration-700 relative z-10",
+        isFocusMode ? "py-24 sm:py-32" : "py-16 sm:py-24"
       )}>
         <header className="space-y-8 text-center border-b border-primary/10 pb-16">
-          <div className="flex justify-center gap-3 mb-4">
+          <div className="flex justify-center flex-wrap gap-2 mb-4">
             {novel.genres.map(genre => (
               <Badge key={genre} variant="outline" className={cn(
-                "border-primary/30 italic rounded-full px-4 h-6",
+                "border-primary/30 italic rounded-full px-4 h-6 text-[10px]",
                 readingMode === 'midnight' ? "bg-primary/20 text-primary-foreground" : "bg-primary/5 text-primary"
               )}>
                 {genre}
@@ -340,20 +339,20 @@ export default function ReadingPage() {
             ))}
           </div>
           
-          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+          <h1 className="font-headline text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight">
             {displayTitle}
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground italic">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-muted-foreground italic">
             <Link href={`/profile/${novel.authorId}`} className="flex items-center gap-3 text-foreground font-semibold hover:text-primary transition-colors">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                <User className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                <User className="w-5 h-5" />
               </div>
-              {novel.authorUsername}
+              <span className="text-sm sm:text-base">{novel.authorUsername}</span>
             </Link>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary/40" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">
+              <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
                 {estimatedReadingTime} {t.read.reading_time}
               </span>
             </div>
@@ -361,35 +360,36 @@ export default function ReadingPage() {
         </header>
 
         <div className={cn(
-          "sticky top-24 z-40 flex flex-col items-center gap-4 transition-all duration-500",
+          "sticky top-20 sm:top-24 z-40 flex flex-col items-center gap-4 transition-all duration-500",
           isFocusMode ? "opacity-10 hover:opacity-100 top-10" : "opacity-100"
         )}>
           <div className={cn(
-            "rounded-full px-6 py-2.5 flex items-center gap-4 shadow-xl backdrop-blur-md border",
+            "rounded-full px-4 sm:px-6 py-2 flex items-center gap-2 sm:gap-4 shadow-xl backdrop-blur-md border",
             readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/70 border-primary/10"
           )}>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10 rounded-full text-primary"
+              className="h-11 w-11 rounded-full text-primary"
               onClick={() => setIsFocusMode(!isFocusMode)}
+              title={isFocusMode ? "Exit Focus" : "Focus Mode"}
             >
-              {isFocusMode ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              {isFocusMode ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
             </Button>
 
             {novel.chapters && novel.chapters.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-primary">
-                    <List className="w-5 h-5" />
+                  <Button variant="ghost" size="icon" className="h-11 w-11 rounded-full text-primary">
+                    <List className="w-6 h-6" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-64 p-2 shadow-2xl">
+                <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-64 p-2 shadow-2xl max-h-[70vh] overflow-y-auto">
                   {novel.chapters.map((chap, idx) => (
                     <DropdownMenuItem 
                       key={chap.id} 
                       onClick={() => handleNavigateChapter(idx)}
-                      className={cn("rounded-xl cursor-pointer gap-3", currentChapterIndex === idx && "bg-primary/5 text-primary")}
+                      className={cn("rounded-xl cursor-pointer gap-3 p-3", currentChapterIndex === idx && "bg-primary/5 text-primary")}
                     >
                       <span className="text-[10px] font-bold opacity-30"># {idx + 1}</span>
                       <span className="font-headline text-sm truncate">{chap.title}</span>
@@ -404,29 +404,29 @@ export default function ReadingPage() {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setUseTranslation(!useTranslation)}
-                className="rounded-full text-primary gap-2 h-10 px-4 hover:bg-primary/5"
+                className="rounded-full text-primary gap-2 h-11 px-3 sm:px-4 hover:bg-primary/5"
               >
-                <Languages className="w-4 h-4" />
+                <Languages className="w-5 h-5" />
                 <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">
                   {useTranslation ? "Original" : "Translate"}
                 </span>
               </Button>
             )}
 
-            <div className="w-px h-6 bg-primary/10 mx-1 hidden sm:block" />
+            <div className="w-px h-6 bg-primary/10 mx-1" />
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground hover:text-primary">
-                  <Palette className="w-5 h-5" />
+                <Button variant="ghost" size="icon" className="h-11 w-11 rounded-full text-muted-foreground hover:text-primary">
+                  <Palette className="w-6 h-6" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-6 rounded-[2.5rem] border-primary/10 bg-white/95 backdrop-blur-xl shadow-2xl" align="center">
+              <PopoverContent className="w-[90vw] max-w-sm p-6 rounded-[2.5rem] border-primary/10 bg-white/95 backdrop-blur-xl shadow-2xl" align="center" side="bottom">
                 <div className="space-y-8">
                   <div className="space-y-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                       <Sun className="w-3 h-3" />
-                      Theme
+                      Atmosphere
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
@@ -446,10 +446,10 @@ export default function ReadingPage() {
                             readingMode === mode.id ? "border-primary bg-primary/5" : "border-primary/5 hover:border-primary/20"
                           )}
                         >
-                          <div className={cn("w-6 h-6 rounded-full border border-primary/10", mode.color)}>
-                            {readingMode === mode.id && <Check className="w-3 h-3 text-primary mx-auto mt-1" />}
+                          <div className={cn("w-7 h-7 rounded-full border border-primary/10", mode.color)}>
+                            {readingMode === mode.id && <Check className="w-4 h-4 text-primary mx-auto mt-1" />}
                           </div>
-                          <span className="text-[9px] font-bold uppercase tracking-tight">{mode.label}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-tight">{mode.label}</span>
                         </button>
                       ))}
                     </div>
@@ -469,7 +469,7 @@ export default function ReadingPage() {
                         setFontSize(val[0]);
                         updatePreferences({ fontSize: val[0] });
                       }} 
-                      min={14} max={32} step={1} 
+                      min={14} max={36} step={1} 
                     />
                   </div>
 
@@ -496,7 +496,7 @@ export default function ReadingPage() {
                              updatePreferences({ lineHeight: opt.val });
                            }}
                            className={cn(
-                             "flex-1 rounded-xl text-[9px] font-bold uppercase",
+                             "flex-1 rounded-xl text-[10px] h-10 font-bold uppercase",
                              lineHeight === opt.val ? "bg-primary text-white" : "bg-primary/5 text-primary"
                            )}
                          >
@@ -511,41 +511,41 @@ export default function ReadingPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", bookmarkData ? "text-primary" : "text-muted-foreground hover:text-primary")}>
+                <Button variant="ghost" size="icon" className={cn("h-11 w-11 rounded-full", bookmarkData ? "text-primary" : "text-muted-foreground hover:text-primary")}>
                   {bookmarkData ? (
-                    bookmarkData.category === 'favorite' ? <Heart className="w-5 h-5 fill-primary" /> : <BookmarkIcon className="w-5 h-5 fill-primary" />
+                    bookmarkData.category === 'favorite' ? <Heart className="w-6 h-6 fill-primary" /> : <BookmarkIcon className="w-6 h-6 fill-primary" />
                   ) : (
-                    <BookmarkIcon className="w-5 h-5" />
+                    <BookmarkIcon className="w-6 h-6" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-48 p-2 shadow-2xl">
-                <DropdownMenuItem onClick={() => handleBookmark('favorite')} className="gap-3 cursor-pointer rounded-xl">
-                  <Heart className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-bold">Add to Favorites</span>
+              <DropdownMenuContent className="bg-white border-primary/10 rounded-2xl w-56 p-2 shadow-2xl">
+                <DropdownMenuItem onClick={() => handleBookmark('favorite')} className="gap-4 cursor-pointer rounded-xl p-3">
+                  <Heart className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-bold">Add to Favorites</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleBookmark('read-later')} className="gap-3 cursor-pointer rounded-xl">
-                  <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-bold">Read Later</span>
+                <DropdownMenuItem onClick={() => handleBookmark('read-later')} className="gap-4 cursor-pointer rounded-xl p-3">
+                  <Sparkles className="w-5 h-5 text-accent" />
+                  <span className="text-sm font-bold">Read Later</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-10 w-10 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
-              <Heart className={cn("w-5 h-5", (novel.likes > 0) && "fill-primary text-primary")} />
+            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isLiking} className={cn("h-11 w-11 rounded-full", isLiking ? "animate-pulse" : "text-muted-foreground hover:text-primary")}>
+              <Heart className={cn("w-6 h-6", (novel.likes > 0) && "fill-primary text-primary")} />
             </Button>
 
             {user && (
               <>
-                <div className="w-px h-6 bg-primary/10 mx-1 hidden sm:block" />
+                <div className="w-px h-6 bg-primary/10 mx-1" />
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-10 w-10 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                  className="h-11 w-11 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                   onClick={() => setIsReportOpen(true)}
                   title={t.read.report}
                 >
-                  <Flag className="w-5 h-5" />
+                  <Flag className="w-6 h-6" />
                 </Button>
               </>
             )}
@@ -557,21 +557,21 @@ export default function ReadingPage() {
           dir={isRtl ? 'rtl' : 'ltr'}
           style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight, color: 'inherit' }}
         >
-          <div className="whitespace-pre-wrap space-y-12 font-body opacity-90 leading-relaxed tracking-wide">
+          <div className="whitespace-pre-wrap space-y-12 font-body opacity-95 leading-relaxed tracking-wide sm:px-4">
             {displayContent}
           </div>
         </article>
 
         {/* Chapter Completion Milestone Bar */}
         <div className="py-20 space-y-12 relative z-10">
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-xl mx-auto">
              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 <span>Progress manifested</span>
                 <span>{Math.round(scrollProgress)}%</span>
              </div>
-             <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden shadow-inner">
+             <div className="w-full h-2 bg-primary/10 rounded-full overflow-hidden shadow-inner">
                <div 
-                 className="h-full bg-primary transition-all duration-700 ease-out relative group" 
+                 className="h-full bg-primary transition-all duration-700 ease-out relative" 
                  style={{ width: `${scrollProgress}%` }}
                >
                  <div className="absolute inset-0 bg-white/20 animate-pulse" />
@@ -585,30 +585,30 @@ export default function ReadingPage() {
           )}>
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150 animate-pulse" />
-              <Badge className="relative bg-primary text-white border-none px-8 py-3 rounded-full font-headline text-xl italic shadow-2xl flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6" />
+              <Badge className="relative bg-primary text-white border-none px-10 py-4 rounded-full font-headline text-xl sm:text-2xl italic shadow-2xl flex items-center gap-4">
+                <CheckCircle2 className="w-7 h-7" />
                 Chapter Completed!
               </Badge>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 w-full">
               <Button 
                 variant="outline" 
-                className="rounded-full px-8 h-14 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg group transition-all"
+                className="rounded-full px-8 h-16 border-primary/20 text-primary hover:bg-primary/5 font-headline text-lg group transition-all flex-1 sm:flex-none max-w-[280px]"
                 disabled={currentChapterIndex === 0}
                 onClick={() => handleNavigateChapter(currentChapterIndex - 1)}
               >
-                <span className="mr-2 transition-transform group-hover:-translate-x-1">⏮️</span>
-                Previous Chapter
+                <span className="mr-3 transition-transform group-hover:-translate-x-1 text-2xl">⏮️</span>
+                Previous
               </Button>
               
               {novel.chapters && currentChapterIndex < (novel.chapters.length - 1) && (
                 <Button 
-                  className="rounded-full px-8 h-14 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 font-headline text-lg group transition-all"
+                  className="rounded-full px-8 h-16 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 font-headline text-lg group transition-all flex-1 sm:flex-none max-w-[280px]"
                   onClick={() => handleNavigateChapter(currentChapterIndex + 1)}
                 >
                   Next Chapter
-                  <span className="ml-2 transition-transform group-hover:translate-x-1">⏭️</span>
+                  <span className="ml-3 transition-transform group-hover:translate-x-1 text-2xl">⏭️</span>
                 </Button>
               )}
             </div>
@@ -616,27 +616,27 @@ export default function ReadingPage() {
         </div>
 
         {novel.poll && novel.poll.active && (
-          <section className="pt-16 max-w-xl mx-auto relative z-10">
+          <section className="pt-16 max-w-xl mx-auto relative z-10 px-4">
             <EndingPoll novel={novel} />
           </section>
         )}
 
         <footer className="pt-24 border-t border-primary/10 space-y-24 relative z-10">
           <div className={cn(
-            "rounded-[3rem] p-12 text-center space-y-8 shadow-sm border",
+            "rounded-[3rem] p-8 sm:p-12 text-center space-y-8 shadow-sm border",
             readingMode === 'midnight' ? "bg-white/5 border-white/10" : "bg-white/40 border-primary/10"
           )}>
             <div className="space-y-2">
-              <h3 className="font-headline text-4xl font-bold">End of Chronicle</h3>
-              <p className="text-muted-foreground italic">Thank you for reading.</p>
+              <h3 className="font-headline text-3xl sm:text-4xl font-bold">End of Chronicle</h3>
+              <p className="text-muted-foreground italic">Thank you for traveling this far.</p>
             </div>
-            <div className="flex flex-wrap justify-center gap-6">
-              <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-14 font-headline text-lg shadow-xl gap-3">
-                <Heart className="w-5 h-5" />
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              <Button onClick={handleLike} className="bg-primary text-white hover:bg-primary/90 rounded-full px-10 h-16 font-headline text-xl shadow-xl gap-4 flex-1 sm:flex-none max-w-[280px]">
+                <Heart className="w-6 h-6" />
                 Appreciate
               </Button>
-              <Button variant="outline" className="border-primary/20 rounded-full px-10 h-14 gap-3 text-primary hover:bg-primary/5 font-headline text-lg">
-                <Share2 className="w-5 h-5" />
+              <Button variant="outline" className="border-primary/20 rounded-full px-10 h-16 gap-4 text-primary hover:bg-primary/5 font-headline text-xl flex-1 sm:flex-none max-w-[280px]">
+                <Share2 className="w-6 h-6" />
                 Share
               </Button>
             </div>
@@ -645,10 +645,10 @@ export default function ReadingPage() {
           {similarNovels && similarNovels.length > 1 && (
             <section className="space-y-8">
               <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-primary" />
+                <Sparkles className="w-6 h-6 text-primary" />
                 <h3 className="font-headline text-2xl font-bold italic">Similar Chronicles</h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                 {similarNovels
                   .filter(n => n.id !== id)
                   .slice(0, 4)

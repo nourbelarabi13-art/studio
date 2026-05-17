@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useCallback, useTransition, useDeferredValue, useEffect } from "react";
@@ -16,6 +15,8 @@ import { checkAchievements } from "@/firebase/firestore/achievement-actions";
 import { createNotification } from "@/firebase/firestore/notification-actions";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Layout, Globe, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Sub-components
 import { EditorCore } from "@/components/write/editor-core";
@@ -58,6 +59,8 @@ export default function WritePage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [showChaptersMobile, setShowChaptersMobile] = useState(false);
+  const [showStatsMobile, setShowStatsMobile] = useState(false);
 
   // Use deferred value for heavy stats to prevent typing lag
   const deferredChapters = useDeferredValue(chapters);
@@ -90,6 +93,7 @@ export default function WritePage() {
   const handleSelectChapter = useCallback((id: string) => {
     startTransition(() => {
       setActiveChapterId(id);
+      setShowChaptersMobile(false);
     });
   }, []);
 
@@ -103,6 +107,7 @@ export default function WritePage() {
     };
     setChapters(prev => [...prev, newChapter]);
     setActiveChapterId(newId);
+    setShowChaptersMobile(false);
   }, [chapters.length]);
 
   const toggleGenre = useCallback((genre: Genre) => {
@@ -239,15 +244,49 @@ export default function WritePage() {
         onToggleNotes={() => setIsNotesOpen(!isNotesOpen)}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-12 max-w-[1600px]">
+      {/* Mobile Sidebar Toggles */}
+      <div className="lg:hidden flex border-b border-primary/5 bg-white px-4 py-3 gap-2 overflow-x-auto scrollbar-hide sticky top-[128px] z-20">
+         <Button 
+           variant={showChaptersMobile ? "default" : "outline"} 
+           size="sm" 
+           onClick={() => { setShowChaptersMobile(!showChaptersMobile); setShowStatsMobile(false); }}
+           className="rounded-full gap-2 shrink-0 h-10 px-4"
+         >
+           <Layout className="w-4 h-4" /> Fragments
+         </Button>
+         <Button 
+           variant={showStatsMobile ? "default" : "outline"} 
+           size="sm" 
+           onClick={() => { setShowStatsMobile(!showStatsMobile); setShowChaptersMobile(false); }}
+           className="rounded-full gap-2 shrink-0 h-10 px-4"
+         >
+           <Globe className="w-4 h-4" /> Context
+         </Button>
+      </div>
+
+      <main className="flex-1 container mx-auto px-4 py-8 lg:py-12 max-w-[1600px]">
         <div className={cn(
-          "grid gap-12 transition-all duration-500",
+          "grid gap-8 lg:gap-12 transition-all duration-500",
           isNotesOpen 
             ? "lg:grid-cols-[250px_1fr_350px]" 
             : "lg:grid-cols-[280px_1fr_300px]"
         )}>
           {/* Left: Fragments */}
-          <aside className={cn(isNotesOpen && "hidden xl:block")}>
+          <aside className={cn(
+            "lg:block", 
+            isNotesOpen && "hidden xl:block",
+            !showChaptersMobile && "hidden lg:block",
+            showChaptersMobile && "fixed inset-0 z-50 bg-white pt-32 px-6 overflow-y-auto"
+          )}>
+            {showChaptersMobile && (
+              <Button 
+                variant="ghost" 
+                className="mb-4 gap-2 text-primary" 
+                onClick={() => setShowChaptersMobile(false)}
+              >
+                <ChevronLeft className="w-4 h-4" /> Back to Desk
+              </Button>
+            )}
             <ChaptersPanel 
               chapters={chapters}
               activeId={activeChapterId}
@@ -271,7 +310,20 @@ export default function WritePage() {
           </div>
 
           {/* Right: Side Notes or Context */}
-          <aside>
+          <aside className={cn(
+            "lg:block",
+            !showStatsMobile && !isNotesOpen && "hidden lg:block",
+            showStatsMobile && "fixed inset-0 z-50 bg-white pt-32 px-6 overflow-y-auto"
+          )}>
+            {showStatsMobile && (
+              <Button 
+                variant="ghost" 
+                className="mb-4 gap-2 text-primary" 
+                onClick={() => setShowStatsMobile(false)}
+              >
+                <ChevronLeft className="w-4 h-4" /> Back to Desk
+              </Button>
+            )}
             {isNotesOpen ? (
               <SideNotesPanel 
                 novelId={novelId}

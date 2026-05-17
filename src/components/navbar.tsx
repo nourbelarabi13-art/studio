@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -19,8 +18,10 @@ import {
   Globe,
   ChevronDown,
   Sparkles,
-  Moon,
-  Sun
+  Menu,
+  X,
+  Sun,
+  Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase";
 import { doc, collection, query, where } from "firebase/firestore";
 import { UserProfile, Notification, AppLanguage } from "@/lib/types";
@@ -54,6 +62,7 @@ export function Navbar() {
   const { theme, toggleTheme } = useCelestialTheme();
   
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null;
@@ -112,15 +121,62 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg border-primary/10 transition-colors duration-700">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Mobile Menu Trigger */}
+        <div className="lg:hidden">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-primary h-12 w-12 rounded-full">
+                <Menu className="w-6 h-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[85vw] max-w-sm rounded-r-[2rem] border-primary/10 bg-background/95 backdrop-blur-xl">
+              <SheetHeader className="border-b border-primary/5 pb-6 mb-6">
+                <SheetTitle className="font-headline text-2xl font-bold flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
+                    <Heart className="w-4 h-4" />
+                  </div>
+                  Rosaline Bela
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2">
+                {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-headline text-lg",
+                      pathname === link.href ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                    )}
+                  >
+                    <link.icon className="w-5 h-5" />
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-auto pt-8 border-t border-primary/5">
+                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-4 mb-4">Sanctuary Settings</p>
+                 <div className="flex flex-col gap-2">
+                    <Button variant="ghost" onClick={toggleTheme} className="justify-start gap-4 h-14 rounded-2xl text-muted-foreground">
+                       {theme === 'celestial' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                       {theme === 'celestial' ? 'Manifest Light' : 'Celestial Night'}
+                    </Button>
+                 </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
             <Heart className="w-4 h-4" />
           </div>
-          <span className="font-headline text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+          <span className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
             Rosaline Bela
           </span>
         </Link>
 
+        {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.filter(link => !link.roles || (profile?.role && link.roles.includes(profile.role))).map((link) => (
             <Link
@@ -137,15 +193,17 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          <AmbientPlayer />
+        <div className="flex items-center gap-1 sm:gap-4">
+          <div className="hidden sm:block">
+            <AmbientPlayer />
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full"
+                className="text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full h-10 w-10 sm:h-12 sm:w-12"
               >
                 <Globe className="w-5 h-5" />
               </Button>
@@ -177,7 +235,7 @@ export function Navbar() {
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full",
+                  "text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full h-10 w-10 sm:h-12 sm:w-12",
                   pathname === '/notifications' && "text-primary bg-primary/5"
                 )}
               >
@@ -194,15 +252,15 @@ export function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5 rounded-full px-2 pr-4 h-10">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary relative overflow-hidden">
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:bg-primary/5 rounded-full px-2 pr-4 h-10 sm:h-12">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary relative overflow-hidden">
                     {displayAvatar ? (
                       <Image src={displayAvatar} alt={profile?.username || "Avatar"} fill className="object-cover" />
                     ) : (
-                      <User className="w-4 h-4" />
+                      <User className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                   </div>
-                  <span className="hidden sm:inline font-medium">{profile?.username || "Dreamer"}</span>
+                  <span className="hidden md:inline font-medium">{profile?.username || "Dreamer"}</span>
                   <ChevronDown className="w-3 h-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
@@ -220,26 +278,26 @@ export function Navbar() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-primary/5" />
                 <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.uid}`} className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary w-full flex items-center">
-                    <User className="w-4 h-4" />
+                  <Link href={`/profile/${user.uid}`} className="gap-3 cursor-pointer rounded-xl py-3 hover:bg-primary/5 hover:text-primary w-full flex items-center text-base">
+                    <User className="w-5 h-5" />
                     {t.nav.profile}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile/edit" className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary font-bold w-full flex items-center">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                  <Link href="/profile/edit" className="gap-3 cursor-pointer rounded-xl py-3 hover:bg-primary/5 hover:text-primary font-bold w-full flex items-center text-base">
+                    <Sparkles className="w-5 h-5 text-primary" />
                     Refine Persona
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="gap-3 cursor-pointer rounded-xl py-2.5 hover:bg-primary/5 hover:text-primary w-full flex items-center">
-                    <Settings className="w-4 h-4" />
+                  <Link href="/settings" className="gap-3 cursor-pointer rounded-xl py-3 hover:bg-primary/5 hover:text-primary w-full flex items-center text-base">
+                    <Settings className="w-5 h-5" />
                     {t.nav.settings}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-primary/5" />
-                <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer text-destructive rounded-xl py-2.5 hover:bg-destructive/5">
-                  <LogOut className="w-4 h-4" />
+                <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer text-destructive rounded-xl py-3 hover:bg-destructive/5 text-base">
+                  <LogOut className="w-5 h-5" />
                   {t.nav.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -247,12 +305,12 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="hover:bg-primary/5 gap-2 text-muted-foreground rounded-full px-4">
+                <Button variant="ghost" size="sm" className="hover:bg-primary/5 gap-2 text-muted-foreground rounded-full px-4 h-10 sm:h-12">
                   {t.nav.login}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 gap-2 rounded-full px-6">
+                <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 gap-2 rounded-full px-6 h-10 sm:h-12 hidden sm:flex">
                   {t.nav.signup}
                 </Button>
               </Link>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -28,29 +27,31 @@ export const WriteToolbar = React.memo(function WriteToolbar({
   onToggleNotes
 }: WriteToolbarProps) {
   return (
-    <div className="sticky top-16 z-30 w-full glass-morphism border-b border-primary/10 px-6 h-16 flex items-center justify-between">
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground italic min-w-[180px]">
+    <div className="sticky top-16 z-30 w-full glass-morphism border-b border-primary/10 px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+      <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground italic min-w-[140px] sm:min-w-[180px]">
           <Clock className="w-3.5 h-3.5 text-primary/40" />
-          {lastSaved ? (
-            `Saved at ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-          ) : (
-            'Drafting...'
-          )}
+          <span className="truncate">
+            {lastSaved ? (
+              `Saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+            ) : (
+              'Drafting...'
+            )}
+          </span>
         </div>
-        <div className="hidden sm:flex items-center gap-4 border-l border-primary/10 pl-6">
+        <div className="hidden md:flex items-center gap-4 border-l border-primary/10 pl-6">
           <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
             <FileText className="w-3 h-3" /> {wordCount.toLocaleString()} words
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="mr-2">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="hidden sm:block mr-2">
           {isSaving && (
             <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-primary animate-pulse">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Syncing Archive
+              Syncing
             </div>
           )}
         </div>
@@ -60,34 +61,37 @@ export const WriteToolbar = React.memo(function WriteToolbar({
           size="sm" 
           onClick={onToggleNotes}
           className={cn(
-            "rounded-full gap-2 h-9 px-4 transition-all",
+            "rounded-full gap-2 h-10 sm:h-12 px-3 sm:px-5 transition-all",
             isNotesOpen ? "bg-primary text-white shadow-lg" : "text-primary hover:bg-primary/5"
           )}
+          title="Toggle Side Notes"
         >
-          <StickyNote className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline font-bold">Notes</span>
+          <StickyNote className="w-5 h-5 sm:w-4 sm:h-4" />
+          <span className="hidden lg:inline font-bold">Notes</span>
         </Button>
 
-        <div className="w-px h-4 bg-primary/10 mx-1 hidden sm:block" />
+        <div className="hidden sm:block w-px h-6 bg-primary/10 mx-1" />
 
         <Button 
           variant="ghost" 
           size="sm" 
-          className="rounded-full gap-2 text-primary hover:bg-primary/5 h-9" 
+          className="rounded-full gap-2 text-primary hover:bg-primary/5 h-10 sm:h-12 px-3 sm:px-5" 
           onClick={onSave} 
           disabled={isSaving}
+          title="Save Draft"
         >
-          <Save className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Save Draft</span>
+          <Save className="w-5 h-5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline font-bold">Save</span>
         </Button>
         
         <Button 
           onClick={onPublish} 
           disabled={isPublishing} 
-          className="rounded-full bg-primary hover:bg-primary/90 px-8 h-9 shadow-lg shadow-primary/10 font-bold"
+          className="rounded-full bg-primary hover:bg-primary/90 px-5 sm:px-8 h-10 sm:h-12 shadow-lg shadow-primary/10 font-bold"
         >
-          {isPublishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-          Publish
+          {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 sm:mr-2" />}
+          <span className="hidden sm:inline">Publish</span>
+          <span className="sm:hidden">Post</span>
         </Button>
       </div>
     </div>

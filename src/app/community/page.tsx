@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -25,7 +24,8 @@ import {
   Camera,
   Smile,
   X,
-  Flag
+  Flag,
+  Menu
 } from "lucide-react";
 import { ChatMessage, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { ReportModal } from "@/components/report-modal";
 
 const COMMUNITY_ROOMS = [
@@ -67,6 +74,7 @@ export default function CommunityPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MOCK_MESSAGES);
   const [reportingMsgId, setReportingMsgId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -108,12 +116,10 @@ export default function CommunityPage() {
     const trimmedText = messageText.trim();
     if (!trimmedText && !selectedImage) return;
 
-    // Create a local copy of data to manifest instantly
     const textToSend = trimmedText;
     const imageToSend = selectedImage || undefined;
     const nameToUse = profile?.username || user.displayName || "Traveler";
     
-    // Clear inputs IMMEDIATELY to prevent freezing feeling
     setMessageText("");
     setSelectedImage(null);
 
@@ -126,7 +132,6 @@ export default function CommunityPage() {
       createdAt: new Date().toISOString(),
     };
 
-    // Push into local state instantly
     setRoomMessages(prev => {
       const currentRoomMessages = prev[activeRoomId] || [];
       return {
@@ -140,7 +145,7 @@ export default function CommunityPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) { // 1MB limit for local demo
+    if (file.size > 1024 * 1024) {
       toast({
         variant: "destructive",
         title: "Image too large",
@@ -174,7 +179,7 @@ export default function CommunityPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -182,97 +187,125 @@ export default function CommunityPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center dreamy-fantasy-gradient">
-        <MessageSquare className="w-12 h-12 text-primary mb-6" />
-        <h1 className="font-headline text-3xl font-bold mb-4">The Community Awaits</h1>
-        <p className="text-muted-foreground italic max-w-md">This sanctuary is reserved for registered dreamers. Please manifest your presence to enter.</p>
-        <Button onClick={() => router.push("/login")} className="mt-8 rounded-full px-12 h-14 bg-primary text-white shadow-xl shadow-primary/20">Sign in to the Sanctuary</Button>
+        <MessageSquare className="w-16 h-16 text-primary mb-6" />
+        <h1 className="font-headline text-4xl font-bold mb-4">The Community Awaits</h1>
+        <p className="text-muted-foreground italic max-w-md text-lg leading-relaxed">This sanctuary is reserved for registered dreamers. Please manifest your presence to enter.</p>
+        <Button onClick={() => router.push("/login")} className="mt-10 rounded-full px-12 h-16 bg-primary text-white shadow-2xl shadow-primary/20 text-lg">Sign in to the Sanctuary</Button>
       </div>
     );
   }
 
+  const SidebarContentEl = (
+    <div className="space-y-10">
+      {/* Reader Space */}
+      <div>
+        <div className="flex items-center gap-3 mb-6 px-2">
+          <BookOpen className="w-5 h-5 text-primary/60" />
+          <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Reader Space</h3>
+        </div>
+        <div className="space-y-2">
+          {filteredRooms.filter(r => r.category === 'Reader').map(room => (
+            <button
+              key={room.id}
+              onClick={() => { setActiveRoomId(room.id); setIsSidebarOpen(false); }}
+              className={cn(
+                "w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center gap-4",
+                activeRoomId === room.id 
+                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+              )}
+            >
+              <Hash className="w-5 h-5 shrink-0" />
+              <p className="font-bold text-sm truncate">{room.name}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Writer Space */}
+      {(profile?.role === 'writer' || !profile) && (
+        <div>
+          <div className="flex items-center gap-3 mb-6 px-2">
+            <PenTool className="w-5 h-5 text-primary/60" />
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Writer Space</h3>
+          </div>
+          <div className="space-y-2">
+            {filteredRooms.filter(r => r.category === 'Writer').map(room => (
+              <button
+                key={room.id}
+                onClick={() => { setActiveRoomId(room.id); setIsSidebarOpen(false); }}
+                className={cn(
+                  "w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center gap-4",
+                  activeRoomId === room.id 
+                    ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20" 
+                    : "text-muted-foreground hover:bg-accent/5 hover:text-accent-foreground"
+                )}
+              >
+                <Ghost className="w-5 h-5 shrink-0" />
+                <p className="font-bold text-sm truncate">{room.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <div className="glass-morphism rounded-[2rem] p-6 border-primary/10 bg-primary/5">
+        <h3 className="font-headline text-lg font-bold mb-3">Instant Whispers</h3>
+        <p className="text-xs text-muted-foreground italic leading-relaxed">
+          "Your words manifest instantly through local magic in this demonstration hall."
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl flex flex-col md:flex-row gap-8 overflow-hidden">
-        {/* Sidebar: Spaces */}
-        <aside className="w-full md:w-80 space-y-6">
-          <div className="glass-morphism rounded-[2rem] p-6 border-primary/10">
-            <div className="space-y-8">
-              {/* Reader Space */}
-              <div>
-                <div className="flex items-center gap-2 mb-4 px-2">
-                  <BookOpen className="w-4 h-4 text-primary/60" />
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Reader Space</h3>
-                </div>
-                <div className="space-y-1">
-                  {filteredRooms.filter(r => r.category === 'Reader').map(room => (
-                    <button
-                      key={room.id}
-                      onClick={() => setActiveRoomId(room.id)}
-                      className={cn(
-                        "w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center gap-3",
-                        activeRoomId === room.id 
-                          ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                          : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                      )}
-                    >
-                      <Hash className="w-4 h-4 shrink-0" />
-                      <p className="font-bold text-sm truncate">{room.name}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
+      <main className="flex-1 container mx-auto px-4 py-6 md:py-10 max-w-6xl flex flex-col md:flex-row gap-6 md:gap-10 overflow-hidden h-[calc(100vh-64px)]">
+        
+        {/* Mobile Sidebar Toggle */}
+        <div className="md:hidden flex items-center justify-between bg-white/50 backdrop-blur-md rounded-2xl p-4 border border-primary/10 mb-2">
+           <div className="flex items-center gap-3">
+              <Badge className={cn("rounded-full", activeRoom.category === 'Writer' ? "bg-accent/20 text-accent-foreground" : "bg-primary/20 text-primary")}>
+                {activeRoom.category}
+              </Badge>
+              <h2 className="font-bold text-sm">{activeRoom.name}</h2>
+           </div>
+           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+             <SheetTrigger asChild>
+               <Button variant="ghost" size="icon" className="text-primary h-10 w-10">
+                 <Menu className="w-6 h-6" />
+               </Button>
+             </SheetTrigger>
+             <SheetContent className="rounded-l-[2rem] border-primary/10 pt-16">
+                <SheetHeader className="mb-8">
+                  <SheetTitle className="font-headline text-2xl">Community Spaces</SheetTitle>
+                </SheetHeader>
+                {SidebarContentEl}
+             </SheetContent>
+           </Sheet>
+        </div>
 
-              {/* Writer Space */}
-              {(profile?.role === 'writer' || !profile) && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4 px-2">
-                    <PenTool className="w-4 h-4 text-primary/60" />
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Writer Space</h3>
-                  </div>
-                  <div className="space-y-1">
-                    {filteredRooms.filter(r => r.category === 'Writer').map(room => (
-                      <button
-                        key={room.id}
-                        onClick={() => setActiveRoomId(room.id)}
-                        className={cn(
-                          "w-full text-left px-4 py-3 rounded-2xl transition-all flex items-center gap-3",
-                          activeRoomId === room.id 
-                            ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20" 
-                            : "text-muted-foreground hover:bg-accent/5 hover:text-accent-foreground"
-                        )}
-                      >
-                        <Ghost className="w-4 h-4 shrink-0" />
-                        <p className="font-bold text-sm truncate">{room.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="glass-morphism rounded-[2rem] p-6 border-primary/10 bg-primary/5 hidden md:block">
-            <h3 className="font-headline text-lg font-bold mb-2">Instant Whispers</h3>
-            <p className="text-xs text-muted-foreground italic leading-relaxed">
-              "In this demonstration hall, your words manifest instantly through local magic. No waiting for the celestial mists to clear."
-            </p>
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:block w-80 shrink-0 h-full overflow-y-auto pr-2 scrollbar-hide">
+          <div className="glass-morphism rounded-[2.5rem] p-8 border-primary/10 shadow-sm h-full">
+            {SidebarContentEl}
           </div>
         </aside>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col glass-morphism rounded-[2.5rem] border-primary/10 overflow-hidden shadow-xl">
-          <CardHeader className="border-b border-primary/5 py-6">
+        <div className="flex-1 flex flex-col glass-morphism rounded-[2.5rem] border-primary/10 overflow-hidden shadow-2xl relative bg-white/30">
+          <CardHeader className="border-b border-primary/5 py-4 sm:py-6 bg-white/60">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                  {activeRoom.category === 'Writer' ? <Ghost className="w-5 h-5 text-accent" /> : <Hash className="w-5 h-5 text-primary" />}
+                <CardTitle className="font-headline text-xl sm:text-2xl flex items-center gap-3">
+                  {activeRoom.category === 'Writer' ? <Ghost className="w-6 h-6 text-accent" /> : <Hash className="w-6 h-6 text-primary" />}
                   {activeRoom.name}
                 </CardTitle>
-                <p className="text-xs text-muted-foreground italic">{activeRoom.description}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground italic line-clamp-1">{activeRoom.description}</p>
               </div>
               <Badge variant="outline" className={cn(
-                "rounded-full px-4 h-6 border-none text-[9px] uppercase tracking-widest font-bold",
+                "hidden sm:flex rounded-full px-4 h-7 border-none text-[9px] uppercase tracking-widest font-bold",
                 activeRoom.category === 'Writer' ? "bg-accent/10 text-accent-foreground" : "bg-primary/10 text-primary"
               )}>
                 {activeRoom.category} Sanctuary
@@ -280,23 +313,23 @@ export default function CommunityPage() {
             </div>
           </CardHeader>
 
-          <ScrollArea className="flex-1 p-8 h-[60vh]">
-            <div className="space-y-8 pb-4">
+          <ScrollArea className="flex-1 p-4 sm:p-8">
+            <div className="space-y-10 pb-20">
               {currentMessages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground italic py-20 opacity-50">
-                  <MessageSquare className="w-12 h-12" />
-                  Be the first to break the silence.
+                <div className="flex flex-col items-center justify-center py-32 gap-6 text-muted-foreground italic opacity-40">
+                  <MessageSquare className="w-16 h-16" />
+                  <p className="text-lg">Be the first to break the silence.</p>
                 </div>
               ) : (
                 currentMessages.map((msg) => (
                   <div 
                     key={msg.id} 
                     className={cn(
-                      "flex flex-col max-w-[85%] animate-fade-in",
+                      "flex flex-col max-w-[90%] sm:max-w-[80%] animate-fade-in",
                       msg.senderId === user.uid ? "ml-auto items-end" : "items-start"
                     )}
                   >
-                    <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className="flex items-center gap-3 mb-2 px-2">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                         {msg.senderName}
                       </span>
@@ -306,26 +339,28 @@ export default function CommunityPage() {
                     </div>
                     <div className="group relative">
                       <div className={cn(
-                        "px-5 py-3 rounded-[1.8rem] shadow-sm overflow-hidden",
+                        "px-5 py-4 rounded-[2rem] shadow-sm overflow-hidden",
                         msg.senderId === user.uid 
                           ? (activeRoom.category === 'Writer' ? "bg-accent text-accent-foreground rounded-tr-none" : "bg-primary text-white rounded-tr-none")
                           : "bg-white border border-primary/5 rounded-tl-none"
                       )}>
                         {msg.imageUrl && (
-                          <div className="mb-3 relative w-full aspect-video rounded-xl overflow-hidden shadow-sm">
+                          <div className="mb-4 relative w-full aspect-video rounded-2xl overflow-hidden shadow-md">
                              <Image src={msg.imageUrl} alt="Shared" fill className="object-cover" />
                           </div>
                         )}
-                        {msg.text && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
+                        {msg.text && <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
                       </div>
                       
                       <div className={cn(
-                        "absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1",
-                        msg.senderId === user.uid ? "-left-16" : "-right-16"
+                        "absolute top-1/2 -translate-y-1/2 flex items-center gap-2 transition-all duration-300",
+                        msg.senderId === user.uid 
+                          ? "-left-10 md:-left-20 opacity-0 group-hover:opacity-100" 
+                          : "-right-10 md:-right-20 opacity-0 group-hover:opacity-100"
                       )}>
                         <button 
                           onClick={() => setReportingMsgId(msg.id)}
-                          className="p-2 text-muted-foreground hover:text-destructive"
+                          className="p-3 bg-white/80 rounded-full text-muted-foreground hover:text-destructive shadow-sm"
                           title="Report whisper"
                         >
                           <Flag className="w-4 h-4" />
@@ -333,7 +368,7 @@ export default function CommunityPage() {
                         {msg.senderId === user.uid && (
                           <button 
                             onClick={() => handleDeleteMessage(msg.id)}
-                            className="p-2 text-muted-foreground hover:text-destructive"
+                            className="p-3 bg-white/80 rounded-full text-muted-foreground hover:text-destructive shadow-sm"
                             title="Vanish fragment"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -348,41 +383,42 @@ export default function CommunityPage() {
             </div>
           </ScrollArea>
 
-          <CardContent className="p-8 border-t border-primary/5 bg-white/40">
+          {/* Fixed Input Bottom Bar */}
+          <div className="p-4 sm:p-8 border-t border-primary/5 bg-white/80 backdrop-blur-xl">
             {selectedImage && (
-              <div className="mb-4 relative w-32 h-24 rounded-xl overflow-hidden border-2 border-primary/20 shadow-md group">
+              <div className="mb-4 relative w-32 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl group animate-fade-in">
                  <Image src={selectedImage} alt="Preview" fill className="object-cover" />
                  <button 
                    onClick={() => setSelectedImage(null)}
-                   className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                   className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 shadow-lg"
                  >
-                   <X className="w-3 h-3" />
+                   <X className="w-4 h-4" />
                  </button>
               </div>
             )}
-            <form onSubmit={handleSendMessage} className="flex gap-4">
+            <form onSubmit={handleSendMessage} className="flex gap-3 sm:gap-4 items-end">
               <div className="flex-1 relative flex items-center">
                 <Input
-                  placeholder={`Speak to the ${activeRoom.category.toLowerCase()}s in ${activeRoom.name}...`}
+                  placeholder={`Speak to the ${activeRoom.category.toLowerCase()}s...`}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  className="bg-white/80 border-primary/10 h-14 rounded-full pl-8 pr-24 focus:bg-white transition-all shadow-sm"
+                  className="bg-white/90 border-primary/10 h-14 sm:h-16 rounded-[2rem] pl-6 pr-24 sm:pr-32 focus:ring-primary/20 focus:border-primary/30 transition-all shadow-inner text-base"
                 />
-                <div className="absolute right-3 flex items-center gap-1">
+                <div className="absolute right-3 flex items-center gap-1 sm:gap-2">
                    <Popover>
                       <PopoverTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-primary hover:bg-primary/5">
-                            <Smile className="w-5 h-5" />
+                         <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full text-primary hover:bg-primary/5">
+                            <Smile className="w-6 h-6" />
                          </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 rounded-[1.5rem] border-primary/10 bg-white shadow-xl mb-2">
-                         <div className="grid grid-cols-4 gap-2">
+                      <PopoverContent className="w-[80vw] max-w-[320px] p-4 rounded-[2rem] border-primary/10 bg-white/95 backdrop-blur-xl shadow-2xl mb-4">
+                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                             {DREAMY_EMOJIS.map(emoji => (
                               <button 
                                 key={emoji} 
                                 type="button"
                                 onClick={() => addEmoji(emoji)}
-                                className="text-xl p-2 hover:bg-primary/5 rounded-xl transition-colors"
+                                className="text-2xl p-2 hover:bg-primary/5 rounded-2xl transition-transform active:scale-90"
                               >
                                 {emoji}
                               </button>
@@ -395,10 +431,10 @@ export default function CommunityPage() {
                      type="button" 
                      variant="ghost" 
                      size="icon" 
-                     className="h-10 w-10 rounded-full text-primary hover:bg-primary/5"
+                     className="h-10 w-10 sm:h-12 sm:w-12 rounded-full text-primary hover:bg-primary/5"
                      onClick={() => fileInputRef.current?.click()}
                    >
-                     <Camera className="w-5 h-5" />
+                     <Camera className="w-6 h-6" />
                    </Button>
                    <input 
                      type="file" 
@@ -413,16 +449,16 @@ export default function CommunityPage() {
                 type="submit" 
                 disabled={!messageText.trim() && !selectedImage}
                 className={cn(
-                  "rounded-full h-14 px-8 shadow-lg transition-all",
+                  "rounded-full h-14 sm:h-16 w-14 sm:w-24 shadow-xl transition-all active:scale-95",
                   activeRoom.category === 'Writer' 
                     ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-accent/20" 
                     : "bg-primary hover:bg-primary/90 text-white shadow-primary/20"
                 )}
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-6 h-6" />
               </Button>
             </form>
-          </CardContent>
+          </div>
         </div>
       </main>
 
