@@ -28,7 +28,8 @@ import {
   Camera,
   Moon,
   PenTool,
-  Library
+  Library,
+  MessageSquare
 } from "lucide-react";
 import { useFirestore, useDoc, useUser, useCollection } from "@/firebase";
 import { doc, collection, query, where, orderBy, updateDoc } from "firebase/firestore";
@@ -275,6 +276,24 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              {/* Statistics Counter Widgets */}
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
+                {[
+                  { label: "Chronicles Read", arabic: "القصص المقروءة", value: 12, icon: BookOpen },
+                  { label: "Whispers Sent", arabic: "الرسائل المرسلة", value: 48, icon: MessageSquare },
+                  { label: "Sanctuary Likes", arabic: "الإعجابات", value: 120, icon: Heart }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-primary/10 backdrop-blur-md rounded-[1.25rem] p-4 px-6 border border-primary/20 flex flex-col items-center md:items-start min-w-[150px] shadow-sm transition-transform hover:scale-105">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <stat.icon className="w-4 h-4 text-primary" />
+                      <span className="text-3xl font-headline font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">{stat.value}</span>
+                    </div>
+                    <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground leading-tight">{stat.label}</p>
+                    <p className="font-arabic text-[10px] text-primary/70 font-bold">{stat.arabic}</p>
+                  </div>
+                ))}
+              </div>
+
               {/* Editable Bio Section */}
               <div className="relative group/bio min-h-[60px] space-y-2">
                 {isEditingBio ? (
@@ -350,13 +369,6 @@ export default function ProfilePage() {
                   <span className="text-2xl font-bold">{profile.totalViews || 0}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Views</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 justify-center md:justify-start">
-                  <Heart className="w-4 h-4 text-primary fill-primary/10" />
-                  <span className="text-2xl font-bold">{profile.totalLikes || 0}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Appreciation</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
